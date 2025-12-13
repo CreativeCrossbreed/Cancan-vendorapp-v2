@@ -1,0 +1,85 @@
+# ------------------------------
+# Flutter / Dart
+# ------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# ------------------------------
+# Build outputs
+# ------------------------------
+build/
+
+# ------------------------------
+# IDEs
+# ------------------------------
+.idea/
+.vscode/
+*.iml
+
+# ------------------------------
+# Android
+# ------------------------------
+android/.gradle/
+android/local.properties
+android/**/build/
+android/**/captures/
+android/**/.cxx/
+
+# Keystore (NEVER commit)
+android/key.properties
+*.jks
+*.keystore
+
+# ------------------------------
+# iOS / macOS
+# ------------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/.last_build_id
+ios/Runner/GeneratedPluginRegistrant.*
+
+macos/Pods/
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# ------------------------------
+# Web
+# ------------------------------
+web/.dart_tool/
+web/build/
+
+# ------------------------------
+# Windows
+# ------------------------------
+windows/flutter/ephemeral/
+windows/**/build/
+
+# ------------------------------
+# Linux
+# ------------------------------
+linux/flutter/ephemeral/
+linux/**/build/
+
+# ------------------------------
+# Logs & misc
+# ------------------------------
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# ------------------------------
+# Environment / secrets
+# ------------------------------
+.env
+.env.*
