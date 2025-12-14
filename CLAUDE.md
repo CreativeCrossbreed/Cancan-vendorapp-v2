@@ -9,10 +9,9 @@ This is a Flutter mobile application for water can delivery vendors called "Can 
 ## Technology Stack
 
 - **Framework**: Flutter (Dart SDK >=3.0.0)
-- **Backend**: Supabase (authentication and database)
+- **Backend**: Supabase (authentication, database, and realtime)
 - **State Management**: Provider pattern
 - **UI**: Material Design 3 with custom theme
-- **Push Notifications**: Firebase Cloud Messaging
 - **Logging**: Logger package with debug mode filtering
 - **Error Handling**: Centralized error handler with user-friendly messages
 - **Security**: Input sanitization and validation helpers
@@ -50,6 +49,12 @@ Before running the app, create a `.env` file in the root directory with:
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anonymous_key
 ```
+
+### Development Mode (Testing without Supabase)
+The app includes a development mode for testing without backend setup:
+- **Dev Mode**: Enter phone number `1111111111` to auto-login
+- **Test Mode**: Use OTP `123456` for any phone number
+- **Location**: `lib/services/auth_service.dart` (set `_devMode = false` for production)
 
 ## Architecture Overview
 
@@ -89,8 +94,9 @@ lib/
 
 The app uses phone number-based authentication with OTP verification:
 - Uses Supabase Auth with PKCE flow for security
-- Supports both production (Supabase auth) and local session modes
+- Includes development mode for testing without backend
 - Implements session persistence using SharedPreferences
+- **Dev Mode**: Auto-login with phone `1111111111`
 
 ### Key Dependencies and Their Uses
 
@@ -100,10 +106,30 @@ The app uses phone number-based authentication with OTP verification:
 - `qr_flutter`: QR code generation
 - `url_launcher`: Launch external URLs (WhatsApp, phone calls)
 - `image_picker`: Camera and gallery access
-- `firebase_messaging`: Push notifications
 - `cached_network_image`: Optimized image loading
 - `shared_preferences`: Local data persistence
 - `flutter_dotenv`: Environment variable management
+- `logger`: Structured logging with debug filtering
+- `uuid`: Generate UUIDs
+
+## Production Readiness Features
+
+### Security & Performance
+- **SecurityHelper**: Input sanitization, SQL injection prevention, data masking
+- **PerformanceHelper**: Caching, debouncing, performance monitoring
+- **ErrorHandler**: Centralized error handling with user-friendly messages
+
+### Code Quality
+- **Flutter Lints**: Enforced code quality standards (version 6.0.0)
+- **Logger**: Replaced all print statements with structured logging
+- **Constants**: Centralized configuration in `lib/config/constants.dart`
+- **Error Handling**: Proper try-catch blocks with user feedback
+
+### Architecture Improvements
+- **Firebase Removed**: Eliminated unused Firebase dependencies for cleaner codebase
+- **Supabase Only**: Single backend solution for all data needs
+- **Environment Validation**: App validates required environment variables on startup
+- **Error Screen**: Dedicated error screen for initialization failures
 
 ## Development Notes
 
@@ -111,16 +137,19 @@ The app uses phone number-based authentication with OTP verification:
 - Uses `flutter_lints` for code analysis (see analysis_options.yaml)
 - Follows Material Design 3 guidelines
 - Implements proper error handling throughout the app
+- No Firebase dependencies (removed for production simplicity)
 
 ### Asset Management
 - App icons should be placed in `assets/icons/`
 - Images should be placed in `assets/images/`
 - After updating icon assets, run `flutter pub run flutter_launcher_icons:main`
+- Currently assets are commented out in pubspec.yaml until proper icons are added
 
 ### Testing
 - Test files should be placed in `test/` directory
 - Use `flutter test` to run all tests
 - Widget tests use `flutter_test` framework
+- Basic test structure provided with unit test examples
 
 ### Platform-Specific Considerations
 - Android: Configured and ready to build
@@ -132,3 +161,21 @@ The app uses phone number-based authentication with OTP verification:
 - Use Provider for state management across screens
 - Implement proper loading states using `flutter_spinkit`
 - Use `google_fonts` with Inter font family for consistent typography
+- Use AppLogger instead of print statements for debugging
+
+### Testing & Development
+- **Dev Mode**: Use phone `1111111111` for instant login without backend
+- **Test OTP**: Use `123456` for any phone number in test mode
+- **Mock Data**: Services include fallback handling for development
+- **Environment Variables**: App validates required variables on startup
+
+### Database Schema (Supabase)
+Key tables needed for production:
+- `vendors` - Vendor information and profiles
+- `products` - Product catalog
+- `vendor_products` - Vendor-specific products and pricing
+- `customers` - Customer information
+- `orders` - Order management
+- `order_items` - Order line items
+
+See README.md for complete SQL schema for database setup.

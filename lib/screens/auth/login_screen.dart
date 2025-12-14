@@ -34,6 +34,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authService = AuthService();
+
+      // DEV MODE: Auto-login for phone 1111111111
+      if (_phoneController.text == '1111111111') {
+        final result = await authService.verifyOTP(
+          phoneNumber: _phoneController.text,
+          otp: '123456', // Any OTP works in dev mode
+        );
+
+        if (!mounted) return;
+
+        if (result['success']) {
+          // Go directly to home screen
+          Navigator.pushReplacementNamed(context, '/home');
+          return;
+        }
+      }
+
+      // Normal flow for other numbers or when dev mode is off
       final result =
           await authService.sendOTP(phoneNumber: _phoneController.text);
 
@@ -55,8 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Something went wrong. Please try again.')),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     } finally {
@@ -159,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: AppTheme.white,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
                             : const Text('Send OTP'),
@@ -170,27 +187,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                // TEST MODE INDICATOR
+                // DEV MODE INDICATOR
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.warningOrange.withValues(alpha: 0.2),
+                    color: Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppTheme.warningOrange.withValues(alpha: 0.5),
+                      color: Colors.green.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.science_outlined,
-                        color: AppTheme.warningOrange,
+                        Icons.developer_mode_outlined,
+                        color: Colors.green,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'TEST MODE: Use OTP 123456',
+                          'DEV MODE: Enter 1111111111 to auto-login',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppTheme.white,

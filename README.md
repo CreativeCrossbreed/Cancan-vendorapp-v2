@@ -11,14 +11,13 @@ A Flutter mobile application for water can delivery vendors to manage their busi
 - 💰 **Payment Tracking** - Track paid and unpaid orders
 - 🏖️ **Vacation Mode** - Temporarily pause order acceptance
 - 📄 **QR Code Generation** - Easy customer ordering via QR codes
-- 🔔 **Push Notifications** - Real-time order alerts (Firebase)
+- 🔄 **Real-time Updates** - Order status changes via Supabase Realtime
 
 ## Technology Stack
 
 - **Framework**: Flutter 3.0+
-- **Backend**: Supabase (PostgreSQL + Authentication)
+- **Backend**: Supabase (PostgreSQL + Authentication + Realtime)
 - **State Management**: Provider pattern
-- **Push Notifications**: Firebase Cloud Messaging
 - **Local Storage**: SharedPreferences
 
 ## Prerequisites
@@ -148,14 +147,7 @@ INSERT INTO products (name, description) VALUES
 ('5L Water Can', 'Small 5 liter water can');
 ```
 
-### 5. Firebase Setup (Optional - for push notifications)
-
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Add an Android app to your Firebase project
-3. Download `google-services.json` and place it in `android/app/`
-4. Add the Firebase dependencies in `android/app/build.gradle`
-
-### 6. Running the App
+### 5. Running the App
 
 ```bash
 # Run in debug mode

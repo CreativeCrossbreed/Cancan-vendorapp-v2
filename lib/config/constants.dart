@@ -82,11 +82,11 @@ class AppConstants {
   static const String bucketQRCodes = 'qr-codes';
   static const String bucketCertificates = 'certificates';
 
-  // Notification Types
-  static const String notificationNewOrder = 'new_order';
-  static const String notificationLowStock = 'low_stock';
-  static const String notificationPaymentReminder = 'payment_reminder';
-  static const String notificationVacationReminder = 'vacation_reminder';
+  // Future Notification Types (for Supabase Realtime implementation)
+  // static const String notificationNewOrder = 'new_order';
+  // static const String notificationLowStock = 'low_stock';
+  // static const String notificationPaymentReminder = 'payment_reminder';
+  // static const String notificationVacationReminder = 'vacation_reminder';
 
   // Working Days
   static const List<String> weekDays = [

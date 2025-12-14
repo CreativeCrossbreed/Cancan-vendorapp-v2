@@ -37,11 +37,7 @@ dependencies:
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
 
-  # Push Notifications
-  firebase_core: ^4.2.1
-  firebase_messaging: ^16.0.4
-  flutter_local_notifications: ^19.5.0
-
+  
   # Permissions
   permission_handler: ^12.0.1
 
@@ -62,21 +58,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
 
-# App Icon Configuration
-flutter_launcher_icons:
-  android: true
-  ios: false  # We'll add iOS later
-  image_path: "assets/icons/app_icon.png"
-  adaptive_icon_background: "#5B8DEF"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+# App Icon Configuration - Disabled temporarily
+# To enable: Add actual PNG icons to assets/icons/ and uncomment below
+# flutter_launcher_icons:
+#   android: true
+#   ios: false  # We'll add iOS later
+#   image_path: "assets/icons/app_icon.png"
+#   adaptive_icon_background: "#5B8DEF"
+#   adaptive_icon_foreground: "assets/icons/app_icon.png"
 
 flutter:
   uses-material-design: true
 
-  # Assets
+  # Assets - Add actual assets before uncommenting
   assets:
-    - assets/images/
-    - assets/icons/
     - .env
 
   # Fonts (using Google Fonts, no need to bundle)
