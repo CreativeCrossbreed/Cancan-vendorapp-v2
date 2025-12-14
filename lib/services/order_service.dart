@@ -1,238 +1,27 @@
 import '../config/supabase_config.dart';
 import '../models/order.dart';
+import '../utils/logger.dart';
 
 /// Order Service - Handles order management operations
 class OrderService {
   final _supabase = SupabaseConfig.client;
 
-  // Toggle this to `true` if you want to see dummy data in the app
-  // (Home screen pending/completed + History screen).
-  // Set to `false` to use real data from Supabase.
-  static const bool _useDummyData = true;
-
-  /// Generate dummy orders for a given date & status.
-  /// This is used only when `_useDummyData` is true.
-  List<Order> _generateDummyOrders({
-    required DateTime date,
-    required String status,
-  }) {
-    final baseDate = DateTime(date.year, date.month, date.day);
-
-    // Shared dummy customer & products
-    final customer1 = Customer(
-      id: 'cust_1',
-      name: 'Rahul Sharma',
-      phone: '+919876543210',
-      address: 'Lake View Society, Sector 21, Mumbai',
-      flatNumber: 'A-201',
-      floor: '2',
-      buildingName: 'Lake View',
-    );
-
-    final customer2 = Customer(
-      id: 'cust_2',
-      name: 'Priya Verma',
-      phone: '+919812345678',
-      address: 'Green Gardens, Near City Mall, Pune',
-      flatNumber: 'B-502',
-      floor: '5',
-      buildingName: 'Green Gardens',
-    );
-
-    final product20L = Product(id: 'prod_20l', name: '20L Water Can');
-    final product10L = Product(id: 'prod_10l', name: '10L Water Can');
-
-    List<Order> pendingOrders = [
-      Order(
-        id: 'order_pending_1',
-        orderNumber: '#1001',
-        vendorId: 'dummy_vendor_1',
-        customerId: customer1.id,
-        deliveryDate: baseDate,
-        timeSlot: '8:00 AM - 10:00 AM',
-        totalAmount: 140,
-        status: 'pending',
-        isDelivered: false,
-        deliveredAt: null,
-        paymentStatus: 'unpaid',
-        paymentMarkedAt: null,
-        notes: 'Leave at the door',
-        cancellationReason: null,
-        createdAt: baseDate.subtract(const Duration(hours: 2)),
-        customer: customer1,
-        items: [
-          OrderItem(
-            id: 'item_p1_1',
-            orderId: 'order_pending_1',
-            productId: product20L.id,
-            quantity: 2,
-            unitPrice: 70,
-            subtotal: 140,
-            product: product20L,
-          ),
-        ],
-      ),
-      Order(
-        id: 'order_pending_2',
-        orderNumber: '#1002',
-        vendorId: 'dummy_vendor_1',
-        customerId: customer2.id,
-        deliveryDate: baseDate,
-        timeSlot: '10:00 AM - 12:00 PM',
-        totalAmount: 210,
-        status: 'pending',
-        isDelivered: false,
-        deliveredAt: null,
-        paymentStatus: 'unpaid',
-        paymentMarkedAt: null,
-        notes: 'Call when outside the gate',
-        cancellationReason: null,
-        createdAt: baseDate.subtract(const Duration(hours: 1)),
-        customer: customer2,
-        items: [
-          OrderItem(
-            id: 'item_p2_1',
-            orderId: 'order_pending_2',
-            productId: product20L.id,
-            quantity: 3,
-            unitPrice: 70,
-            subtotal: 210,
-            product: product20L,
-          ),
-        ],
-      ),
-    ];
-
-    List<Order> completedOrders = [
-      Order(
-        id: 'order_completed_1',
-        orderNumber: '#0950',
-        vendorId: 'dummy_vendor_1',
-        customerId: customer1.id,
-        deliveryDate: baseDate,
-        timeSlot: '6:00 AM - 8:00 AM',
-        totalAmount: 200,
-        status: 'completed',
-        isDelivered: true,
-        deliveredAt: baseDate.add(const Duration(hours: 7, minutes: 30)),
-        paymentStatus: 'paid',
-        paymentMarkedAt: baseDate.add(const Duration(hours: 7, minutes: 35)),
-        notes: 'Cash collected',
-        cancellationReason: null,
-        createdAt: baseDate.subtract(const Duration(days: 1)),
-        customer: customer1,
-        items: [
-          OrderItem(
-            id: 'item_c1_1',
-            orderId: 'order_completed_1',
-            productId: product20L.id,
-            quantity: 2,
-            unitPrice: 80,
-            subtotal: 160,
-            product: product20L,
-          ),
-          OrderItem(
-            id: 'item_c1_2',
-            orderId: 'order_completed_1',
-            productId: product10L.id,
-            quantity: 2,
-            unitPrice: 20,
-            subtotal: 40,
-            product: product10L,
-          ),
-        ],
-      ),
-      Order(
-        id: 'order_completed_2',
-        orderNumber: '#0951',
-        vendorId: 'dummy_vendor_1',
-        customerId: customer2.id,
-        deliveryDate: baseDate,
-        timeSlot: '8:00 AM - 10:00 AM',
-        totalAmount: 140,
-        status: 'completed',
-        isDelivered: true,
-        deliveredAt: baseDate.add(const Duration(hours: 9, minutes: 15)),
-        paymentStatus: 'paid',
-        paymentMarkedAt: baseDate.add(const Duration(hours: 9, minutes: 20)),
-        notes: 'UPI payment',
-        cancellationReason: null,
-        createdAt: baseDate.subtract(const Duration(days: 1)),
-        customer: customer2,
-        items: [
-          OrderItem(
-            id: 'item_c2_1',
-            orderId: 'order_completed_2',
-            productId: product20L.id,
-            quantity: 2,
-            unitPrice: 70,
-            subtotal: 140,
-            product: product20L,
-          ),
-        ],
-      ),
-    ];
-
-    List<Order> cancelledOrders = [
-      Order(
-        id: 'order_cancelled_1',
-        orderNumber: '#0888',
-        vendorId: 'dummy_vendor_1',
-        customerId: customer1.id,
-        deliveryDate: baseDate,
-        timeSlot: '4:00 PM - 6:00 PM',
-        totalAmount: 140,
-        status: 'cancelled',
-        isDelivered: false,
-        deliveredAt: null,
-        paymentStatus: 'unpaid',
-        paymentMarkedAt: null,
-        notes: 'Customer not at home',
-        cancellationReason: 'Customer cancelled via phone',
-        createdAt: baseDate.subtract(const Duration(days: 2)),
-        customer: customer1,
-        items: [
-          OrderItem(
-            id: 'item_x1_1',
-            orderId: 'order_cancelled_1',
-            productId: product20L.id,
-            quantity: 2,
-            unitPrice: 70,
-            subtotal: 140,
-            product: product20L,
-          ),
-        ],
-      ),
-    ];
-
-    switch (status) {
-      case 'pending':
-        return pendingOrders;
-      case 'completed':
-        return completedOrders;
-      case 'cancelled':
-        return cancelledOrders;
-      default:
-        return [];
-    }
-  }
-
+  
+  
   /// Get orders by date and status
   Future<List<Order>> getOrdersByDate({
     required DateTime date,
     required String status,
   }) async {
-    if (_useDummyData) {
-      return _generateDummyOrders(date: date, status: status);
-    }
-
     try {
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-      print('📦 Fetching $status orders for $dateStr...');
+      AppLogger.d('Fetching $status orders for $dateStr');
 
       final response = await _supabase
           .from('orders')
@@ -252,12 +41,11 @@ class OrderService {
           .eq('status', status)
           .order('time_slot', ascending: true);
 
-      print('✅ Found ${response.length} $status orders for $dateStr');
+      AppLogger.i('Found ${response.length} $status orders for $dateStr');
 
       return (response as List).map((json) => Order.fromJson(json)).toList();
     } catch (e, stackTrace) {
-      print('❌ Error fetching orders for $date: $e');
-      print('❌ Stack trace: $stackTrace');
+      AppLogger.e('Error fetching orders for $date: $e', e, stackTrace);
       return [];
     }
   }
@@ -270,13 +58,6 @@ class OrderService {
   /// Get order counts for today
   Future<Map<String, int>> getTodayOrderCounts() async {
     try {
-      if (_useDummyData) {
-        final pending =
-            await getOrdersByDate(date: DateTime.now(), status: 'pending');
-        final completed =
-            await getOrdersByDate(date: DateTime.now(), status: 'completed');
-        return {'pending': pending.length, 'completed': completed.length};
-      }
 
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) return {'pending': 0, 'completed': 0};
@@ -301,7 +82,7 @@ class OrderService {
 
       return {'pending': pending, 'completed': completed};
     } catch (e) {
-      print('❌ Error fetching order counts: $e');
+      AppLogger.e('Error fetching order counts: $e');
       return {'pending': 0, 'completed': 0};
     }
   }
@@ -309,27 +90,10 @@ class OrderService {
   /// Get daily summary (total cans and earnings)
   Future<Map<String, dynamic>> getDailySummary() async {
     try {
-      if (_useDummyData) {
-        // Use only pending orders for "to be delivered" summary
-        final pending =
-            await getOrdersByDate(date: DateTime.now(), status: 'pending');
-
-        int totalCans = 0;
-        double totalEarnings = 0.0;
-
-        for (final order in pending) {
-          totalEarnings += order.totalAmount;
-          for (final item in order.items) {
-            totalCans += item.quantity;
-          }
-        }
-
-        return {'totalCans': totalCans, 'totalEarnings': totalEarnings};
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
       }
-
-      // In test mode, use hardcoded vendor ID
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
 
       final today = DateTime.now();
       final dateStr =
@@ -361,7 +125,7 @@ class OrderService {
 
       return {'totalCans': totalCans, 'totalEarnings': totalEarnings};
     } catch (e) {
-      print('❌ Error fetching daily summary: $e');
+      AppLogger.e('Error fetching daily summary: $e');
       return {'totalCans': 0, 'totalEarnings': 0.0};
     }
   }
@@ -388,14 +152,14 @@ class OrderService {
 
       await _supabase.from('orders').update(updates).eq('id', orderId);
 
-      print('✅ Order $orderId updated successfully');
+      AppLogger.i('Order $orderId updated successfully');
 
       return {
         'success': true,
         'message': 'Order updated successfully',
       };
     } catch (e) {
-      print('❌ Error updating order: $e');
+      AppLogger.e('Error updating order: $e');
       return {
         'success': false,
         'message': 'Failed to update order',
@@ -419,7 +183,7 @@ class OrderService {
         'message': 'Order cancelled',
       };
     } catch (e) {
-      print('❌ Error cancelling order: $e');
+      AppLogger.e('Error cancelling order: $e');
       return {
         'success': false,
         'message': 'Failed to cancel order',

@@ -13,6 +13,10 @@ This is a Flutter mobile application for water can delivery vendors called "Can 
 - **State Management**: Provider pattern
 - **UI**: Material Design 3 with custom theme
 - **Push Notifications**: Firebase Cloud Messaging
+- **Logging**: Logger package with debug mode filtering
+- **Error Handling**: Centralized error handler with user-friendly messages
+- **Security**: Input sanitization and validation helpers
+- **Performance**: Caching utilities and performance monitoring
 
 ## Development Commands
 

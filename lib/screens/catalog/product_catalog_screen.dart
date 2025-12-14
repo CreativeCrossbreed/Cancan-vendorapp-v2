@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
 /// Product Catalog Screen - Display all products with pricing
 class ProductCatalogScreen extends StatefulWidget {
@@ -15,9 +16,6 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   final _supabase = SupabaseConfig.client;
   bool _isLoading = true;
   List<Map<String, dynamic>> _products = [];
-  
-  // Dummy data flag - set to false when ready for production
-  static const bool _useDummyData = true;
 
   @override
   void initState() {
@@ -29,20 +27,11 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
     setState(() => _isLoading = true);
 
     try {
-      if (_useDummyData) {
-        // Use dummy data for testing
-        await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-        setState(() {
-          _products = _generateDummyProducts();
-          _isLoading = false;
-        });
-        print('✅ Loaded ${_products.length} dummy products for catalog');
-        return;
-      }
-
       // Get vendor ID
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
 
       // Fetch vendor products with product details
       final response = await _supabase.from('vendor_products').select('''
@@ -55,9 +44,9 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_products.length} products for catalog');
+      AppLogger.i('Loaded ${_products.length} products for catalog');
     } catch (e) {
-      print('❌ Error loading products: $e');
+      AppLogger.e('Error loading products: $e');
       setState(() => _isLoading = false);
     }
   }

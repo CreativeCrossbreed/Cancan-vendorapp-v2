@@ -16,9 +16,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final _supabase = SupabaseConfig.client;
   bool _isLoading = true;
   List<Map<String, dynamic>> _products = [];
-  
-  // Dummy data flag - set to false when ready for production
-  static const bool _useDummyData = true;
 
   @override
   void initState() {
@@ -30,20 +27,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     setState(() => _isLoading = true);
 
     try {
-      if (_useDummyData) {
-        // Use dummy data for testing
-        await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-        setState(() {
-          _products = _generateDummyProducts();
-          _isLoading = false;
-        });
-        print('✅ Loaded ${_products.length} dummy products');
-        return;
-      }
 
       // Get vendor ID
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
 
       // Fetch vendor products with product details
       final response = await _supabase.from('vendor_products').select('''

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
 import '../home/home_screen.dart';
+import '../../utils/logger.dart';
 
 /// Profile Setup Screen - First-time vendor registration
 class ProfileSetupScreen extends StatefulWidget {
@@ -42,7 +43,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      print('💼 Saving vendor profile...');
+      AppLogger.d('Saving vendor profile...');
 
       final result = await _vendorService.createVendorProfile(
         phone: widget.phoneNumber,
@@ -53,8 +54,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
       if (!mounted) return;
 
-      print('📊 Result: ${result['success']}');
-      print('📊 Message: ${result['message']}');
+      AppLogger.d('Profile save result: ${result['success']} - ${result['message']}');
 
       if (result['success']) {
         // Navigate to Home Screen
@@ -66,7 +66,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _showError(result['message'] ?? 'Failed to create profile');
       }
     } catch (e) {
-      print('❌ Exception in _saveProfile: $e');
+      AppLogger.e('Exception in _saveProfile: $e');
       _showError('Something went wrong: ${e.toString()}');
     } finally {
       if (mounted) {

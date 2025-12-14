@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../config/supabase_config.dart';
+import '../utils/logger.dart';
 
 /// Vendor Service - Handles vendor profile CRUD operations
 class VendorService {
@@ -20,10 +21,7 @@ class VendorService {
       // Generate a proper UUID for the vendor
       final vendorId = SupabaseConfig.currentVendorId ?? _uuid.v4();
 
-      print('📝 Creating vendor profile...');
-      print('   Vendor ID: $vendorId');
-      print('   Phone: $fullPhone');
-      print('   Name: $name');
+      AppLogger.d('Creating vendor profile: $name ($fullPhone) with ID: $vendorId');
 
       // Check if vendor already exists by phone
       final existing = await _supabase
@@ -33,7 +31,7 @@ class VendorService {
           .maybeSingle();
 
       if (existing != null) {
-        print('⚠️ Vendor already exists');
+        AppLogger.w('Vendor already exists');
         return {
           'success': true, // Return success since profile exists
           'message': 'Profile already exists',
@@ -51,7 +49,7 @@ class VendorService {
         'is_active': true,
       });
 
-      print('✅ Vendor profile created successfully: $vendorId');
+      AppLogger.i('Vendor profile created successfully: $vendorId');
 
       return {
         'success': true,
@@ -59,8 +57,7 @@ class VendorService {
         'vendorId': vendorId,
       };
     } catch (e) {
-      print('❌ Error creating vendor profile: $e');
-      print('   Error type: ${e.runtimeType}');
+      AppLogger.e('Error creating vendor profile: $e (${e.runtimeType})');
       return {
         'success': false,
         'message': 'Failed to create profile: ${e.toString()}',
@@ -80,7 +77,7 @@ class VendorService {
 
       return data;
     } catch (e) {
-      print('Error fetching vendor profile: $e');
+      AppLogger.e('Error fetching vendor profile: $e');
       return null;
     }
   }
@@ -124,7 +121,7 @@ class VendorService {
         'message': 'Profile updated successfully',
       };
     } catch (e) {
-      print('Error updating vendor profile: $e');
+      AppLogger.e('Error updating vendor profile: $e');
       return {
         'success': false,
         'message': 'Failed to update profile.',
@@ -160,7 +157,7 @@ class VendorService {
             isOnVacation ? 'Vacation mode enabled' : 'Vacation mode disabled',
       };
     } catch (e) {
-      print('Error setting vacation mode: $e');
+      AppLogger.e('Error setting vacation mode: $e');
       return {
         'success': false,
         'message': 'Failed to update vacation mode.',
@@ -207,7 +204,7 @@ class VendorService {
         'earnings': totalEarnings,
       };
     } catch (e) {
-      print('Error fetching daily summary: $e');
+      AppLogger.e('Error fetching daily summary: $e');
       return {'cansToDeliver': 0, 'earnings': 0.0};
     }
   }
