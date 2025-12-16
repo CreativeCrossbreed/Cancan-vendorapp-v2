@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
+import '../../services/analytics_service.dart';
 import '../../models/order.dart';
 import 'widgets/update_status_modal.dart';
 import 'widgets/app_drawer.dart';
@@ -98,6 +99,7 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _orderService = OrderService();
+  final _analyticsService = AnalyticsService();
   bool _isLoading = true;
   bool _showAnalyticsView = true;
   bool _showPending = true;
@@ -161,81 +163,40 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
   }
 
   Future<Map<String, dynamic>> _generateAnalyticsData() async {
-    // Mock analytics data - In real implementation, this would come from the API
-    final now = DateTime.now();
+    try {
+      // Get data for the last 7 days
+      final now = DateTime.now();
+      final startDate = now.subtract(const Duration(days: 6));
 
-    // Generate 7-day revenue data
-    final revenueData = List.generate(7, (index) {
-      final date = now.subtract(Duration(days: 6 - index));
+      // Run all analytics queries in parallel
+      final results = await Future.wait([
+        _analyticsService.getRevenueData(startDate: startDate, endDate: now),
+        _analyticsService.getTopProducts(limit: 5, startDate: startDate, endDate: now),
+        _analyticsService.getCustomerInsights(limit: 5),
+        _analyticsService.getQuickStats(),
+      ]);
+
+      final revenueData = results[0] as List<Map<String, dynamic>>;
+      final topProducts = results[1] as List<Map<String, dynamic>>;
+      final customerInsights = results[2] as List<Map<String, dynamic>>;
+      final quickStats = results[3] as Map<String, dynamic>;
+
       return {
-        'date': DateFormat('yyyy-MM-dd').format(date),
-        'revenue': 800 + (index * 150) + (index % 2 * 200), // Mock revenue
+        'revenueData': revenueData,
+        'topProducts': topProducts,
+        'customerInsights': customerInsights,
+        'quickStats': quickStats,
       };
-    });
-
-    // Mock top products
-    final topProducts = [
-      {'name': 'AquaPure 20L', 'quantity': 45},
-      {'name': 'FreshSpring 20L', 'quantity': 38},
-      {'name': 'CrystalClear 20L', 'quantity': 32},
-      {'name': 'PureDrop 20L', 'quantity': 28},
-      {'name': 'AquaFresh 20L', 'quantity': 25},
-    ];
-
-    // Mock customer insights
-    final customerInsights = [
-      {
-        'name': 'Rahul Sharma',
-        'lastOrder': '2 hours ago',
-        'totalOrders': 12,
-        'totalSpent': 2400.0,
-      },
-      {
-        'name': 'Priya Patel',
-        'lastOrder': '5 hours ago',
-        'totalOrders': 8,
-        'totalSpent': 1600.0,
-      },
-      {
-        'name': 'Amit Kumar',
-        'lastOrder': '1 day ago',
-        'totalOrders': 1,
-        'totalSpent': 200.0,
-      },
-      {
-        'name': 'Sneha Reddy',
-        'lastOrder': '2 days ago',
-        'totalOrders': 15,
-        'totalSpent': 3000.0,
-      },
-      {
-        'name': 'Vikram Singh',
-        'lastOrder': '3 days ago',
-        'totalOrders': 6,
-        'totalSpent': 1200.0,
-      },
-    ];
-
-    // Mock quick stats
-    final quickStats = {
-      'totalCustomers': 127,
-      'customerGrowth': 12.5,
-      'avgOrderValue': 350.0,
-      'orderValueGrowth': -5.2,
-      'deliveryRate': 98.5,
-      'deliveryGrowth': 2.1,
-      'totalRevenue': 12500.0,
-      'revenueGrowth': 18.3,
-      'cancellationRate': 3.2,
-      'cancellationGrowth': -1.5,
-    };
-
-    return {
-      'revenueData': revenueData,
-      'topProducts': topProducts,
-      'customerInsights': customerInsights,
-      'quickStats': quickStats,
-    };
+    } catch (e) {
+      print('Error loading analytics data: $e');
+      // Return empty data on error
+      return {
+        'revenueData': [],
+        'topProducts': [],
+        'customerInsights': [],
+        'quickStats': {},
+      };
+    }
   }
 
   @override

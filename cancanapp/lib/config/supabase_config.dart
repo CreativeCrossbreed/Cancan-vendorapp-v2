@@ -1,32 +1,35 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'app_config.dart';
 import '../services/session_service.dart';
+import '../utils/logger.dart';
 
 /// Supabase configuration and initialization
 class SupabaseConfig {
   static Future<void> initialize() async {
-    // Load environment variables
-    await dotenv.load(fileName: ".env");
+    try {
+      // Get credentials from AppConfig
+      final supabaseUrl = AppConfig.supabaseUrl;
+      final supabaseAnonKey = AppConfig.supabaseAnonKey;
 
-    // Get credentials from .env file
-    final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+      AppLogger.i('Initializing Supabase with URL: ${supabaseUrl.substring(0, 20)}...');
 
-    // Validate credentials
-    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-      throw Exception(
-        'Supabase credentials not found. Please check your .env file.',
+      // Initialize Supabase
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+        authOptions: const FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.pkce, // More secure
+        ),
+        debugOptions: SupabaseDebugOptions(
+          enabled: AppConfig.shouldEnableVerboseLogging,
+        ),
       );
-    }
 
-    // Initialize Supabase
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-      authOptions: const FlutterAuthClientOptions(
-        authFlowType: AuthFlowType.pkce, // More secure
-      ),
-    );
+      AppLogger.i('Supabase initialized successfully');
+    } catch (e) {
+      AppLogger.e('Failed to initialize Supabase: $e');
+      rethrow;
+    }
   }
 
   /// Get Supabase client instance

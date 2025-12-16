@@ -96,6 +96,7 @@ class Order {
 /// Customer Model (simplified for orders)
 class Customer {
   final String id;
+  final String vendorId;
   final String name;
   final String phone;
   final String address;
@@ -105,6 +106,7 @@ class Customer {
 
   Customer({
     required this.id,
+    this.vendorId = '',
     required this.name,
     required this.phone,
     required this.address,
@@ -116,6 +118,7 @@ class Customer {
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
       id: json['id'] as String,
+      vendorId: json['vendor_id'] as String? ?? '',
       name: json['name'] as String,
       phone: json['phone'] as String,
       address: json['address'] as String,

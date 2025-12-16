@@ -1,31 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'config/app_config.dart';
 import 'config/supabase_config.dart';
 import 'config/theme.dart';
 import 'services/session_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/home/home_tab_screen_enhanced.dart';
 import 'utils/logger.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
+  // Load environment variables and app configuration
   try {
-    await dotenv.load(fileName: ".env");
+    await AppConfig.initialize();
 
-    // Validate required environment variables
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
-    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
-
-    if (supabaseUrl == null || supabaseAnonKey == null) {
+    if (!AppConfig.isValidConfig) {
       throw Exception(
-        'Missing required environment variables. Please check your .env file.\n'
+        'Invalid configuration. Please check your .env file.\n'
         'Required: SUPABASE_URL, SUPABASE_ANON_KEY\n'
         'Copy .env.example to .env and fill in the values.',
       );
+    }
+
+    // Log debug information in development mode
+    if (AppConfig.shouldEnableVerboseLogging) {
+      AppLogger.d('App configuration: ${AppConfig.debugInfo}');
     }
   } catch (e) {
     AppLogger.critical('Environment setup failed: $e');
@@ -67,13 +70,14 @@ class CanCanApp extends StatelessWidget {
 
       // Check authentication state and navigate accordingly
       home: SupabaseConfig.isAuthenticated
-          ? const HomeScreen()
+          ? const HomeScreenEnhanced()
           : const LoginScreen(),
 
       // Define routes
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
+        '/home_enhanced': (context) => const HomeScreenEnhanced(),
       },
     );
   }
