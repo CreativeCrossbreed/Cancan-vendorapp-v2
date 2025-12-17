@@ -1,9 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/supabase_config.dart';
 import 'session_service.dart';
 import '../utils/logger.dart';
 
-/// Authentication Service - Handles phone OTP authentication
+/// Authentication Service - Handles phone OTP authentication with proper admin onboarding
 class AuthService {
   final _supabase = SupabaseConfig.client;
 
@@ -13,6 +14,12 @@ class AuthService {
   static const String _testOTP = '123456';
   static const String _devPhoneNumber = '1111111111';
   static const String _devVendorId = 'dev-vendor-123';
+
+  // GOOGLE SIGN IN FOR ADMIN DASHBOARD VENDOR ONBOARDING
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: 'your-google-client-id.apps.googleusercontent.com',
+    serverClientId: 'your-google-server-client-id.apps.googleusercontent.com',
+  );
 
   /// Send OTP to phone number
   Future<Map<String, dynamic>> sendOTP({required String phoneNumber}) async {
