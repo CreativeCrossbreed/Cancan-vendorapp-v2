@@ -6,7 +6,8 @@ import '../../auth/login_screen.dart';
 import '../../qr_code/qr_code_screen.dart';
 import '../../catalog/product_catalog_screen.dart';
 import '../../settings/settings_screen.dart';
-import '../../vacation/vacation_mode_screen.dart';
+import '../../vacation/vacation_screen.dart';
+import '../../customers/customers_screen.dart';
 
 /// App Drawer - Side menu with profile and settings
 class AppDrawer extends StatefulWidget {

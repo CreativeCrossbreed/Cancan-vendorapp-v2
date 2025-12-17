@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
+import '../../services/payment_service.dart';
 import '../../models/order.dart';
 import '../home/widgets/app_drawer.dart';
 
@@ -14,19 +15,22 @@ class PaymentsScreen extends StatefulWidget {
   State<PaymentsScreen> createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends State<PaymentsScreen> {
+class _PaymentsScreenState extends State<PaymentsScreen>
+    with SingleTickerProviderStateMixin {
   final _orderService = OrderService();
+  final _paymentService = PaymentService();
   bool _isLoading = true;
 
   List<Order> _unpaidOrders = [];
-  List<Order> _allCompletedOrders = [];
+  List<Map<String, dynamic>> _paymentHistory = [];
+  Map<String, dynamic> _paymentStatistics = {};
 
   // Summary data
   double _totalPending = 0.0;
   double _totalEarnings = 0.0;
   int _totalCansDelivered = 0;
-  final DateTime _startDate = DateTime.now();
-  final DateTime _endDate = DateTime.now();
+  double _walletBalance = 0.0;
+  late TabController _tabController;
 
   @override
   void initState() {
