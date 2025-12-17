@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../services/inventory_service.dart';
 
-/// Inventory Screen - Manage stock levels
+/// Inventory Screen - Manage stock levels with comprehensive tracking
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
 
@@ -12,42 +14,48 @@ class InventoryScreen extends StatefulWidget {
   State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenState extends State<InventoryScreen> {
-  final _supabase = SupabaseConfig.client;
+class _InventoryScreenState extends State<InventoryScreen>
+    with SingleTickerProviderStateMixin {
+  final _inventoryService = InventoryService();
   bool _isLoading = true;
   List<Map<String, dynamic>> _products = [];
+  List<Map<String, dynamic>> _lowStockProducts = [];
+  Map<String, dynamic> _statistics = {};
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _loadInventory();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInventory() async {
     setState(() => _isLoading = true);
 
     try {
-
-      // Get vendor ID
-      final vendorId = SupabaseConfig.currentVendorId;
-      if (vendorId == null) {
-        throw Exception('Vendor not authenticated');
-      }
-
-      // Fetch vendor products with product details
-      final response = await _supabase.from('vendor_products').select('''
-            *,
-            products!inner(id, name)
-          ''').eq('vendor_id', vendorId).order('created_at', ascending: false);
+      final results = await Future.wait([
+        _inventoryService.getVendorProducts(),
+        _inventoryService.getLowStockProducts(),
+        _inventoryService.getInventoryStatistics(),
+      ]);
 
       setState(() {
-        _products = List<Map<String, dynamic>>.from(response as List);
+        _products = results[0] as List<Map<String, dynamic>>;
+        _lowStockProducts = results[1] as List<Map<String, dynamic>>;
+        _statistics = results[2] as Map<String, dynamic>;
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_products.length} products');
+      AppLogger.i('✅ Loaded ${_products.length} products, ${_lowStockProducts.length} low stock');
     } catch (e) {
-      print('❌ Error loading inventory: $e');
+      AppLogger.e('❌ Error loading inventory: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -87,22 +95,692 @@ class _InventoryScreenState extends State<InventoryScreen> {
             onPressed: _showAddProductDialog,
             tooltip: 'Add Product',
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadInventory,
+            tooltip: 'Refresh',
+          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _products.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadInventory,
-                  child: _buildInventoryList(),
+      body: Column(
+        children: [
+          // Statistics Cards
+          if (!_isLoading) _buildStatisticsCards(),
+          // Tab Bar
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'All Products'),
+              Tab(text: 'Low Stock'),
+              Tab(text: 'Statistics'),
+            ],
+          ),
+          // Tab Content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllProductsTab(),
+                _buildLowStockTab(),
+                _buildStatisticsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticsCards() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: AppTheme.primaryBlue.withOpacity(0.05),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              'Total Products',
+              '${_statistics['totalProducts'] ?? 0}',
+              Icons.inventory_2_outlined,
+              AppTheme.primaryBlue,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              'Low Stock',
+              '${_statistics['lowStockProducts'] ?? 0}',
+              Icons.warning_amber_outlined,
+              AppTheme.warningOrange,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              'Total Value',
+              'Rs.${(_statistics['totalValue'] ?? 0.0).toStringAsFixed(0)}',
+              Icons.currency_rupee_outlined,
+              AppTheme.successGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllProductsTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_products.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadInventory,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _products.length,
+        itemBuilder: (context, index) => _buildProductCard(_products[index]),
+      ),
+    );
+  }
+
+  Widget _buildLowStockTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_lowStockProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              size: 64,
+              color: AppTheme.successGreen,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No low stock products',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppTheme.successGreen,
+              ),
+            ),
+            Text(
+              'All products have adequate stock levels',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadInventory,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _lowStockProducts.length,
+        itemBuilder: (context, index) => _buildProductCard(
+          _lowStockProducts[index],
+          isLowStock: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatisticsTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDetailedStatsCard(),
+          const SizedBox(height: 20),
+          _buildStockHealthIndicator(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedStatsCard() {
+    final totalProducts = _statistics['totalProducts'] ?? 0;
+    final lowStockProducts = _statistics['lowStockProducts'] ?? 0;
+    final totalStock = _statistics['totalStock'] ?? 0;
+    final totalValue = (_statistics['totalValue'] ?? 0.0) as double;
+    final lowStockPercentage = (_statistics['lowStockPercentage'] ?? 0.0) as double;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Inventory Overview',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildStatRow('Total Products', totalProducts.toString()),
+          _buildStatRow('Low Stock Items', lowStockProducts.toString()),
+          _buildStatRow('Total Stock Units', totalStock.toString()),
+          _buildStatRow('Total Inventory Value', 'Rs.${totalValue.toStringAsFixed(0)}'),
+          _buildStatRow('Low Stock Percentage', '${lowStockPercentage.toStringAsFixed(1)}%'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockHealthIndicator() {
+    final lowStockPercentage = (_statistics['lowStockPercentage'] ?? 0.0) as double;
+    Color color;
+    String status;
+    IconData icon;
+
+    if (lowStockPercentage == 0) {
+      color = AppTheme.successGreen;
+      status = 'Excellent';
+      icon = Icons.sentiment_very_satisfied;
+    } else if (lowStockPercentage <= 20) {
+      color = AppTheme.warningOrange;
+      status = 'Good';
+      icon = Icons.sentiment_satisfied;
+    } else {
+      color = AppTheme.errorRed;
+      status = 'Critical';
+      icon = Icons.sentiment_very_dissatisfied;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Stock Health: $status',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Low stock items represent ${lowStockPercentage.toStringAsFixed(1)}% of your inventory',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: color.withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Map<String, dynamic> product, {bool isLowStock = false}) {
+    final productName = product['products']?['name'] ?? 'Unknown Product';
+    final currentStock = product['current_stock'] ?? 0;
+    final lowStockThreshold = product['low_stock_threshold'] ?? 10;
+    final sellingPrice = (product['selling_price'] ?? 0.0) as double;
+    final isActuallyLowStock = currentStock <= lowStockThreshold;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActuallyLowStock ? AppTheme.errorRed.withOpacity(0.3) : AppTheme.mediumGray.withOpacity(0.3),
+          width: isActuallyLowStock ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      productName,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rs.${sellingPrice.toStringAsFixed(0)} per can',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              if (isActuallyLowStock)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorRed.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_outlined,
+                        size: 16,
+                        color: AppTheme.errorRed,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Low Stock',
+                        style: TextStyle(
+                          color: AppTheme.errorRed,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStockInfo(
+                  'Current Stock',
+                  currentStock.toString(),
+                  isActuallyLowStock ? AppTheme.errorRed : AppTheme.successGreen,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStockInfo(
+                  'Low Stock Alert',
+                  'Below $lowStockThreshold',
+                  AppTheme.warningOrange,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showUpdateStockDialog(product),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Update Stock'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showProductOptions(product),
+                  icon: const Icon(Icons.more_horiz),
+                  label: const Text('Options'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockInfo(String label, String value, Color valueColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: valueColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 64,
+              color: AppTheme.mediumGray,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No products in inventory',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add your first product to start tracking inventory',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _showAddProductDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Product'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddProductDialog() {
+    // TODO: Implement add product dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Add product feature coming soon')),
+    );
+  }
+
+  void _showUpdateStockDialog(Map<String, dynamic> product) {
+    final currentStock = product['current_stock'] ?? 0;
+    final productName = product['products']?['name'] ?? 'Product';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Update Stock - $productName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Current stock: $currentStock',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'New Stock Level',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (value) {
+                final newStock = int.tryParse(value);
+                if (newStock != null && newStock >= 0) {
+                  _updateStock(product['id'], newStock);
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a valid stock number')),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Handle update
+              Navigator.pop(context);
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProductOptions(Map<String, dynamic> product) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Edit Product'),
+              onTap: () {
+                Navigator.pop(context);
+                _editProduct(product);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.history_outlined),
+              title: const Text('View History'),
+              onTap: () {
+                Navigator.pop(context);
+                _viewStockHistory(product);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: AppTheme.errorRed),
+              title: const Text('Delete Product', style: TextStyle(color: AppTheme.errorRed)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteProduct(product);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateStock(String vendorProductId, int newStock) async {
+    try {
+      final result = await _inventoryService.updateStockLevel(
+        vendorProductId: vendorProductId,
+        newStockLevel: newStock,
+      );
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: AppTheme.successGreen,
+          ),
+        );
+        _loadInventory();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update stock')),
+      );
+    }
+  }
+
+  void _editProduct(Map<String, dynamic> product) {
+    // TODO: Implement edit product
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit product feature coming soon')),
+    );
+  }
+
+  void _viewStockHistory(Map<String, dynamic> product) {
+    // TODO: Implement stock history view
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Stock history feature coming soon')),
+    );
+  }
+
+  void _deleteProduct(Map<String, dynamic> product) {
+    final productName = product['products']?['name'] ?? 'Product';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Are you sure you want to delete "$productName" from your inventory?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final result = await _inventoryService.deleteVendorProduct(product['id']);
+                if (result['success'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(result['message']),
+                      backgroundColor: AppTheme.successGreen,
+                    ),
+                  );
+                  _loadInventory();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(result['message']),
+                      backgroundColor: AppTheme.errorRed,
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to delete product')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

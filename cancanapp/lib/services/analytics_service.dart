@@ -518,4 +518,185 @@ class AnalyticsService {
       ),
     ];
   }
+
+  /// Get revenue data for charts (dashboard specific)
+  Future<List<Map<String, dynamic>>> getRevenueData({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
+
+      final orders = await _supabase
+          .from('orders')
+          .select('delivery_date, total_amount')
+          .eq('vendor_id', vendorId)
+          .gte('delivery_date', startDate.toIso8601String())
+          .lte('delivery_date', endDate.toIso8601String())
+          .eq('status', 'completed')
+          .order('delivery_date');
+
+      final List<Map<String, dynamic>> revenueData = [];
+      for (final order in orders) {
+        revenueData.add({
+          'date': order['delivery_date'],
+          'revenue': (order['total_amount'] as num).toDouble(),
+        });
+      }
+
+      return revenueData;
+    } catch (e) {
+      AppLogger.e('Error getting revenue data: $e');
+      return [];
+    }
+  }
+
+  /// Get top products for dashboard
+  Future<List<Map<String, dynamic>>> getTopProducts({
+    required int limit,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
+
+      final products = await _supabase
+          .from('order_items')
+          .select('''
+            quantity,
+            products!inner(name)
+          ''')
+          .eq('orders.vendor_id', vendorId)
+          .gte('orders.delivery_date', startDate.toIso8601String())
+          .lte('orders.delivery_date', endDate.toIso8601String())
+          .eq('orders.status', 'completed');
+
+      final Map<String, int> productCounts = {};
+      for (final item in products) {
+        final productName = item['products']['name'] as String;
+        final quantity = item['quantity'] as int;
+        productCounts[productName] = (productCounts[productName] ?? 0) + quantity;
+      }
+
+      final sortedProducts = productCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      return sortedProducts
+          .take(limit)
+          .map((entry) => {
+                'name': entry.key,
+                'quantity': entry.value,
+              })
+          .toList();
+    } catch (e) {
+      AppLogger.e('Error getting top products: $e');
+      return [];
+    }
+  }
+
+  /// Get customer insights for dashboard
+  Future<List<Map<String, dynamic>>> getCustomerInsights({
+    required int limit,
+  }) async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
+
+      final customers = await _supabase
+          .from('orders')
+          .select('''
+            customers!inner(name, phone)
+          ''')
+          .eq('vendor_id', vendorId)
+          .eq('status', 'completed');
+
+      final Map<String, Map<String, dynamic>> customerData = {};
+      for (final order in customers) {
+        final customer = order['customers'] as Map<String, dynamic>;
+        final customerId = customer['phone'] as String;
+
+        if (!customerData.containsKey(customerId)) {
+          customerData[customerId] = {
+            'name': customer['name'],
+            'phone': customer['phone'],
+            'orderCount': 0,
+          };
+        }
+        customerData[customerId]['orderCount']++;
+      }
+
+      final sortedCustomers = customerData.values.toList()
+        ..sort((a, b) => (b['orderCount'] as int).compareTo(a['orderCount'] as int));
+
+      return sortedCustomers.take(limit).toList();
+    } catch (e) {
+      AppLogger.e('Error getting customer insights: $e');
+      return [];
+    }
+  }
+
+  /// Get quick stats for dashboard
+  Future<Map<String, dynamic>> getQuickStats() async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        throw Exception('Vendor not authenticated');
+      }
+
+      // Get total customers
+      final customersCount = await _supabase
+          .from('orders')
+          .select('customer_id')
+          .eq('vendor_id', vendorId)
+          .neq('customer_id', null);
+
+      final uniqueCustomers = customersCount.map((order) => order['customer_id'] as String).toSet().length;
+
+      // Get total revenue and calculate stats
+      final orders = await _supabase
+          .from('orders')
+          .select('total_amount, status')
+          .eq('vendor_id', vendorId)
+          .eq('status', 'completed');
+
+      double totalRevenue = 0.0;
+      for (final order in orders) {
+        totalRevenue += (order['total_amount'] as num).toDouble();
+      }
+
+      final avgOrderValue = orders.isNotEmpty ? totalRevenue / orders.length : 0.0;
+      final deliveryRate = customersCount.isNotEmpty ? (orders.length / customersCount.length) * 100 : 0.0;
+
+      return {
+        'totalCustomers': uniqueCustomers,
+        'avgOrderValue': avgOrderValue,
+        'totalRevenue': totalRevenue,
+        'deliveryRate': deliveryRate,
+        'customerGrowth': 15.3, // Mock growth percentage
+        'orderValueGrowth': 8.7, // Mock growth percentage
+        'revenueGrowth': 12.1, // Mock growth percentage
+        'deliveryGrowth': 5.2, // Mock growth percentage
+      };
+    } catch (e) {
+      AppLogger.e('Error getting quick stats: $e');
+      return {
+        'totalCustomers': 0,
+        'avgOrderValue': 0.0,
+        'totalRevenue': 0.0,
+        'deliveryRate': 0.0,
+        'customerGrowth': 0.0,
+        'orderValueGrowth': 0.0,
+        'revenueGrowth': 0.0,
+        'deliveryGrowth': 0.0,
+      };
+    }
+  }
 }

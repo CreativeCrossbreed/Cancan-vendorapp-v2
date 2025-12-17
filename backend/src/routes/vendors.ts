@@ -1,8 +1,285 @@
 import express from 'express';
-import { supabase } from '../config/database';
-import { authenticateToken, requireRole } from '../middleware/auth';
+import { supabase, supabaseAdmin, db } from '../config/database';
+import { authenticateToken, authenticateVendorToken, requireRole, requireAdmin, requireVendor } from '../middleware/auth';
 
 const router = express.Router();
+
+// ============================================
+// MOBILE APP VENDOR ENDPOINTS
+// ============================================
+
+// Get vendor profile (mobile app)
+router.get('/profile', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const vendor = await db.getVendorById(req.user.vendorId);
+    if (!vendor) {
+      return res.status(404).json({ error: 'Vendor not found' });
+    }
+
+    res.json({
+      success: true,
+      vendor
+    });
+  } catch (error) {
+    console.error('Get vendor profile error:', error);
+    res.status(500).json({ error: 'Failed to get vendor profile' });
+  }
+});
+
+// Update vendor profile (mobile app)
+router.put('/profile', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const updates = req.body;
+
+    // Remove sensitive fields that shouldn't be updated via this endpoint
+    delete updates.id;
+    delete updates.user_id;
+    delete updates.total_orders;
+    delete updates.completed_orders;
+    delete updates.cancelled_orders;
+    delete updates.rating;
+    delete updates.created_at;
+
+    const updatedVendor = await db.updateVendor(req.user.vendorId, updates);
+
+    res.json({
+      success: true,
+      vendor: updatedVendor
+    });
+  } catch (error) {
+    console.error('Update vendor profile error:', error);
+    res.status(500).json({ error: 'Failed to update vendor profile' });
+  }
+});
+
+// Update vendor location (mobile app)
+router.put('/location', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const { latitude, longitude, address } = req.body;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ error: 'Latitude and longitude required' });
+    }
+
+    const updatedVendor = await db.updateVendor(req.user.vendorId, {
+      latitude,
+      longitude,
+      address: address || undefined
+    });
+
+    res.json({
+      success: true,
+      vendor: updatedVendor
+    });
+  } catch (error) {
+    console.error('Update vendor location error:', error);
+    res.status(500).json({ error: 'Failed to update vendor location' });
+  }
+});
+
+// Set vacation mode (mobile app)
+router.put('/vacation', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const { isOnVacation, vacationReason, vacationEndDate } = req.body;
+
+    const updates: any = {
+      is_on_vacation: isOnVacation
+    };
+
+    if (isOnVacation) {
+      updates.vacation_reason = vacationReason || null;
+      updates.vacation_end_date = vacationEndDate ? new Date(vacationEndDate).toISOString() : null;
+    } else {
+      updates.vacation_reason = null;
+      updates.vacation_end_date = null;
+    }
+
+    const updatedVendor = await db.updateVendor(req.user.vendorId, updates);
+
+    res.json({
+      success: true,
+      vendor: updatedVendor
+    });
+  } catch (error) {
+    console.error('Update vacation mode error:', error);
+    res.status(500).json({ error: 'Failed to update vacation mode' });
+  }
+});
+
+// Get vendor statistics (mobile app)
+router.get('/stats', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const vendorId = req.user.vendorId;
+
+    // Get vendor details
+    const vendor = await db.getVendorById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ error: 'Vendor not found' });
+    }
+
+    // Get today's orders
+    const today = new Date().toISOString().split('T')[0];
+    const todayOrders = await db.getOrders(vendorId);
+    const todayOrdersFiltered = todayOrders.filter(order =>
+      order.delivery_date === today && order.status === 'delivered'
+    );
+
+    // Get monthly analytics
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 1);
+    const monthlyAnalytics = await db.getVendorAnalytics(
+      vendorId,
+      startDate.toISOString().split('T')[0],
+      new Date().toISOString().split('T')[0]
+    );
+
+    const totalMonthlyRevenue = monthlyAnalytics.reduce((sum, day) => sum + (day.total_revenue || 0), 0);
+    const totalMonthlyOrders = monthlyAnalytics.reduce((sum, day) => sum + (day.total_orders || 0), 0);
+
+    res.json({
+      success: true,
+      stats: {
+        totalOrders: vendor.total_orders || 0,
+        completedOrders: vendor.completed_orders || 0,
+        cancelledOrders: vendor.cancelled_orders || 0,
+        rating: vendor.rating || 0.0,
+        todayOrders: todayOrdersFiltered.length,
+        todayRevenue: todayOrdersFiltered.reduce((sum, order) => sum + (order.total_amount || 0), 0),
+        monthlyRevenue: totalMonthlyRevenue,
+        monthlyOrders: totalMonthlyOrders,
+        isOnVacation: vendor.is_on_vacation || false,
+        walletBalance: vendor.wallet_balance || 0
+      }
+    });
+  } catch (error) {
+    console.error('Get vendor stats error:', error);
+    res.status(500).json({ error: 'Failed to get vendor statistics' });
+  }
+});
+
+// Get vendor products (mobile app)
+router.get('/products', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const vendorId = req.user.vendorId;
+    const products = await db.getVendorProducts(vendorId);
+
+    res.json({
+      success: true,
+      products
+    });
+  } catch (error) {
+    console.error('Get vendor products error:', error);
+    res.status(500).json({ error: 'Failed to get vendor products' });
+  }
+});
+
+// Update product stock and price (mobile app)
+router.put('/products/:productId', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const { productId } = req.params;
+    const { price, stockQuantity, isAvailable } = req.body;
+
+    if (db.isUsingSupabase()) {
+      // Update in Supabase
+      const { data, error } = await supabaseAdmin
+        .from('vendor_products')
+        .update({
+          price,
+          stock_quantity: stockQuantity,
+          is_available: isAvailable,
+          updated_at: new Date().toISOString()
+        })
+        .eq('vendor_id', req.user.vendorId)
+        .eq('product_id', productId)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      res.json({
+        success: true,
+        product: data
+      });
+    } else {
+      // Development mode - just return success
+      res.json({
+        success: true,
+        message: 'Product updated successfully (development mode)'
+      });
+    }
+  } catch (error) {
+    console.error('Update vendor product error:', error);
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+// Get vendor orders (mobile app)
+router.get('/orders', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const vendorId = req.user.vendorId;
+    const { status, date, limit = 50, offset = 0 } = req.query;
+
+    let orders = await db.getOrders(vendorId, status as string);
+
+    // Filter by date if provided
+    if (date) {
+      orders = orders.filter(order => order.delivery_date === date);
+    }
+
+    // Apply pagination
+    const paginatedOrders = orders.slice(
+      parseInt(offset as string),
+      parseInt(offset as string) + parseInt(limit as string)
+    );
+
+    res.json({
+      success: true,
+      orders: paginatedOrders,
+      total: orders.length,
+      hasMore: orders.length > parseInt(offset as string) + parseInt(limit as string)
+    });
+  } catch (error) {
+    console.error('Get vendor orders error:', error);
+    res.status(500).json({ error: 'Failed to get vendor orders' });
+  }
+});
+
+// Get daily summary (mobile app)
+router.get('/daily-summary', authenticateVendorToken, async (req: any, res) => {
+  try {
+    const vendorId = req.user.vendorId;
+    const date = req.query.date as string || new Date().toISOString().split('T')[0];
+
+    const orders = await db.getOrdersByDateRange(vendorId, date, date);
+    const deliveredOrders = orders.filter(order => order.status === 'delivered');
+    const pendingOrders = orders.filter(order => order.status === 'pending');
+
+    const totalCans = orders.reduce((sum, order) => {
+      // This would need order items for accurate can count
+      return sum + 1; // Simplified
+    }, 0);
+
+    const totalEarnings = deliveredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+    res.json({
+      success: true,
+      date,
+      summary: {
+        totalOrders: orders.length,
+        deliveredOrders: deliveredOrders.length,
+        pendingOrders: pendingOrders.length,
+        totalCans,
+        totalEarnings,
+        averageOrderValue: deliveredOrders.length > 0 ? totalEarnings / deliveredOrders.length : 0
+      }
+    });
+  } catch (error) {
+    console.error('Get daily summary error:', error);
+    res.status(500).json({ error: 'Failed to get daily summary' });
+  }
+});
 
 // Get all vendors with pagination and filtering
 router.get('/', authenticateToken, async (req: any, res) => {
