@@ -60,28 +60,6 @@ class _InventoryScreenState extends State<InventoryScreen>
     }
   }
 
-  List<Map<String, dynamic>> _generateDummyProducts() {
-    final vendorId = SupabaseConfig.currentVendorId ??
-        '5d4b8601-2bef-4ce3-8631-b62730d403ea';
-
-    return [
-      {
-        'id': 'dummy-vp-1',
-        'vendor_id': vendorId,
-        'product_id': 'dummy-product-1',
-        'selling_price': 50.0,
-        'deposit_amount': 0.0,
-        'current_stock': 30,
-        'low_stock_threshold': 10,
-        'products': {
-          'id': 'dummy-product-1',
-          'name': 'Bisleri water cans',
-        },
-        'created_at': DateTime.now().toIso8601String(),
-      },
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -592,9 +570,19 @@ class _InventoryScreenState extends State<InventoryScreen>
   }
 
   void _showAddProductDialog() {
-    // TODO: Implement add product dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add product feature coming soon')),
+    // Show product selection and pricing setup
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Product'),
+        content: const Text('Product catalog and pricing setup will be implemented in the next phase. This will allow you to:\n\n• Select from available water can brands\n• Set your selling prices\n• Configure deposit amounts\n• Set initial stock levels'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -720,16 +708,36 @@ class _InventoryScreenState extends State<InventoryScreen>
   }
 
   void _editProduct(Map<String, dynamic> product) {
-    // TODO: Implement edit product
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit product feature coming soon')),
+    final productName = product['products']?['name'] ?? 'Product';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $productName'),
+        content: const Text('Product editing features including:\n\n• Price adjustments\n• Stock threshold changes\n• Deposit amount updates\n• Product information management\n\nWill be available in the next update.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
     );
   }
 
   void _viewStockHistory(Map<String, dynamic> product) {
-    // TODO: Implement stock history view
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Stock history feature coming soon')),
+    final productName = product['products']?['name'] ?? 'Product';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Stock History - $productName'),
+        content: const Text('Stock movement history will show:\n\n• Stock updates and changes\n• Delivery usage tracking\n• Low stock alerts timeline\n• Inventory adjustments\n\nComing in the next phase.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
     );
   }
 

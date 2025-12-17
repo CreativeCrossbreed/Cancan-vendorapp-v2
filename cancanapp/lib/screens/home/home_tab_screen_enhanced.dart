@@ -482,18 +482,22 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
             children: [
               Expanded(
                 child: _buildTrendCard(
-                  'Weekly Trend',
-                  '+15.3%',
-                  true,
+                  'Weekly Performance',
+                  _quickStats['revenueGrowth'] != null
+                      ? '${_quickStats['revenueGrowth'].toStringAsFixed(1)}%'
+                      : '0%',
+                  (_quickStats['revenueGrowth'] as double? ?? 0) >= 0,
                   Icons.trending_up,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildTrendCard(
-                  'Monthly Trend',
-                  '+8.7%',
-                  true,
+                  'Monthly Performance',
+                  _quickStats['customerGrowth'] != null
+                      ? '${_quickStats['customerGrowth'].toStringAsFixed(1)}%'
+                      : '0%',
+                  (_quickStats['customerGrowth'] as double? ?? 0) >= 0,
                   Icons.show_chart,
                 ),
               ),

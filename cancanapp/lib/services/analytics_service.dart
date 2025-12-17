@@ -651,6 +651,11 @@ class AnalyticsService {
         throw Exception('Vendor not authenticated');
       }
 
+      final now = DateTime.now();
+      final thisMonthStart = DateTime(now.year, now.month, 1);
+      final lastMonthStart = DateTime(now.year, now.month - 1, 1);
+      final lastMonthEnd = DateTime(now.year, now.month, 0, 23, 59, 59);
+
       // Get total customers
       final customersCount = await _supabase
           .from('orders')
@@ -660,30 +665,56 @@ class AnalyticsService {
 
       final uniqueCustomers = customersCount.map((order) => order['customer_id'] as String).toSet().length;
 
-      // Get total revenue and calculate stats
-      final orders = await _supabase
+      // Get this month's completed orders
+      final thisMonthOrders = await _supabase
           .from('orders')
-          .select('total_amount, status')
+          .select('total_amount')
           .eq('vendor_id', vendorId)
-          .eq('status', 'completed');
+          .eq('status', 'completed')
+          .gte('created_at', thisMonthStart.toIso8601String());
 
-      double totalRevenue = 0.0;
-      for (final order in orders) {
-        totalRevenue += (order['total_amount'] as num).toDouble();
+      // Get last month's completed orders for comparison
+      final lastMonthOrders = await _supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('vendor_id', vendorId)
+          .eq('status', 'completed')
+          .gte('created_at', lastMonthStart.toIso8601String())
+          .lte('created_at', lastMonthEnd.toIso8601String());
+
+      // Calculate this month's revenue and stats
+      double thisMonthRevenue = 0.0;
+      for (final order in thisMonthOrders) {
+        thisMonthRevenue += (order['total_amount'] as num).toDouble();
       }
 
-      final avgOrderValue = orders.isNotEmpty ? totalRevenue / orders.length : 0.0;
-      final deliveryRate = customersCount.isNotEmpty ? (orders.length / customersCount.length) * 100 : 0.0;
+      // Calculate last month's revenue for growth
+      double lastMonthRevenue = 0.0;
+      for (final order in lastMonthOrders) {
+        lastMonthRevenue += (order['total_amount'] as num).toDouble();
+      }
+
+      final avgOrderValue = thisMonthOrders.isNotEmpty ? thisMonthRevenue / thisMonthOrders.length : 0.0;
+      final deliveryRate = customersCount.isNotEmpty ? (thisMonthOrders.length / customersCount.length) * 100 : 0.0;
+
+      // Calculate growth percentages
+      final revenueGrowth = lastMonthRevenue > 0
+          ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+          : 0.0;
+
+      final orderValueGrowth = 0.0; // Would need historical data for accurate calculation
+      final customerGrowth = 0.0; // Would need historical customer data
+      final deliveryGrowth = 0.0; // Would need historical delivery data
 
       return {
         'totalCustomers': uniqueCustomers,
         'avgOrderValue': avgOrderValue,
-        'totalRevenue': totalRevenue,
+        'totalRevenue': thisMonthRevenue,
         'deliveryRate': deliveryRate,
-        'customerGrowth': 15.3, // Mock growth percentage
-        'orderValueGrowth': 8.7, // Mock growth percentage
-        'revenueGrowth': 12.1, // Mock growth percentage
-        'deliveryGrowth': 5.2, // Mock growth percentage
+        'customerGrowth': customerGrowth,
+        'orderValueGrowth': orderValueGrowth,
+        'revenueGrowth': revenueGrowth,
+        'deliveryGrowth': deliveryGrowth,
       };
     } catch (e) {
       AppLogger.e('Error getting quick stats: $e');

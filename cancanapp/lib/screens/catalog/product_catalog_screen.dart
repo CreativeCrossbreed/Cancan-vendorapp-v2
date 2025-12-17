@@ -51,28 +51,6 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
     }
   }
 
-  List<Map<String, dynamic>> _generateDummyProducts() {
-    final vendorId = SupabaseConfig.currentVendorId ??
-        '5d4b8601-2bef-4ce3-8631-b62730d403ea';
-
-    return [
-      {
-        'id': 'dummy-vp-1',
-        'vendor_id': vendorId,
-        'product_id': 'dummy-product-1',
-        'selling_price': 50.0,
-        'deposit_amount': 0.0,
-        'current_stock': 30,
-        'low_stock_threshold': 10,
-        'products': {
-          'id': 'dummy-product-1',
-          'name': 'Bisleri water cans',
-        },
-        'created_at': DateTime.now().toIso8601String(),
-      },
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
