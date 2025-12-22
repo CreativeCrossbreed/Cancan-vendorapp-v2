@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../models/order.dart';
+import '../../widgets/custom_widgets.dart';
 import 'widgets/update_status_modal.dart';
 import 'widgets/app_drawer.dart';
 import '../history/history_screen.dart';
 import '../payments/payments_screen.dart';
 import '../inventory/inventory_screen.dart';
+import '../settings/settings_screen.dart';
 
 /// Home Screen - Main Dashboard with Bottom Navigation
 class HomeScreen extends StatefulWidget {
@@ -44,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         currentScreen = const InventoryScreen();
         break;
+      case 4:
+        currentScreen = const SettingsScreen();
+        break;
       default:
         currentScreen = const HomeTabScreen();
     }
@@ -51,32 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       drawer: const AppDrawer(),
       body: currentScreen,
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: CanCanBottomNavigation(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.payment_outlined),
-            activeIcon: Icon(Icons.payment),
-            label: 'Payments',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_outlined),
-            activeIcon: Icon(Icons.inventory),
-            label: 'Inventory',
-          ),
-        ],
       ),
     );
   }
