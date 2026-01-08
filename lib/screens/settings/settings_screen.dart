@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
+import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
 import 'notifications_settings_screen.dart';
 import 'working_hours_screen.dart';
@@ -123,26 +124,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScreenWithNav(
+      title: 'Settings',
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Settings'),
-        actions: [
-          if (!_isLoading)
-            TextButton(
-              onPressed: _isSaving ? null : _saveProfile,
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  color: _isSaving
-                      ? AppTheme.white.withValues(alpha: 0.5)
-                      : AppTheme.white,
-                  fontWeight: FontWeight.w600,
-                ),
+      currentNavIndex: 0,
+      actions: [
+        if (!_isLoading)
+          TextButton(
+            onPressed: _isSaving ? null : _saveProfile,
+            child: Text(
+              'Save',
+              style: TextStyle(
+                color: _isSaving
+                    ? AppTheme.white.withValues(alpha: 0.5)
+                    : AppTheme.white,
+                fontWeight: FontWeight.w600,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -218,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             controller: _nameController,
                             decoration: const InputDecoration(
                               labelText: 'Your Name',
-                              prefixIcon: Icon(Icons.person_outline),
+                              prefixIcon: Icon(Icons.person_rounded),
                             ),
                             textCapitalization: TextCapitalization.words,
                             validator: (value) {
@@ -235,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             controller: _businessNameController,
                             decoration: const InputDecoration(
                               labelText: 'Business Name',
-                              prefixIcon: Icon(Icons.business_outlined),
+                              prefixIcon: Icon(Icons.business_rounded),
                             ),
                             textCapitalization: TextCapitalization.words,
                             validator: (value) {
@@ -252,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             controller: _addressController,
                             decoration: const InputDecoration(
                               labelText: 'Business Address',
-                              prefixIcon: Icon(Icons.location_on_outlined),
+                              prefixIcon: Icon(Icons.location_on_rounded),
                             ),
                             maxLines: 3,
                             textCapitalization: TextCapitalization.words,
@@ -278,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 16),
 
                           _buildSettingTile(
-                            icon: Icons.notifications_outlined,
+                            icon: Icons.notifications_rounded,
                             title: 'Notifications',
                             subtitle: 'Manage notification preferences',
                             onTap: () {
@@ -291,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                           ),
                           _buildSettingTile(
-                            icon: Icons.schedule_outlined,
+                            icon: Icons.schedule_rounded,
                             title: 'Working Hours',
                             subtitle: 'Set your business hours',
                             onTap: () {
@@ -304,7 +304,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                           ),
                           _buildSettingTile(
-                            icon: Icons.language_outlined,
+                            icon: Icons.language_rounded,
                             title: 'Language',
                             subtitle: _selectedLanguage,
                             onTap: _showLanguageDialog,
@@ -325,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 16),
 
                           _buildSettingTile(
-                            icon: Icons.privacy_tip_outlined,
+                            icon: Icons.privacy_tip_rounded,
                             title: 'Privacy Policy',
                             onTap: () {
                               Navigator.push(
@@ -337,8 +337,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                           ),
                           _buildSettingTile(
-                            icon: Icons.description_outlined,
-                            title: 'Terms of Service',
+                            icon: Icons.description_rounded,
+                            title: 'Terms & Conditions',
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -349,7 +349,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                           ),
                           _buildSettingTile(
-                            icon: Icons.delete_outline,
+                            icon: Icons.delete_rounded,
                             title: 'Delete Account',
                             subtitle: 'Permanently delete your account',
                             titleColor: AppTheme.errorRed,
@@ -427,7 +427,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             RadioListTile<String>(
               title: const Text('English'),
               value: 'English',
+              // ignore: deprecated_member_use
               groupValue: _selectedLanguage,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 setState(() => _selectedLanguage = value!);
                 Navigator.pop(context);
@@ -437,7 +439,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             RadioListTile<String>(
               title: const Text('Tamil'),
               value: 'Tamil',
+              // ignore: deprecated_member_use
               groupValue: _selectedLanguage,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 setState(() => _selectedLanguage = value!);
                 Navigator.pop(context);

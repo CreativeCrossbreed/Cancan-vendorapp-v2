@@ -117,7 +117,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     Text(
                       'Let\'s set up your vendor profile',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.white.withOpacity(0.9),
+                            color: AppTheme.white.withValues(alpha: 0.9),
                           ),
                     ),
                   ],

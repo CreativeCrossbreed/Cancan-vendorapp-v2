@@ -54,19 +54,27 @@ class _AppDrawerState extends State<AppDrawer> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Logo/Avatar
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.water_drop_rounded,
-                        size: 40,
-                        color: AppTheme.white,
-                      ),
+                    // Logo
+                    Image.asset(
+                      'assets/images/Can Can [Logo].png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.water_drop_rounded,
+                            size: 40,
+                            color: AppTheme.white,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -134,7 +142,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     children: [
                       _buildMenuItem(
-                        icon: Icons.person_outline,
+                        icon: Icons.business_rounded,
                         title: 'Business Details',
                         onTap: () {
                           Navigator.pop(context);
@@ -142,7 +150,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.inventory_outlined,
+                        icon: Icons.storefront_rounded,
                         title: 'Product Catalog',
                         onTap: () {
                           Navigator.pop(context);
@@ -155,7 +163,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.qr_code_2,
+                        icon: Icons.qr_code_2_rounded,
                         title: 'My QR Code',
                         onTap: () {
                           Navigator.pop(context);
@@ -168,7 +176,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.beach_access,
+                        icon: Icons.beach_access_rounded,
                         title: 'Vacation Mode',
                         onTap: () {
                           Navigator.pop(context);
@@ -181,7 +189,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.analytics_outlined,
+                        icon: Icons.analytics_rounded,
                         title: 'Analytics',
                         onTap: () {
                           Navigator.pop(context);
@@ -192,7 +200,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.settings_outlined,
+                        icon: Icons.settings_rounded,
                         title: 'Settings',
                         onTap: () {
                           Navigator.pop(context);
@@ -206,7 +214,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       ),
                       const Divider(height: 32),
                       _buildMenuItem(
-                        icon: Icons.help_outline,
+                        icon: Icons.help_rounded,
                         title: 'Support & Help',
                         onTap: () {
                           Navigator.pop(context);
@@ -214,7 +222,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.info_outline,
+                        icon: Icons.info_rounded,
                         title: 'About Can Can',
                         onTap: () {
                           Navigator.pop(context);
@@ -223,7 +231,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       ),
                       const Divider(height: 32),
                       _buildMenuItem(
-                        icon: Icons.logout,
+                        icon: Icons.logout_rounded,
                         title: 'Logout',
                         color: AppTheme.errorRed,
                         onTap: () => _handleLogout(context),

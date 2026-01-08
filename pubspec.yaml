@@ -78,4 +78,11 @@ flutter:
     - assets/icons/
     - .env
 
-  # Fonts (using Google Fonts, no need to bundle)
+  # Fonts - Agrandir
+  fonts:
+    - family: Agrandir
+      fonts:
+        - asset: assets/fonts/Agrandir-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Agrandir-TextBold.otf
+          weight: 700

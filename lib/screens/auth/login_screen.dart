@@ -81,10 +81,18 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo/Brand Section
-                const Icon(
-                  Icons.water_drop_rounded,
-                  size: 80,
-                  color: AppTheme.white,
+                Image.asset(
+                  'assets/images/Can Can [Logo].png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.water_drop_rounded,
+                      size: 80,
+                      color: AppTheme.white,
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 Text(

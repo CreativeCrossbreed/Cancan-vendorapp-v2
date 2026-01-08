@@ -1,5 +1,6 @@
 import '../config/supabase_config.dart';
 import '../models/order.dart';
+import 'inventory_service.dart';
 
 /// Order Service - Handles order management operations
 class OrderService {
@@ -21,7 +22,7 @@ class OrderService {
     // Shared dummy customer & products
     final customer1 = Customer(
       id: 'cust_1',
-      name: 'Rahul Sharma',
+      name: 'ராஜேஷ் குமார்',
       phone: '+919876543210',
       address: 'Lake View Society, Sector 21, Mumbai',
       flatNumber: 'A-201',
@@ -31,7 +32,7 @@ class OrderService {
 
     final customer2 = Customer(
       id: 'cust_2',
-      name: 'Priya Verma',
+      name: 'பிரியா ராணி',
       phone: '+919812345678',
       address: 'Green Gardens, Near City Mall, Pune',
       flatNumber: 'B-502',
@@ -379,6 +380,13 @@ class OrderService {
         updates['status'] = 'completed';
         updates['is_delivered'] = true;
         updates['delivered_at'] = DateTime.now().toIso8601String();
+        
+        // Deduct stock from inventory when order is delivered
+        final inventoryService = InventoryService();
+        final stockResult = await inventoryService.deductStockForOrder(orderId: orderId);
+        if (!stockResult['success']) {
+          print('⚠️ Warning: ${stockResult['message']}');
+        }
       }
 
       if (isPaid) {

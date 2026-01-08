@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
+import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
 
 /// Product Catalog Screen - Display all products with pricing
@@ -86,12 +87,10 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScreenWithNav(
+      title: 'Product Catalog',
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Product Catalog'),
-        elevation: 0,
-      ),
+      currentNavIndex: 3,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
