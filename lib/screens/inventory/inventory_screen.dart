@@ -466,61 +466,122 @@ class _InventoryScreenState extends State<InventoryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+              const Text(
+                'Product Name',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Product Name',
                   hintText: 'e.g., 20L Water Can',
                   border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Selling Price',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: priceController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
                 decoration: const InputDecoration(
-                  labelText: 'Selling Price',
+                  hintText: 'Enter price',
                   prefixText: 'Rs. ',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Deposit Amount (optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Refundable deposit per can (0 if none)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: depositController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
                 decoration: const InputDecoration(
-                  labelText: 'Deposit Amount (optional)',
-                  hintText: '0',
+                  hintText: 'Enter deposit amount',
                   prefixText: 'Rs. ',
-                  helperText: 'Refundable deposit per can (0 if none)',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Initial Stock',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: stockController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
-                  labelText: 'Initial Stock',
-                  hintText: '0',
+                  hintText: 'Enter number of cans',
                   suffixText: 'cans',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Low Stock Threshold',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Alert when stock falls below this number',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: thresholdController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
-                  labelText: 'Low Stock Threshold',
-                  hintText: '10',
+                  hintText: 'Enter threshold number',
                   suffixText: 'cans',
-                  helperText: 'Alert when stock falls below this number',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -575,9 +636,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _showUpdateStockDialog(Map<String, dynamic> product) {
-    final stockController = TextEditingController(
-      text: (product['current_stock'] as int? ?? 0).toString(),
-    );
+    final stockController = TextEditingController();
     bool isAdding = true;
     int changeAmount = 0;
 
@@ -699,12 +758,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
               const SizedBox(height: 16),
 
               // Amount Input
+              Text(
+                isAdding ? 'Cans to Add' : 'Cans to Reduce',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: stockController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: isAdding ? 'Cans to Add' : 'Cans to Reduce',
+                  hintText: 'Enter number of cans',
                   suffixText: 'cans',
                   border: const OutlineInputBorder(),
                   prefixIcon: Icon(
@@ -788,15 +856,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _showEditProductDialog(Map<String, dynamic> product) {
-    final priceController = TextEditingController(
-      text: (product['selling_price'] as num).toString(),
-    );
-    final depositController = TextEditingController(
-      text: (product['deposit_amount'] as num?)?.toString() ?? '0',
-    );
-    final thresholdController = TextEditingController(
-      text: (product['low_stock_threshold'] as int).toString(),
-    );
+    final priceController = TextEditingController();
+    final depositController = TextEditingController();
+    final thresholdController = TextEditingController();
 
     showDialog(
       context: context,
@@ -806,36 +868,83 @@ class _InventoryScreenState extends State<InventoryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text(
+                'Selling Price',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: priceController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
                 decoration: const InputDecoration(
-                  labelText: 'Selling Price',
+                  hintText: 'Enter price',
                   prefixText: 'Rs. ',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Deposit Amount',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Refundable deposit per can',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: depositController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
                 decoration: const InputDecoration(
-                  labelText: 'Deposit Amount',
+                  hintText: 'Enter deposit amount',
                   prefixText: 'Rs. ',
                   border: OutlineInputBorder(),
-                  helperText: 'Refundable deposit per can',
                 ),
               ),
               const SizedBox(height: 16),
+              const Text(
+                'Low Stock Threshold',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Alert when stock falls below this number',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: thresholdController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
-                  labelText: 'Low Stock Threshold',
+                  hintText: 'Enter threshold',
                   suffixText: 'cans',
                   border: OutlineInputBorder(),
-                  helperText: 'Alert when stock falls below this number',
                 ),
               ),
             ],

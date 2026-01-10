@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/theme.dart';
 import '../../services/auth_service.dart';
 import 'otp_screen.dart';
@@ -94,15 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Can Can',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: AppTheme.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
                 const SizedBox(height: 8),
                 Text(
                   'Vendor App',
@@ -144,12 +136,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
 
                       // Phone Number Input
+                      const Text(
+                        'Phone Number',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         maxLength: 10,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         decoration: const InputDecoration(
-                          labelText: 'Phone Number',
                           hintText: '9876543210',
                           prefixIcon: Icon(Icons.phone_outlined),
                           prefixText: '+91 ',

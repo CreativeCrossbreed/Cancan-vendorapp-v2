@@ -98,7 +98,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  // Removed _selectDate() - no longer needed as we only support Today and Date Range
+  void _goToPreviousDay() {
+    setState(() {
+      _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+    });
+    _loadData();
+  }
+
+  void _goToNextDay() {
+    final now = DateTime.now();
+    if (_selectedDate.isBefore(DateTime(now.year, now.month, now.day))) {
+      setState(() {
+        _selectedDate = _selectedDate.add(const Duration(days: 1));
+      });
+      _loadData();
+    }
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate:
+          DateTime.now().subtract(const Duration(days: 90)), // Last 3 months
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryBlue,
+              onPrimary: AppTheme.white,
+              surface: AppTheme.white,
+              onSurface: AppTheme.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateFilterMode = _isToday()
+            ? 'today'
+            : 'today'; // Keep in today mode but allow viewing past dates
+      });
+      _loadData();
+    }
+  }
 
   Future<void> _selectDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
@@ -296,12 +344,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             // Date Navigator and Filter
                             Row(
                               children: [
-                                // No prev/next buttons needed - only Today and Date Range modes
-                                const SizedBox(width: 40),
+                                if (_dateFilterMode != 'range')
+                                  IconButton(
+                                    onPressed: _goToPreviousDay,
+                                    icon: const Icon(Icons.chevron_left,
+                                        size: 20),
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: AppTheme.lightGray,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(width: 40),
                                 const SizedBox(width: AppTheme.spacingS),
                                 Expanded(
                                   child: InkWell(
-                                    onTap: _selectDateRange,
+                                    onTap: _dateFilterMode == 'range'
+                                        ? _selectDateRange
+                                        : _selectDate,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 10, horizontal: 12),
@@ -341,8 +403,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: AppTheme.spacingS),
-                                // No next button needed - only Today and Date Range modes
-                                const SizedBox(width: 40),
+                                if (_dateFilterMode != 'range')
+                                  IconButton(
+                                    onPressed: _isToday() ? null : _goToNextDay,
+                                    icon: const Icon(Icons.chevron_right,
+                                        size: 20),
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: AppTheme.lightGray,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(width: 40),
                                 const SizedBox(width: AppTheme.spacingS),
                                 // Filter Button
                                 PopupMenuButton<String>(
@@ -459,7 +533,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             color: isActive
                 ? activeColor.withValues(alpha: 0.1)
                 : activeColor.withValues(
-                    alpha: 0.05), // Very light hue when inactive
+                    alpha: 0.15), // More visible when inactive
             borderRadius: BorderRadius.circular(8),
             border: isActive
                 ? Border.all(
@@ -477,7 +551,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   color: isActive
                       ? activeColor
                       : activeColor.withValues(
-                          alpha: 0.3), // Light version for inactive badge
+                          alpha: 0.5), // More visible for inactive badge
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -688,7 +762,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
               ),
               Text(
-                'Rs.${order.totalAmount.toStringAsFixed(0)}',
+                'Rs. ${order.totalAmount.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: statusColor,
                       fontWeight: FontWeight.bold,

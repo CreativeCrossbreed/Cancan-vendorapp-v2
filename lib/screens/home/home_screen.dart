@@ -444,7 +444,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
-                      'Rs.${order.totalAmount.toStringAsFixed(0)}',
+                      'Rs. ${order.totalAmount.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: AppTheme.successGreen,
                             fontWeight: FontWeight.bold,

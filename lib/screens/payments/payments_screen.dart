@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
@@ -190,7 +191,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                         ),
                                         const SizedBox(height: AppTheme.spacingXS),
                                         Text(
-                                          'Rs.${_totalPending.toStringAsFixed(0)}',
+                                          'Rs. ${_totalPending.toStringAsFixed(0)}',
                                           style: Theme.of(context)
                                               .textTheme
                                               .headlineSmall
@@ -329,7 +330,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     ),
                     const SizedBox(height: AppTheme.spacingXS),
                     Text(
-                      'Rs.${pendingAmount.toStringAsFixed(0)}',
+                      'Rs. ${pendingAmount.toStringAsFixed(0)}',
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: AppTheme.errorRed,
@@ -400,9 +401,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   }
   
   void _showPaymentDialog(Order order, double pendingAmount) {
-    final amountController = TextEditingController(
-      text: pendingAmount.toStringAsFixed(0),
-    );
+    final amountController = TextEditingController();
     
     showDialog(
       context: context,
@@ -412,15 +411,27 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Pending Amount: Rs.${pendingAmount.toStringAsFixed(0)}',
+              'Pending Amount: Rs. ${pendingAmount.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
+            const Text(
+              'Amount Received',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              ],
               decoration: const InputDecoration(
-                labelText: 'Amount Received',
+                hintText: 'Enter amount',
                 prefixText: 'Rs. ',
                 border: OutlineInputBorder(),
               ),
@@ -454,7 +465,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Partial payment recorded. Remaining: Rs.${(pendingAmount - receivedAmount).toStringAsFixed(0)}',
+                      'Partial payment recorded. Remaining: Rs. ${(pendingAmount - receivedAmount).toStringAsFixed(0)}',
                     ),
                     backgroundColor: AppTheme.warningOrange,
                   ),
@@ -475,7 +486,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     // Remove + and spaces from phone number
     final cleanPhone = phone.replaceAll(RegExp(r'[+\s]'), '');
     final message =
-        'Hi $name! This is a friendly reminder about your pending water can payment of Rs.${amount.toStringAsFixed(0)}. Please pay at your earliest convenience. Thank you!';
+        'Hi $name! This is a friendly reminder about your pending water can payment of Rs. ${amount.toStringAsFixed(0)}. Please pay at your earliest convenience. Thank you!';
     final uri =
         Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
 
