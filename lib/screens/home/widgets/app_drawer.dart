@@ -377,7 +377,7 @@ class _AppDrawerState extends State<AppDrawer> {
               children: [
                 Icon(Icons.email, size: 20),
                 SizedBox(width: 8),
-                Text('support@cancan.app'),
+                Text('support@cancanindia.com'),
               ],
             ),
             SizedBox(height: 8),
@@ -385,7 +385,7 @@ class _AppDrawerState extends State<AppDrawer> {
               children: [
                 Icon(Icons.phone, size: 20),
                 SizedBox(width: 8),
-                Text('+91 98765 43210'),
+                Text('90253 20535'),
               ],
             ),
           ],

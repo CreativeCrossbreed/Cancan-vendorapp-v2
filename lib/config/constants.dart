@@ -70,8 +70,8 @@ class AppConstants {
   }
 
   // Support Contact
-  static const String supportEmail = 'support@cancan.app';
-  static const String supportPhone = '+919876543210';
+  static const String supportEmail = 'support@cancanindia.com';
+  static const String supportPhone = '9025320535';
 
   // Legal Links (placeholder - update with actual URLs)
   static const String termsOfServiceUrl = 'https://cancan.app/terms';

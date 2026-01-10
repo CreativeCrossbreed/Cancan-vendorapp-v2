@@ -209,6 +209,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Column(
                   children: [
+                    const SizedBox(height: AppTheme.spacingXXL),
                     Expanded(
                       child: _isLoading
                           ? const Center(child: CircularProgressIndicator())
@@ -300,7 +301,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     if (customer == null) return const SizedBox();
 
     return Container(
-      padding: AppTheme.cardPadding,
+      padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(12),
@@ -331,51 +332,78 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             ],
           ),
           const SizedBox(height: AppTheme.spacingM),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer.name,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: AppTheme.spacingXS),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 14, color: AppTheme.errorRed),
-                        const SizedBox(width: AppTheme.spacingXS),
-                        Expanded(
-                          child: Text(
-                            customer.fullAddress,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+              Text(
+                customer.name,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppTheme.spacingS),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _openGoogleMaps(customer.fullAddress),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingS,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGray,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppTheme.mediumGray.withValues(alpha: 0.5),
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 14, color: AppTheme.errorRed),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                customer.fullAddress,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.successGreen,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.call, color: AppTheme.white, size: 20),
-                  onPressed: () => _makePhoneCall(customer.phone),
-                ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.successGreen,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.call,
+                          color: AppTheme.white, size: 20),
+                      onPressed: () => _makePhoneCall(customer.phone),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.spacingL),
+          const SizedBox(height: AppTheme.spacingM),
           Container(
-            padding: AppTheme.paddingM,
+            padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
               color: AppTheme.lightGray,
               borderRadius: BorderRadius.circular(8),
@@ -395,8 +423,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingS),
                 ...order.items.map((item) => Padding(
-                      padding:
-                          const EdgeInsets.only(bottom: AppTheme.spacingXS),
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -408,7 +435,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ],
                       ),
                     )),
-                const Divider(height: AppTheme.spacingXXL),
+                const Divider(height: AppTheme.spacingXL),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -428,7 +455,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               ],
             ),
           ),
-          const SizedBox(height: AppTheme.spacingL),
+          const SizedBox(height: AppTheme.spacingM),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -463,6 +490,22 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not launch phone dialer')),
+        );
+      }
+    }
+  }
+
+  Future<void> _openGoogleMaps(String address) async {
+    final encodedAddress = Uri.encodeComponent(address);
+    final uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google Maps')),
         );
       }
     }

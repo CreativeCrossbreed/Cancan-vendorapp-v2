@@ -89,25 +89,87 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Inventory Management'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            onPressed: _showAddProductDialog,
-            tooltip: 'Add Product',
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _products.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadInventory,
-                  child: _buildInventoryList(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Custom Header
+              Padding(
+                padding: AppTheme.paddingXXL,
+                child: Column(
+                  children: [
+                    // Hamburger + Title Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Isolated hamburger icon
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.menu, color: AppTheme.white),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                        // Center title/subtitle
+                        Column(
+                          children: [
+                            Text(
+                              'Inventory',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white.withValues(alpha: 0.9),
+                                  ),
+                            ),
+                            const SizedBox(height: AppTheme.spacingXS),
+                            Text(
+                              'Track your Water Cans Stock',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        // Balance spacing
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
+              // Body content
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _products.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _loadInventory,
+                            child: _buildInventoryList(),
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddProductDialog,
+        icon: const Icon(Icons.add_rounded, color: AppTheme.primaryBlue),
+        label: const Text('Add Product', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+        backgroundColor: AppTheme.white,
+        elevation: 6,
+      ),
     );
   }
 
@@ -205,32 +267,50 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 // Product Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            productInfo['name'] ?? 'Product',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: AppTheme.spacingXS),
-                          Text(
-                            'Rs.${product['selling_price']} per can',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: AppTheme.textSecondary,
-                                ),
-                          ),
-                        ],
+                      child: Text(
+                        productInfo['name'] ?? 'Product',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingS),
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditProductDialog(product),
+                      icon: const Icon(Icons.edit_rounded, size: 16),
+                      label: const Text('Edit'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: AppTheme.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        elevation: 2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingXS),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Cost of one can : Rs. ${(product['selling_price'] as num).toStringAsFixed(0)}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
                     ),
                     // Status Badge
                     if (isOutOfStock)
@@ -343,36 +423,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingM),
 
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showUpdateStockDialog(product),
-                        icon: const Icon(Icons.edit_rounded, size: 18),
-                        label: const Text('Update Stock'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
+                // Action Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showUpdateStockDialog(product),
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: const Text('Update Stock'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: AppTheme.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => _showEditProductDialog(product),
-                      icon: const Icon(Icons.tune_rounded,
-                          color: AppTheme.textSecondary),
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppTheme.lightGray,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      tooltip: 'Product Settings',
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -385,9 +452,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _showAddProductDialog() {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
-    final depositController = TextEditingController(text: '0');
-    final stockController = TextEditingController(text: '0');
-    final thresholdController = TextEditingController(text: '10');
+    final depositController = TextEditingController();
+    final stockController = TextEditingController();
+    final thresholdController = TextEditingController();
 
     showDialog(
       context: context,
@@ -426,6 +493,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Deposit Amount (optional)',
+                  hintText: '0',
                   prefixText: 'Rs. ',
                   helperText: 'Refundable deposit per can (0 if none)',
                   border: OutlineInputBorder(),
@@ -438,6 +506,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
                   labelText: 'Initial Stock',
+                  hintText: '0',
                   suffixText: 'cans',
                   border: OutlineInputBorder(),
                 ),
@@ -449,6 +518,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
                   labelText: 'Low Stock Threshold',
+                  hintText: '10',
                   suffixText: 'cans',
                   helperText: 'Alert when stock falls below this number',
                   border: OutlineInputBorder(),
@@ -458,6 +528,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -542,25 +613,88 @@ class _InventoryScreenState extends State<InventoryScreen> {
               const SizedBox(height: 16),
 
               // Add/Reduce Toggle
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(
-                    value: true,
-                    label: Text('Add Stock'),
-                    icon: Icon(Icons.add_rounded, size: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          isAdding = true;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isAdding
+                            ? AppTheme.successGreen
+                            : AppTheme.lightGray,
+                        foregroundColor: isAdding
+                            ? AppTheme.white
+                            : AppTheme.textSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            size: 24,
+                            color: isAdding
+                                ? AppTheme.white
+                                : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Add\nStock',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  ButtonSegment(
-                    value: false,
-                    label: Text('Reduce Stock'),
-                    icon: Icon(Icons.remove_rounded, size: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          isAdding = false;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: !isAdding
+                            ? AppTheme.errorRed
+                            : AppTheme.lightGray,
+                        foregroundColor: !isAdding
+                            ? AppTheme.white
+                            : AppTheme.textSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.remove_rounded,
+                            size: 24,
+                            color: !isAdding
+                                ? AppTheme.white
+                                : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Reduce\nStock',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
-                selected: {isAdding},
-                onSelectionChanged: (Set<bool> selection) {
-                  setDialogState(() {
-                    isAdding = selection.first;
-                  });
-                },
               ),
               const SizedBox(height: 16),
 

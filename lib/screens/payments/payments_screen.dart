@@ -65,11 +65,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Payments'),
-        elevation: 0,
-        backgroundColor: const Color(0xFF4CAF50),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -81,6 +76,58 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         child: SafeArea(
           child: Column(
             children: [
+              // Custom Header
+              Padding(
+                padding: AppTheme.paddingXXL,
+                child: Column(
+                  children: [
+                    // Hamburger + Title Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Isolated hamburger icon
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.menu, color: AppTheme.white),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                        // Center title/subtitle
+                        Column(
+                          children: [
+                            Text(
+                              'Payments',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white.withValues(alpha: 0.9),
+                                  ),
+                            ),
+                            const SizedBox(height: AppTheme.spacingXS),
+                            Text(
+                              'Track pending payments',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        // Balance spacing
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
 
               // Payments Section
               Expanded(
@@ -100,28 +147,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Title
-                            Text(
-                              'Payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: AppTheme.spacingXS),
-                            Text(
-                              'Track pending payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                            ),
-                            const SizedBox(height: AppTheme.spacingL),
-
                             // Pending Payments Header
                             Container(
                               padding: AppTheme.cardPadding,
@@ -202,22 +227,20 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                   ),
                                 ),
                               ),
+                            const SizedBox(height: AppTheme.spacingM),
+
+                            // Customer List Header
+                            Text(
+                              'Customers with Pending Payments',
+                              style:
+                                  Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                            ),
                           ],
                         ),
                       ),
-
-                      // Customer List Header
-                      Padding(
-                        padding: AppTheme.paddingHorizontalXL,
-                        child: Text(
-                          'Customers with Pending Payments',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingM),
+                      const SizedBox(height: AppTheme.spacingL),
 
                       // Customers List
                       Expanded(

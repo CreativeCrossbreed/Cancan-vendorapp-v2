@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Support Text
                 Text(
-                  'Having trouble logging in?\nContact support at support@cancan.app',
+                  'Having trouble logging in?\nContact support at support@cancanindia.com',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.white.withValues(alpha: 0.8),

@@ -22,7 +22,7 @@ class OrderService {
     // Shared dummy customer & products
     final customer1 = Customer(
       id: 'cust_1',
-      name: 'ராஜேஷ் குமார்',
+      name: 'Sivanesan V',
       phone: '+919876543210',
       address: 'Lake View Society, Sector 21, Mumbai',
       flatNumber: 'A-201',
@@ -32,12 +32,32 @@ class OrderService {
 
     final customer2 = Customer(
       id: 'cust_2',
-      name: 'பிரியா ராணி',
+      name: 'Akhilan V',
       phone: '+919812345678',
       address: 'Green Gardens, Near City Mall, Pune',
       flatNumber: 'B-502',
       floor: '5',
       buildingName: 'Green Gardens',
+    );
+
+    final customer3 = Customer(
+      id: 'cust_3',
+      name: 'Karthikeyan',
+      phone: '+919876501234',
+      address: 'Sunrise Apartments, MG Road, Chennai',
+      flatNumber: 'C-305',
+      floor: '3',
+      buildingName: 'Sunrise Apartments',
+    );
+
+    final customer4 = Customer(
+      id: 'cust_4',
+      name: 'Selvakumari',
+      phone: '+919812309876',
+      address: 'Royal Heights, Anna Nagar, Chennai',
+      flatNumber: 'D-102',
+      floor: '1',
+      buildingName: 'Royal Heights',
     );
 
     final product20L = Product(id: 'prod_20l', name: '20L Water Can');
@@ -147,7 +167,7 @@ class OrderService {
         id: 'order_completed_2',
         orderNumber: '#0951',
         vendorId: 'dummy_vendor_1',
-        customerId: customer2.id,
+        customerId: customer3.id,
         deliveryDate: baseDate,
         timeSlot: '8:00 AM - 10:00 AM',
         totalAmount: 140,
@@ -159,7 +179,7 @@ class OrderService {
         notes: 'UPI payment',
         cancellationReason: null,
         createdAt: baseDate.subtract(const Duration(days: 1)),
-        customer: customer2,
+        customer: customer3,
         items: [
           OrderItem(
             id: 'item_c2_1',
@@ -179,7 +199,7 @@ class OrderService {
         id: 'order_cancelled_1',
         orderNumber: '#0888',
         vendorId: 'dummy_vendor_1',
-        customerId: customer1.id,
+        customerId: customer4.id,
         deliveryDate: baseDate,
         timeSlot: '4:00 PM - 6:00 PM',
         totalAmount: 140,
@@ -191,7 +211,7 @@ class OrderService {
         notes: 'Customer not at home',
         cancellationReason: 'Customer cancelled via phone',
         createdAt: baseDate.subtract(const Duration(days: 2)),
-        customer: customer1,
+        customer: customer4,
         items: [
           OrderItem(
             id: 'item_x1_1',
