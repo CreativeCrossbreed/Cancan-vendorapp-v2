@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'config/supabase_config.dart';
 import 'config/theme.dart';
 import 'services/session_service.dart';
+import 'services/vendor_data_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 
@@ -27,6 +28,11 @@ void main() async {
 
   // Initialize local session storage (SharedPreferences)
   await SessionService.init();
+
+  // Initialize vendor data caching (loads vendor profile once)
+  if (SupabaseConfig.isAuthenticated) {
+    await VendorDataService.initialize();
+  }
 
   runApp(const CanCanApp());
 }
