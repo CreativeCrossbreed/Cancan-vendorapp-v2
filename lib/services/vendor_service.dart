@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../config/supabase_config.dart';
+import 'auth_service.dart';
 
 /// Vendor Service - Handles vendor profile CRUD operations
 class VendorService {
@@ -17,13 +18,11 @@ class VendorService {
       // Add +91 prefix if not present
       final fullPhone = phone.startsWith('+91') ? phone : '+91$phone';
 
-      // Generate a proper UUID for the vendor
-      final vendorId = SupabaseConfig.currentVendorId ?? _uuid.v4();
-
       print('📝 Creating vendor profile...');
-      print('   Vendor ID: $vendorId');
       print('   Phone: $fullPhone');
       print('   Name: $name');
+      print('   Business: $businessName');
+      print('   Address: $address');
 
       // Check if vendor already exists by phone
       final existing = await _supabase
@@ -41,7 +40,13 @@ class VendorService {
         };
       }
 
-      // Insert new vendor with proper UUID
+      // Use the authenticated user ID (auth.uid()) as vendor ID
+      // This ensures RLS policies work correctly since they check id = auth.uid()
+      final vendorId = SupabaseConfig.currentVendorId!;
+
+      // Check if this is test mode (vendorId from session, not auth.uid())
+      final isTestMode = SupabaseConfig.currentUser == null;
+
       await _supabase.from('vendors').insert({
         'id': vendorId,
         'phone': fullPhone,
@@ -49,6 +54,7 @@ class VendorService {
         'business_name': businessName,
         'address': address,
         'is_active': true,
+        'test_mode': isTestMode, // Mark as test vendor if not using real auth
       });
 
       print('✅ Vendor profile created successfully: $vendorId');

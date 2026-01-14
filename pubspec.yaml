@@ -44,10 +44,7 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.1.0
-  
-  # Environment Variables
-  flutter_dotenv: ^5.1.0
-  
+
   # Loading & Alerts
   flutter_spinkit: ^5.2.0
   
@@ -76,7 +73,6 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - .env
 
   # Fonts - Agrandir
   fonts:

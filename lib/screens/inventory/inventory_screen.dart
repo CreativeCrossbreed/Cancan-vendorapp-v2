@@ -18,7 +18,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   List<Map<String, dynamic>> _products = [];
   
   // Dummy data flag - set to false when ready for production
-  static const bool _useDummyData = true;
+  static const bool _useDummyData = false;
 
   @override
   void initState() {

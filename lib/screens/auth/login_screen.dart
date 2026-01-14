@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'TEST MODE: Use OTP 123456',
+                          'DEV: Use OTP 000000 (simulated, no SMS needed)',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppTheme.white,

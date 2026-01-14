@@ -1,28 +1,41 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/session_service.dart';
 
 /// Supabase configuration and initialization
+///
+/// This class uses compile-time constants for API keys via --dart-define.
+/// Example usage:
+/// ```bash
+/// flutter run --dart-define-from-file=api-keys.json
+/// flutter build apk --release --dart-define-from-file=api-keys.json --obfuscate
+/// ```
 class SupabaseConfig {
+  /// Supabase URL from compile-time constants
+  static const String _supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
+
+  /// Supabase Anon Key from compile-time constants
+  static const String _supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
+
   static Future<void> initialize() async {
-    // Load environment variables
-    await dotenv.load(fileName: ".env");
-
-    // Get credentials from .env file
-    final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-
     // Validate credentials
-    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
       throw Exception(
-        'Supabase credentials not found. Please check your .env file.',
+        'Supabase credentials not configured.\n'
+        'Please use --dart-define to pass SUPABASE_URL and SUPABASE_ANON_KEY.\n'
+        'Example: flutter run --dart-define-from-file=api-keys.json',
       );
     }
 
     // Initialize Supabase
     await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
+      url: _supabaseUrl,
+      anonKey: _supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce, // More secure
       ),

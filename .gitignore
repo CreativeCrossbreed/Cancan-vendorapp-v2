@@ -83,3 +83,5 @@ Thumbs.db
 # ------------------------------
 .env
 .env.*
+api-keys.json
+api-keys.*.json

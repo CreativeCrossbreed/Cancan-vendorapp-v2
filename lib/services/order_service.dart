@@ -272,8 +272,11 @@ class OrderService {
     }
 
     try {
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        print('⚠️ User not authenticated - cannot fetch orders');
+        return [];
+      }
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
@@ -372,9 +375,11 @@ class OrderService {
         return {'totalCans': totalCans, 'totalEarnings': totalEarnings};
       }
 
-      // In test mode, use hardcoded vendor ID
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '5d4b8601-2bef-4ce3-8631-b62730d403ea';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        print('⚠️ User not authenticated - cannot fetch daily summary');
+        return {'totalCans': 0, 'totalEarnings': 0.0};
+      }
 
       final today = DateTime.now();
       final dateStr =

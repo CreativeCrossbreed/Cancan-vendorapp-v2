@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "mcp__web-search-prime__webSearchPrime",
+      "mcp__web-reader__webReader",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter run:*)",
+      "Bash(timeout:*)"
+    ]
+  }
+}
