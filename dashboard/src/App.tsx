@@ -16,6 +16,7 @@ import Orders from './pages/Orders';
 import WhatsApp from './pages/WhatsApp';
 import Commissions from './pages/Commissions';
 import Settings from './pages/Settings';
+import Landing from './pages/Landing';
 
 // Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,6 +32,7 @@ const ThemedApp: React.FC = () => {
       <CssBaseline />
       <Router>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route
             path="/"

@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'crypto';
 import axios from 'axios';
 import { supabase } from '../config/database';
 import { authenticateToken } from '../middleware/auth';
@@ -28,6 +29,16 @@ router.get('/webhook', (req, res) => {
 
 // Webhook endpoint for incoming messages
 router.post('/webhook', async (req, res) => {
+  const appSecret = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
+  const signature = req.headers['x-hub-signature-256'] as string | undefined;
+  if (appSecret && signature) {
+    const raw = (req as any).rawBody as Buffer | undefined;
+    if (!raw) return res.sendStatus(400);
+    const hmac = crypto.createHmac('sha256', appSecret).update(raw).digest('hex');
+    const expected = `sha256=${hmac}`;
+    const ok = expected.length === signature.length && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    if (!ok) return res.sendStatus(401);
+  }
   try {
     const data = req.body;
 

@@ -154,7 +154,7 @@ const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                placeholder="admin@cancan.com"
+                placeholder="you@example.com"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -215,32 +215,6 @@ const Login: React.FC = () => {
                 )}
               </Button>
 
-              <Box
-                sx={{
-                  mt: 3,
-                  p: 2,
-                  bgcolor: '#F8F9FA',
-                  borderRadius: 2,
-                  border: '1px solid #E8EAED',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  display="block"
-                  align="center"
-                  sx={{ color: 'text.secondary', mb: 0.5 }}
-                >
-                  <strong>Demo Credentials:</strong>
-                </Typography>
-                <Typography
-                  variant="caption"
-                  display="block"
-                  align="center"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  Email: admin@cancan.com &nbsp;|&nbsp; Password: admin123
-                </Typography>
-              </Box>
             </Box>
           </Paper>
 

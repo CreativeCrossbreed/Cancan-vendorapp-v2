@@ -122,7 +122,7 @@ const Settings: React.FC = () => {
               </Box>
               <Box sx={{ bgcolor: '#F8F9FA', p: 3, borderRadius: 2, mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 1.5 }}><strong>Name:</strong> {user?.name || 'Admin User'}</Typography>
-                <Typography variant="body2" sx={{ mb: 1.5 }}><strong>Email:</strong> {user?.email || 'admin@cancan.com'}</Typography>
+                <Typography variant="body2" sx={{ mb: 1.5 }}><strong>Email:</strong> {user?.email || 'you@example.com'}</Typography>
                 <Typography variant="body2" sx={{ mb: 1.5 }}><strong>Role:</strong> {user?.role || 'Administrator'}</Typography>
                 <Typography variant="body2"><strong>Last Login:</strong> {new Date().toLocaleDateString()}</Typography>
               </Box>
