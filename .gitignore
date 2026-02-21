@@ -12,6 +12,7 @@
 # Build outputs
 # ------------------------------
 build/
+dist/
 
 # ------------------------------
 # IDEs
@@ -19,6 +20,76 @@ build/
 .idea/
 .vscode/
 *.iml
+
+# ------------------------------
+# Node.js
+# ------------------------------
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+build/
+dist/
+
+# Environment variables
+.env*
+!.env.example
+
+# Coverage
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# ESLint cache
+.eslintcache
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ------------------------------
+# Server (Node.js/Express)
+# ------------------------------
+server/node_modules/
+server/dist/
+server/.env
+server/.env.*
+server/logs/
+server/*.log
+
+# ------------------------------
+# Dashboard (React)
+# ------------------------------
+dashboard/node_modules/
+dashboard/build/
+dashboard/.env
+dashboard/.env.*
+dashboard/.cache/
+dashboard/eslint-cache
 
 # ------------------------------
 # Android
@@ -83,3 +154,40 @@ Thumbs.db
 # ------------------------------
 .env
 .env.*
+
+# ------------------------------
+# Database
+# ------------------------------
+*.sqlite
+*.sqlite3
+*.db
+
+# ------------------------------
+# OS generated files
+# ------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ------------------------------
+# Temporary files
+# ------------------------------
+*.temp
+*.swp
+*.swo
+*~
+
+# ------------------------------
+# Certificates and keys
+# ------------------------------
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+android/key.properties
