@@ -30,13 +30,11 @@ import {
   LinearProgress,
 } from '@mui/material';
 import {
-  Payment as PaymentIcon,
   TrendingUp as TrendingUpIcon,
   AccountBalance as AccountBalanceIcon,
   Pending as PendingIcon,
   CheckCircle as CheckCircleIcon,
   Visibility as VisibilityIcon,
-  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';

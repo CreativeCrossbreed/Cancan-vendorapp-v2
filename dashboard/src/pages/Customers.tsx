@@ -32,10 +32,9 @@ import {
   Visibility as ViewIcon,
   Person as PersonIcon,
   Phone as PhoneIcon,
-  LocationOn as LocationIcon,
   ShoppingBasket as ShoppingBasketIcon,
   AttachMoney as AttachMoneyIcon,
-  TrendingUp as TrendingUp,
+  TrendingUp,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';

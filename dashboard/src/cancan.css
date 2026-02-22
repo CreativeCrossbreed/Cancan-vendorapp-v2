@@ -1,0 +1,147 @@
+/* ==========================================================
+   Can Can Website Styles — scoped under .cancan-site
+   to prevent collisions with MUI / dashboard styles.
+   ========================================================== */
+
+.cancan-site {
+  --primary: #6DD3DC;
+  --secondary: #A9E06D;
+  --soft: #E3F0B6;
+  --bg: #FAF8F0;
+  --muted: #6b7280;
+  --card: #ffffff;
+  --max: 1100px;
+}
+
+/* Prefer local Agrandir family if installed */
+@font-face { font-family: 'Agrandir'; src: local('Agrandir ExtraLight'), local('Agrandir-ExtraLight'); font-weight: 200; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir Light'), local('Agrandir-Light'); font-weight: 300; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir'), local('Agrandir-Regular'); font-weight: 400; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir Medium'), local('Agrandir-Medium'); font-weight: 500; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir SemiBold'), local('Agrandir-SemiBold'); font-weight: 600; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir Bold'), local('Agrandir-Bold'); font-weight: 700; font-style: normal; font-display: swap }
+@font-face { font-family: 'Agrandir'; src: local('Agrandir ExtraBold'), local('Agrandir-ExtraBold'); font-weight: 800; font-style: normal; font-display: swap }
+
+.cancan-site {
+  margin: 0;
+  font-family: 'Agrandir', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #0f172a;
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.cancan-site *, .cancan-site *::before, .cancan-site *::after {
+  box-sizing: border-box;
+}
+
+.cancan-site a { color: inherit; }
+
+.cancan-site .container { max-width: var(--max); padding: 0 20px; margin: 0 auto; }
+
+.cancan-site .site-header { background: transparent; }
+.cancan-site .header-inner { display: flex; align-items: center; height: 72px; gap: 20px; position: relative; }
+.cancan-site .site-header { position: sticky; top: 0; backdrop-filter: blur(6px); z-index: 1000; background: linear-gradient(0deg, rgba(250,248,240,0.85), rgba(250,248,240,0.85)); box-shadow: 0 6px 18px rgba(15,23,42,0.04); }
+.cancan-site .brand { display: inline-flex; align-items: center; text-decoration: none; }
+.cancan-site .logo { height: 48px; display: block; }
+
+.cancan-site .brand-text { font-weight: 800; font-size: 1.25rem; color: var(--primary); margin-left: 8px; }
+
+.cancan-site h1, .cancan-site h2, .cancan-site h3, .cancan-site .brand-text { font-family: 'Agrandir', Inter, sans-serif; }
+.cancan-site h1 { font-weight: 800; }
+.cancan-site h2, .cancan-site h3 { font-weight: 700; }
+.cancan-site .nav { margin-left: auto; display: flex; gap: 22px; align-items: center; }
+.cancan-site .nav a { color: var(--muted); font-weight: 600; padding: 8px 10px; border-radius: 8px; text-decoration: none; }
+.cancan-site .nav a:hover { background: var(--soft); color: var(--primary); }
+.cancan-site .header-actions { display: flex; align-items: center; gap: 12px; }
+.cancan-site .cta { margin-left: 8px; padding: 10px 16px; background: var(--primary); color: #fff; border-radius: 12px; text-decoration: none; font-weight: 700; }
+.cancan-site .btn.outline { padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(15,23,42,0.06); background: transparent; color: var(--muted); font-weight: 700; }
+
+.cancan-site .hero { padding: 56px 0; }
+.cancan-site .hero-inner { display: grid; grid-template-columns: 1fr 380px; gap: 32px; align-items: center; }
+.cancan-site .hero-text h1 { margin: 0 0 12px; font-size: 2rem; line-height: 1.05; }
+.cancan-site .hero-text p { margin: 0 0 18px; color: var(--muted); max-width: 54ch; }
+.cancan-site .hero-actions { display: flex; gap: 12px; }
+.cancan-site .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; text-decoration: none; font-weight: 700; }
+.cancan-site .btn.primary { background: var(--primary); color: #fff; }
+.cancan-site .btn.outline { border: 1px solid rgba(109,211,220,0.28); color: var(--primary); background: transparent; }
+
+.cancan-site .phone-mock { width: 320px; height: 560px; background: linear-gradient(180deg,#ffffff,var(--soft)); border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(15,23,42,0.06); }
+.cancan-site .mock-screen { padding: 20px; color: var(--muted); text-align: center; }
+
+.cancan-site .how { padding: 56px 0; background: var(--soft); }
+.cancan-site .how .container { padding: 8px 20px; }
+.cancan-site .section-head { margin-bottom: 18px; }
+.cancan-site .section-head h2 { margin: 0 0 8px; }
+.cancan-site .section-head .muted { color: var(--muted); margin: 0; }
+.cancan-site .steps { display: flex; gap: 18px; }
+.cancan-site .step { flex: 1; background: var(--card); padding: 22px; border-radius: 12px; border: 1px solid rgba(15,23,42,0.06); box-shadow: 0 6px 22px rgba(15,23,42,0.03); }
+.cancan-site .step h3 { margin: 0 0 8px; }
+.cancan-site .step p { margin: 0; color: var(--muted); }
+
+.cancan-site .vendor-section { padding: 56px 0; }
+.cancan-site .vendor-inner { padding: 0 20px; }
+.cancan-site .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+.cancan-site .feature { background: var(--card); padding: 20px; border-radius: 12px; text-align: left; border: 1px solid rgba(15,23,42,0.06); box-shadow: 0 6px 22px rgba(15,23,42,0.03); }
+.cancan-site .feature h4 { margin: 0 0 8px; }
+.cancan-site .feature p { margin: 0; color: var(--muted); }
+.cancan-site .vendor-cta { margin-top: 20px; text-align: center; }
+
+.cancan-site .contact { padding: 36px 0; }
+.cancan-site .contact-inner { display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+
+.cancan-site .site-footer { padding: 20px 0; border-top: 1px solid rgba(169,224,109,0.12); text-align: center; background: transparent; }
+.cancan-site .footer-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cancan-site .footer-links { display: flex; gap: 16px; }
+.cancan-site .footer-links a { text-decoration: none; color: var(--muted); }
+.cancan-site .footer-links a:hover { color: var(--primary); }
+
+/* Legal pages */
+.cancan-site .legal { padding: 40px 0; }
+.cancan-site .legal h1 { margin: 0 0 8px; }
+.cancan-site .legal h2 { margin: 24px 0 8px; }
+.cancan-site .legal h3 { margin: 18px 0 6px; }
+.cancan-site .legal p { line-height: 1.6; }
+.cancan-site .muted { color: var(--muted); }
+.cancan-site .muted-sm { color: var(--muted); font-size: 0.9em; }
+
+/* Floating WhatsApp FAB */
+.cancan-site .whatsapp-fab { position: fixed; right: 20px; bottom: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(109,211,220,0.18); z-index: 1200; text-decoration: none; transition: transform 0.2s ease; }
+.cancan-site .whatsapp-fab svg { display: block; }
+.cancan-site .whatsapp-fab:focus { outline: 3px solid rgba(109,211,220,0.18); outline-offset: 4px; }
+.cancan-site .whatsapp-fab:hover { transform: translateY(-3px); }
+
+/* Mobile menu button */
+.cancan-site .menu-btn { display: none; background: transparent; border: 0; padding: 8px; border-radius: 8px; cursor: pointer; }
+.cancan-site .menu-btn .hamburger { width: 22px; height: 2px; background: var(--muted); display: block; position: relative; }
+.cancan-site .menu-btn .hamburger::before, .cancan-site .menu-btn .hamburger::after { content: ''; position: absolute; left: 0; width: 22px; height: 2px; background: var(--muted); }
+.cancan-site .menu-btn .hamburger::before { top: -7px; }
+.cancan-site .menu-btn .hamburger::after { top: 7px; }
+
+/* Mobile nav overlay */
+.cancan-site .mobile-nav { position: fixed; left: 0; right: 0; top: 72px; background: var(--bg); box-shadow: 0 12px 40px rgba(15,23,42,0.08); z-index: 999; }
+.cancan-site .mobile-inner { display: flex; flex-direction: column; padding: 20px 0; }
+.cancan-site .mobile-link { padding: 12px 20px; border-bottom: 1px solid rgba(15,23,42,0.03); color: var(--muted); text-decoration: none; }
+.cancan-site .mobile-cta { display: inline-block; margin: 12px 20px; padding: 10px 14px; background: var(--primary); color: #fff; border-radius: 10px; text-decoration: none; }
+
+@media (max-width: 900px) {
+  .cancan-site .hero-inner { grid-template-columns: 1fr; }
+  .cancan-site .phone-mock { margin: 18px auto; }
+  .cancan-site .feature-grid { grid-template-columns: repeat(2,1fr); }
+  .cancan-site .steps { flex-direction: column; }
+  .cancan-site .contact-inner { flex-direction: column; align-items: flex-start; }
+  .cancan-site .nav { display: none; }
+  .cancan-site .section-head { text-align: center; }
+  .cancan-site .section-head .muted { max-width: 46ch; margin: 0 auto; }
+  .cancan-site .menu-btn { display: inline-flex; }
+  .cancan-site .header-actions .btn.outline { display: none; }
+  .cancan-site .cta { padding: 8px 12px; }
+}
+
+@media (max-width: 420px) {
+  .cancan-site .logo { height: 40px; }
+  .cancan-site .brand-text { font-size: 1.05rem; }
+  .cancan-site .hero-text h1 { font-size: 1.4rem; }
+  .cancan-site .phone-mock { width: 260px; height: 440px; }
+}

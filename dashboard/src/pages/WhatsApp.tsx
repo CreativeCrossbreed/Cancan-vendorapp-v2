@@ -39,8 +39,6 @@ import {
   Phone as PhoneIcon,
   Settings as SettingsIcon,
   Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
   Schedule as ScheduleIcon,
   ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';

@@ -36,7 +36,7 @@ import {
   Visibility as ViewIcon,
   Store as StoreIcon,
   Person as PersonIcon,
-  TrendingUp as TrendingUp,
+  TrendingUp,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
@@ -53,7 +53,6 @@ const Vendors: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState({
     phone: '',
     name: '',
@@ -104,7 +103,6 @@ const Vendors: React.FC = () => {
   };
 
   const handleEditVendor = (vendor: Vendor) => {
-    setSelectedVendor(vendor);
     setFormData({
       phone: vendor.phone,
       name: vendor.name,

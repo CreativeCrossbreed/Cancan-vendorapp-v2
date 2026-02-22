@@ -17,11 +17,13 @@ import WhatsApp from './pages/WhatsApp';
 import Commissions from './pages/Commissions';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 // Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
-  return token ? <>{children}</> : <Navigate to="/login" />;
+  return token ? <>{children}</> : <Navigate to="/portal/login" />;
 };
 
 const ThemedApp: React.FC = () => {
@@ -32,17 +34,22 @@ const ThemedApp: React.FC = () => {
       <CssBaseline />
       <Router>
         <Routes>
+          {/* Public Can Can website routes */}
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+
+          {/* Secret admin portal routes */}
+          <Route path="/portal/login" element={<Login />} />
           <Route
-            path="/"
+            path="/portal"
             element={
               <ProtectedRoute>
                 <Layout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route index element={<Navigate to="/portal/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="vendors" element={<Vendors />} />
             <Route path="customers" element={<Customers />} />

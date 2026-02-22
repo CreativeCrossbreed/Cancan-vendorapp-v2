@@ -17,8 +17,6 @@ import {
   MenuItem,
   Badge,
   Tooltip,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -44,13 +42,13 @@ const DRAWER_WIDTH_EXPANDED = 260;
 const DRAWER_WIDTH_COLLAPSED = 80;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-  { text: 'Vendors', icon: <People />, path: '/vendors' },
-  { text: 'Customers', icon: <People />, path: '/customers' },
-  { text: 'Orders', icon: <ShoppingCart />, path: '/orders' },
-  { text: 'WhatsApp', icon: <WhatsApp />, path: '/whatsapp' },
-  { text: 'Commissions', icon: <Payments />, path: '/commissions' },
-  { text: 'Settings', icon: <Settings />, path: '/settings' },
+  { text: 'Dashboard', icon: <Dashboard />, path: '/portal/dashboard' },
+  { text: 'Vendors', icon: <People />, path: '/portal/vendors' },
+  { text: 'Customers', icon: <People />, path: '/portal/customers' },
+  { text: 'Orders', icon: <ShoppingCart />, path: '/portal/orders' },
+  { text: 'WhatsApp', icon: <WhatsApp />, path: '/portal/whatsapp' },
+  { text: 'Commissions', icon: <Payments />, path: '/portal/commissions' },
+  { text: 'Settings', icon: <Settings />, path: '/portal/settings' },
 ];
 
 const Layout: React.FC = () => {
@@ -63,8 +61,6 @@ const Layout: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { mode, toggleColorMode, theme } = useThemeContext();
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -79,7 +75,7 @@ const Layout: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    navigate('/portal/login');
   };
 
   const isExpanded = !isCollapsed || isHovered;

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { DashboardStats, Vendor, Customer, Order, WhatsAppMessage, WhatsAppOrder, CommissionRecord } from '../types';
+import { DashboardStats, Vendor, Customer } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
