@@ -1,243 +1,65 @@
-# ------------------------------
-# Flutter / Dart
-# ------------------------------
+# ──────────────────────────────────────────
+# Can Can — Monorepo .gitignore
+# Two active projects: frontend/ and android/
+# ──────────────────────────────────────────
+
+# ── Secrets (NEVER commit) ────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+android/key.properties
+api-keys.json
+
+# ── Node / Next.js (frontend/) ────────────
+node_modules/
+**/node_modules/
+.next/
+out/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.pnp
+.pnp.js
+.eslintcache
+.npm
+coverage/
+*.tsbuildinfo
+.cache/
+
+# ── Flutter / Dart (android/) ─────────────
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
-
-# ------------------------------
-# Build outputs
-# ------------------------------
-build/
-dist/
-dashboard/.next/
-
-# ------------------------------
-# IDEs
-# ------------------------------
-.idea/
-.vscode/
-*.iml
-
-# ------------------------------
-# Node.js
-# ------------------------------
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Dependency directories
-node_modules/
-**/node_modules/
-server/node_modules/
-server/node_modules/**
-.pnp
-.pnp.js
-
-# Build outputs
-build/
-dist/
-
-# Environment variables
-.env*
-!.env.example
-
-# Coverage
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# ESLint cache
-.eslintcache
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Specific server node_modules files that might be missed
-server/node_modules/
-server/node_modules/**
-server/node_modules/.*
-**/server/node_modules/
-**/server/node_modules/**
-
-# Yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# ------------------------------
-# Server (Node.js/Express)
-# ------------------------------
-server/node_modules/**
-server/dist/
-server/build/
-server/.env
-server/.env.*
-server/logs/
-server/*.log
-server/npm-debug.log*
-server/yarn-debug.log*
-server/yarn-error.log*
-server/pnpm-debug.log*
-server/.npm
-server/.yarn/cache
-server/.yarn/unplugged
-server/.yarn/build-state.yml
-server/.yarn/install-state.gz
-server/.pnp.*
-server/.cache/
-server/.eslintcache
-server/.nyc_output/
-server/coverage/
-server/*.tsbuildinfo
-server/tsconfig.tsbuildinfo
-
-# ------------------------------
-# Dashboard (React)
-# ------------------------------
-dashboard/node_modules/
-dashboard/build/
-dashboard/dist/
-dashboard/.env
-dashboard/.env.*
-dashboard/.cache/
-dashboard/eslint-cache
-dashboard/.eslintcache
-dashboard/*.log
-dashboard/npm-debug.log*
-dashboard/yarn-debug.log*
-dashboard/yarn-error.log*
-dashboard/pnpm-debug.log*
-
-# ------------------------------
-# Android
-# ------------------------------
 android/.gradle/
 android/local.properties
 android/**/build/
 android/**/captures/
 android/**/.cxx/
+android/*.apk
+android/*.aab
 
-# Keystore (NEVER commit)
-android/key.properties
-*.jks
-*.keystore
+# ── IDEs ──────────────────────────────────
+.idea/
+.vscode/
+*.iml
 
-# ------------------------------
-# iOS / macOS
-# ------------------------------
-ios/Pods/
-ios/.symlinks/
-ios/Flutter/ephemeral/
-ios/Flutter/App.framework
-ios/Flutter/Flutter.framework
-ios/Flutter/Generated.xcconfig
-ios/Flutter/flutter_export_environment.sh
-ios/Flutter/.last_build_id
-ios/Runner/GeneratedPluginRegistrant.*
-
-macos/Pods/
-macos/Flutter/ephemeral/
-macos/Flutter/GeneratedPluginRegistrant.swift
-
-# ------------------------------
-# Web
-# ------------------------------
-web/.dart_tool/
-web/build/
-
-# ------------------------------
-# Windows
-# ------------------------------
-windows/flutter/ephemeral/
-windows/**/build/
-
-# ------------------------------
-# Linux
-# ------------------------------
-linux/flutter/ephemeral/
-linux/**/build/
-
-# ------------------------------
-# Logs & misc
-# ------------------------------
-*.log
+# ── OS ────────────────────────────────────
+.DS_Store
+Thumbs.db
 *.tmp
-*.bak
-.DS_Store
-Thumbs.db
-*.pid
-*.seed
-*.pid.lock
-lib-cov
-_grunt
-_bower
-.lock-wscript
-*.tgz
-*.tar.gz
-.npm
-.eslintcache
-.node_repl_history
-*.tsbuildinfo
-tsconfig.tsbuildinfo
-
-# ------------------------------
-# Environment / secrets
-# ------------------------------
-.env
-.env.*
-
-# ------------------------------
-# Database
-# ------------------------------
-*.sqlite
-*.sqlite3
-*.db
-
-# ------------------------------
-# OS generated files
-# ------------------------------
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# ------------------------------
-# Temporary files
-# ------------------------------
-*.temp
 *.swp
-*.swo
 *~
 
-# ------------------------------
-# Certificates and keys
-# ------------------------------
-*.pem
-*.key
-*.crt
-*.p12
-*.jks
-*.keystore
-android/key.properties
+# ── Misc ──────────────────────────────────
+*.tgz
+*.tar.gz
