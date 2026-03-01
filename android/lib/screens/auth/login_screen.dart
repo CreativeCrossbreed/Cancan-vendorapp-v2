@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/theme.dart';
 import '../../services/auth_service.dart';
 import 'otp_screen.dart';
@@ -98,19 +99,18 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo/Brand Section
-                const Icon(
-                  Icons.water_drop_rounded,
-                  size: 80,
-                  color: AppTheme.white,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Can Can',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: AppTheme.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                Image.asset(
+                  'assets/images/Can Can [Logo].png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.water_drop_rounded,
+                      size: 80,
+                      color: AppTheme.white,
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -153,12 +153,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
 
                       // Phone Number Input
+                      const Text(
+                        'Phone Number',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         maxLength: 10,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         decoration: const InputDecoration(
-                          labelText: 'Phone Number',
                           hintText: '9876543210',
                           prefixIcon: Icon(Icons.phone_outlined),
                           prefixText: '+91 ',
@@ -207,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'DEV MODE: Enter 1111111111 to auto-login',
+                          'DEV: Use OTP 000000 (simulated, no SMS needed)',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppTheme.white,
@@ -222,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Support Text
                 Text(
-                  'Having trouble logging in?\nContact support at support@cancan.app',
+                  'Having trouble logging in?\nContact support at support@cancanindia.com',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.white.withValues(alpha: 0.8),

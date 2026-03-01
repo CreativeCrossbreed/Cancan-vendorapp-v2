@@ -57,7 +57,11 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: const Text('Notification Settings'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           TextButton(
             onPressed: _saveSettings,

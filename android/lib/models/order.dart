@@ -7,6 +7,8 @@ class Order {
   final DateTime deliveryDate;
   final String timeSlot;
   final double totalAmount;
+  final double amountPaid;
+  final double remainingAmount;
   final String status;
   final bool isDelivered;
   final DateTime? deliveredAt;
@@ -15,10 +17,12 @@ class Order {
   final String? notes;
   final String? cancellationReason;
   final DateTime createdAt;
+  final DateTime updatedAt;
 
   // Related data
   final Customer? customer;
   final List<OrderItem> items;
+  final List<Payment>? payments;
 
   Order({
     required this.id,
@@ -28,6 +32,8 @@ class Order {
     required this.deliveryDate,
     required this.timeSlot,
     required this.totalAmount,
+    required this.amountPaid,
+    required this.remainingAmount,
     required this.status,
     required this.isDelivered,
     this.deliveredAt,
@@ -36,8 +42,10 @@ class Order {
     this.notes,
     this.cancellationReason,
     required this.createdAt,
+    required this.updatedAt,
     this.customer,
     this.items = const [],
+    this.payments,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -49,6 +57,12 @@ class Order {
       deliveryDate: DateTime.parse(json['delivery_date'] as String),
       timeSlot: json['time_slot'] as String,
       totalAmount: (json['total_amount'] as num).toDouble(),
+      amountPaid: json['amount_paid'] != null
+          ? (json['amount_paid'] as num).toDouble()
+          : 0.0,
+      remainingAmount: json['remaining_amount'] != null
+          ? (json['remaining_amount'] as num).toDouble()
+          : 0.0,
       status: json['status'] as String,
       isDelivered: json['is_delivered'] as bool,
       deliveredAt: json['delivered_at'] != null
@@ -61,6 +75,7 @@ class Order {
       notes: json['notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
       customer: json['customers'] != null
           ? Customer.fromJson(json['customers'] as Map<String, dynamic>)
           : null,
@@ -69,6 +84,11 @@ class Order {
               .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
               .toList()
           : [],
+      payments: json['payments'] != null
+          ? (json['payments'] as List)
+              .map((p) => Payment.fromJson(p as Map<String, dynamic>))
+              .toList()
+          : null,
     );
   }
 
@@ -81,6 +101,8 @@ class Order {
       'delivery_date': deliveryDate.toIso8601String(),
       'time_slot': timeSlot,
       'total_amount': totalAmount,
+      'amount_paid': amountPaid,
+      'remaining_amount': remainingAmount,
       'status': status,
       'is_delivered': isDelivered,
       'delivered_at': deliveredAt?.toIso8601String(),
@@ -89,6 +111,7 @@ class Order {
       'notes': notes,
       'cancellation_reason': cancellationReason,
       'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 }
@@ -103,6 +126,8 @@ class Customer {
   final String? flatNumber;
   final String? floor;
   final String? buildingName;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Customer({
     required this.id,
@@ -113,6 +138,8 @@ class Customer {
     this.flatNumber,
     this.floor,
     this.buildingName,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -125,6 +152,8 @@ class Customer {
       flatNumber: json['flat_number'] as String?,
       floor: json['floor'] as String?,
       buildingName: json['building_name'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
 
@@ -197,4 +226,118 @@ class Product {
       name: json['name'] as String,
     );
   }
+}
+
+/// Payment Model - Tracks individual payment transactions
+class Payment {
+  final String id;
+  final String orderId;
+  final double amount;
+  final String? paymentMethod;
+  final String? notes;
+  final DateTime createdAt;
+
+  Payment({
+    required this.id,
+    required this.orderId,
+    required this.amount,
+    this.paymentMethod,
+    this.notes,
+    required this.createdAt,
+  });
+
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      id: json['id'] as String,
+      orderId: json['order_id'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      paymentMethod: json['payment_method'] as String?,
+      notes: json['notes'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'order_id': orderId,
+      'amount': amount,
+      'payment_method': paymentMethod,
+      'notes': notes,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+}
+
+/// VendorProduct Model - Links vendors to products with pricing and inventory
+class VendorProduct {
+  final String id;
+  final String vendorId;
+  final String productId;
+  final double sellingPrice;
+  final double depositAmount;
+  final int currentStock;
+  final int lowStockThreshold;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  // Related product info
+  final Product? product;
+
+  VendorProduct({
+    required this.id,
+    required this.vendorId,
+    required this.productId,
+    required this.sellingPrice,
+    required this.depositAmount,
+    required this.currentStock,
+    required this.lowStockThreshold,
+    required this.createdAt,
+    required this.updatedAt,
+    this.product,
+  });
+
+  factory VendorProduct.fromJson(Map<String, dynamic> json) {
+    return VendorProduct(
+      id: json['id'] as String,
+      vendorId: json['vendor_id'] as String,
+      productId: json['product_id'] as String,
+      sellingPrice: (json['selling_price'] as num).toDouble(),
+      depositAmount: (json['deposit_amount'] as num).toDouble(),
+      currentStock: json['current_stock'] as int,
+      lowStockThreshold: json['low_stock_threshold'] as int,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      product: json['products'] != null
+          ? Product.fromJson(json['products'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'vendor_id': vendorId,
+      'product_id': productId,
+      'selling_price': sellingPrice,
+      'deposit_amount': depositAmount,
+      'current_stock': currentStock,
+      'low_stock_threshold': lowStockThreshold,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Get stock status label
+  String get stockStatus {
+    if (currentStock == 0) return 'out_of_stock';
+    if (currentStock <= lowStockThreshold) return 'low_stock';
+    return 'in_stock';
+  }
+
+  /// Check if stock is low
+  bool get isLowStock => currentStock <= lowStockThreshold;
+
+  /// Check if out of stock
+  bool get isOutOfStock => currentStock == 0;
 }

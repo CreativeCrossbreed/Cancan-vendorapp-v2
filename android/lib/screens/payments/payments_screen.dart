@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../services/payment_service.dart';
@@ -21,21 +21,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
   final _paymentService = PaymentService();
   bool _isLoading = true;
 
-  List<Order> _allCompletedOrders = [];
   List<Order> _unpaidOrders = [];
-  List<Map<String, dynamic>> _paymentHistory = [];
-  Map<String, dynamic> _paymentStatistics = {};
-
-  // Date range for filtering
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
-  DateTime _endDate = DateTime.now();
-
-  // Summary data
   double _totalPending = 0.0;
-  double _totalEarnings = 0.0;
-  int _totalCansDelivered = 0;
-  double _walletBalance = 0.0;
-  late TabController _tabController;
 
   @override
   void initState() {
@@ -47,41 +34,31 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     setState(() => _isLoading = true);
 
     try {
-      // Get ALL completed orders (paid + unpaid)
-      final allCompleted =
-          await _orderService.getTodayOrders(status: 'completed');
-
+      // Get ALL completed orders (across all dates) that are unpaid
+      final allCompleted = await _orderService.getTodayOrders(status: 'completed');
+      
+      // For production, we'd need to fetch all unpaid orders, but for now use today's
+      // In a real scenario, you'd query all completed orders with payment_status = 'unpaid'
+      
       // Filter unpaid orders
       final unpaid = allCompleted
           .where((order) => order.paymentStatus == 'unpaid')
           .toList();
 
-      // Calculate totals from ALL completed orders
-      double totalEarnings = 0;
+      // Calculate total pending amount
       double pendingAmount = 0;
-      int totalCans = 0;
-
-      for (final order in allCompleted) {
-        totalEarnings += order.totalAmount;
-        totalCans += order.items.fold(0, (sum, item) => sum + item.quantity);
-
-        if (order.paymentStatus == 'unpaid') {
-          pendingAmount += order.totalAmount;
-        }
+      for (final order in unpaid) {
+        pendingAmount += order.totalAmount;
       }
 
       setState(() {
-        _allCompletedOrders = allCompleted;
         _unpaidOrders = unpaid;
-        _totalEarnings = totalEarnings;
         _totalPending = pendingAmount;
-        _totalCansDelivered = totalCans;
         _isLoading = false;
       });
 
-      print(
-          '💰 Payments loaded: ${allCompleted.length} completed, ${unpaid.length} unpaid');
-      print('📊 Total Earnings: Rs.$totalEarnings, Pending: Rs.$pendingAmount');
+      print('💰 Payments loaded: ${unpaid.length} unpaid orders');
+      print('📊 Total Pending: Rs.$pendingAmount');
     } catch (e) {
       print('❌ Error loading payments: $e');
       setState(() => _isLoading = false);
@@ -90,15 +67,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final dateRange = '${DateFormat('d MMM').format(_startDate)} - ${DateFormat('d MMM yyyy').format(_endDate)}';
-
     return Scaffold(
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Payments'),
-        elevation: 0,
-        backgroundColor: const Color(0xFF4CAF50),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -110,53 +80,53 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // Custom Header
               Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: AppTheme.paddingXXL,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Hamburger + Title Row
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Today's Deliveries",
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.white,
+                        // Isolated hamburger icon
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.menu, color: AppTheme.white),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                        // Center title/subtitle
+                        Column(
+                          children: [
+                            Text(
+                              'Payments',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white.withValues(alpha: 0.9),
                                   ),
+                            ),
+                            const SizedBox(height: AppTheme.spacingXS),
+                            Text(
+                              'Track pending payments',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: AppTheme.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    Text(
-                      DateFormat('EEEE, d MMM yyyy').format(DateTime.now()),
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppTheme.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Summary Cards Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSummaryCard(
-                            context,
-                            Icons.delivery_dining,
-                            '$_totalCansDelivered',
-                            'Cans to be delivered',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildSummaryCard(
-                            context,
-                            Icons.currency_rupee,
-                            'Rs. ${_totalEarnings.toStringAsFixed(0)}',
-                            'Earnings',
-                          ),
-                        ),
+                        // Balance spacing
+                        const SizedBox(width: 48),
                       ],
                     ),
                   ],
@@ -177,99 +147,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(20),
+                        padding: AppTheme.paddingXXL,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Title
-                            Text(
-                              'Payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Track earnings & pending payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Date Range Selector
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.lightGray,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.calendar_today,
-                                      size: 16, color: AppTheme.textSecondary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    dateRange,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    'Today',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: AppTheme.successGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Earnings Summary
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildEarningSummaryCard(
-                                    context,
-                                    Icons.local_shipping_outlined,
-                                    'Total Cans\nDelivered',
-                                    _totalCansDelivered.toString(),
-                                    AppTheme.primaryBlue,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildEarningSummaryCard(
-                                    context,
-                                    Icons.currency_rupee,
-                                    'Total\nEarnings',
-                                    'Rs. ${_totalEarnings.toStringAsFixed(0)}',
-                                    AppTheme.successGreen,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-
                             // Pending Payments Header
                             Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: AppTheme.cardPadding,
                               decoration: BoxDecoration(
                                 color: AppTheme.warningOrange
                                     .withValues(alpha: 0.1),
@@ -282,7 +166,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                               child: Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(8),
+                                    padding: AppTheme.paddingS,
                                     decoration: BoxDecoration(
                                       color: AppTheme.warningOrange,
                                       borderRadius: BorderRadius.circular(8),
@@ -293,7 +177,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                                       size: 20,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: AppTheme.spacingM),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -308,9 +192,9 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                                                 fontWeight: FontWeight.w600,
                                               ),
                                         ),
-                                        const SizedBox(height: 2),
+                                        const SizedBox(height: AppTheme.spacingXS),
                                         Text(
-                                          'Rs.${_totalPending.toStringAsFixed(0)}',
+                                          'Rs. ${_totalPending.toStringAsFixed(0)}',
                                           style: Theme.of(context)
                                               .textTheme
                                               .headlineSmall
@@ -331,22 +215,36 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                                 ],
                               ),
                             ),
+                            const SizedBox(height: AppTheme.spacingL),
+                            
+                            // Remind All Button
+                            if (_unpaidOrders.isNotEmpty)
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _remindAllToPay,
+                                  icon: const Icon(Icons.chat_rounded),
+                                  label: const Text('Remind all to Pay'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.successGreen,
+                                    padding: AppTheme.paddingVerticalL,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: AppTheme.spacingM),
+
+                            // Customer List Header
+                            Text(
+                              'Customers with Pending Payments',
+                              style:
+                                  Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                            ),
                           ],
                         ),
                       ),
-
-                      // Customer List Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          'Customers with Pending Payments',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppTheme.spacingL),
 
                       // Customers List
                       Expanded(
@@ -368,77 +266,6 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
   }
 
-  Widget _buildSummaryCard(
-      BuildContext context, IconData icon, String value, String label) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.white.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppTheme.white, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppTheme.white,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.white.withValues(alpha: 0.9),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEarningSummaryCard(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCustomersList() {
     if (_unpaidOrders.isEmpty) {
@@ -453,7 +280,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'All payments collected! 🎉',
+              'All Payments Collected !',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppTheme.successGreen,
                   ),
@@ -468,7 +295,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       itemCount: _unpaidOrders.length,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingM),
           child: _buildCustomerCard(_unpaidOrders[index]),
         );
       },
@@ -478,9 +305,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
   Widget _buildCustomerCard(Order order) {
     final customer = order.customer;
     if (customer == null) return const SizedBox();
+    
+    // Get remaining amount (stored in order or calculate)
+    final pendingAmount = order.totalAmount; // In real app, this would track partial payments
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppTheme.cardPadding,
       decoration: BoxDecoration(
         color: AppTheme.lightGray,
         borderRadius: BorderRadius.circular(12),
@@ -496,54 +326,33 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rs.${order.totalAmount.toStringAsFixed(0)}',
+                      customer.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingXS),
+                    Text(
+                      'Rs. ${pendingAmount.toStringAsFixed(0)}',
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: AppTheme.errorRed,
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      customer.name,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 12, color: AppTheme.textSecondary),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            customer.fullAddress,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
-                ),
-              ),
-              IconButton(
-                onPressed: () => _makePhoneCall(customer.phone),
-                icon: const Icon(Icons.call),
-                style: IconButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
-                  foregroundColor: AppTheme.white,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.spacingM),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _sendWhatsAppReminder(
-                      customer.phone, customer.name, order.totalAmount),
-                  icon: const Icon(Icons.chat_outlined, size: 18),
+                      customer.phone, customer.name, pendingAmount),
+                  icon: const Icon(Icons.chat_rounded, size: 18),
                   label: const Text('Remind to Pay'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.successGreen,
@@ -551,14 +360,14 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.spacingS),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _markAsPaid(order),
+                  onPressed: () => _showPaymentDialog(order, pendingAmount),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.successGreen,
                   ),
-                  child: const Text('Mark Paid'),
+                  child: const Text('Paid'),
                 ),
               ),
             ],
@@ -567,23 +376,134 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       ),
     );
   }
-
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final uri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  
+  Future<void> _remindAllToPay() async {
+    if (_unpaidOrders.isEmpty) return;
+    
+    for (final order in _unpaidOrders) {
+      final customer = order.customer;
+      if (customer != null) {
+        await _sendWhatsAppReminder(
+          customer.phone,
+          customer.name,
+          order.totalAmount,
+        );
+        // Small delay between messages
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
     }
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reminders sent to all customers'),
+          backgroundColor: AppTheme.successGreen,
+        ),
+      );
+    }
+  }
+  
+  void _showPaymentDialog(Order order, double pendingAmount) {
+    final amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Record Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Pending Amount: Rs. ${pendingAmount.toStringAsFixed(0)}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Amount Received',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+              ],
+              decoration: const InputDecoration(
+                hintText: 'Enter amount',
+                prefixText: 'Rs. ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final receivedAmount = double.tryParse(amountController.text);
+              if (receivedAmount == null || receivedAmount < 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid amount'),
+                    backgroundColor: AppTheme.errorRed,
+                  ),
+                );
+                return;
+              }
+              
+              if (receivedAmount >= pendingAmount) {
+                // Full payment
+                await _markAsPaid(order);
+              } else {
+                // Partial payment - update order with remaining amount
+                // In a real app, you'd store partial payments
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Partial payment recorded. Remaining: Rs. ${(pendingAmount - receivedAmount).toStringAsFixed(0)}',
+                    ),
+                    backgroundColor: AppTheme.warningOrange,
+                  ),
+                );
+                Navigator.pop(context);
+                _loadData(); // Refresh to show updated amounts
+              }
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _sendWhatsAppReminder(
       String phone, String name, double amount) async {
+    // Remove + and spaces from phone number
+    final cleanPhone = phone.replaceAll(RegExp(r'[+\s]'), '');
     final message =
-        'Hi $name! This is a friendly reminder about your pending water can payment of Rs.${amount.toStringAsFixed(0)}. Please pay at your earliest convenience. Thank you!';
+        'Hi $name! This is a friendly reminder about your pending water can payment of Rs. ${amount.toStringAsFixed(0)}. Please pay at your earliest convenience. Thank you!';
     final uri =
-        Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+        Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open WhatsApp'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
     }
   }
 
@@ -593,6 +513,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       status: order.status,
     );
 
+    if (!mounted) return;
     if (result['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

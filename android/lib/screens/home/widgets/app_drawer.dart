@@ -56,19 +56,19 @@ class _AppDrawerState extends State<AppDrawer> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Logo/Avatar
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppTheme.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.water_drop_rounded,
-                        size: 40,
-                        color: AppTheme.white,
-                      ),
+                    // Logo
+                    Image.asset(
+                      'assets/images/Can Can [Logo].png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.water_drop_rounded,
+                          size: 80,
+                          color: AppTheme.white,
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -165,7 +165,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       const Divider(height: 24),
                       // Business Section
                       _buildMenuItem(
-                        icon: Icons.person_outline,
+                        icon: Icons.business_rounded,
                         title: 'Business Details',
                         onTap: () {
                           Navigator.pop(context);
@@ -173,7 +173,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.inventory_outlined,
+                        icon: Icons.storefront_rounded,
                         title: 'Product Catalog',
                         onTap: () {
                           Navigator.pop(context);
@@ -186,7 +186,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.qr_code_2,
+                        icon: Icons.qr_code_2_rounded,
                         title: 'My QR Code',
                         onTap: () {
                           Navigator.pop(context);
@@ -199,7 +199,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.beach_access,
+                        icon: Icons.beach_access_rounded,
                         title: 'Vacation Mode',
                         onTap: () {
                           Navigator.pop(context);
@@ -212,7 +212,18 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.settings_outlined,
+                        icon: Icons.analytics_rounded,
+                        title: 'Analytics',
+                        onTap: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Analytics coming soon!')),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.settings_rounded,
                         title: 'Settings',
                         onTap: () {
                           Navigator.pop(context);
@@ -227,7 +238,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       const Divider(height: 24),
                       // Help Section
                       _buildMenuItem(
-                        icon: Icons.help_outline,
+                        icon: Icons.help_rounded,
                         title: 'Support & Help',
                         onTap: () {
                           Navigator.pop(context);
@@ -235,7 +246,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                       _buildMenuItem(
-                        icon: Icons.info_outline,
+                        icon: Icons.info_rounded,
                         title: 'About Can Can',
                         onTap: () {
                           Navigator.pop(context);
@@ -244,7 +255,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       ),
                       const Divider(height: 24),
                       _buildMenuItem(
-                        icon: Icons.logout,
+                        icon: Icons.logout_rounded,
                         title: 'Logout',
                         color: AppTheme.errorRed,
                         onTap: () => _handleLogout(context),
@@ -297,52 +308,201 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   void _showBusinessDetails(BuildContext context) {
+    final nameController = TextEditingController(text: _vendorData?['name'] ?? '');
+    final businessNameController = TextEditingController(text: _vendorData?['business_name'] ?? '');
+    final addressController = TextEditingController(text: _vendorData?['address'] ?? '');
+    bool isEditing = false;
+    bool isSaving = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppTheme.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Business Details',
-                  style: Theme.of(context).textTheme.titleLarge,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Business Details',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (!isEditing) ...[
+                _buildDetailItem('Vendor Name', _vendorData?['name'] ?? 'N/A'),
+                _buildDetailItem(
+                    'Business Name', _vendorData?['business_name'] ?? 'N/A'),
+                _buildDetailItem('Phone', _vendorData?['phone'] ?? 'N/A'),
+                _buildDetailItem('Address', _vendorData?['address'] ?? 'N/A'),
+              ] else ...[
+                const Text(
+                  'Vendor Name',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter vendor name',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Business Name',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: businessNameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter business name',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 16),
+                _buildDetailItem('Phone', _vendorData?['phone'] ?? 'N/A'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Address',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: addressController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter address',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.words,
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-            _buildDetailItem('Vendor Name', _vendorData?['name'] ?? 'N/A'),
-            _buildDetailItem(
-                'Business Name', _vendorData?['business_name'] ?? 'N/A'),
-            _buildDetailItem('Phone', _vendorData?['phone'] ?? 'N/A'),
-            _buildDetailItem('Address', _vendorData?['address'] ?? 'N/A'),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () {
+                              if (isEditing) {
+                                Navigator.pop(context);
+                              } else {
+                                Navigator.pop(context);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.mediumGray,
+                        foregroundColor: AppTheme.white,
+                      ),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              if (!isEditing) {
+                                setState(() => isEditing = true);
+                              } else {
+                                // Save changes
+                                setState(() => isSaving = true);
+                                try {
+                                  final result = await _vendorService.updateVendorProfile(
+                                    name: nameController.text.trim(),
+                                    businessName: businessNameController.text.trim(),
+                                    address: addressController.text.trim(),
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  if (result['success']) {
+                                    await _loadVendorData();
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Business details updated successfully!'),
+                                          backgroundColor: AppTheme.successGreen,
+                                        ),
+                                      );
+                                      Navigator.pop(context);
+                                    }
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(result['message'] ?? 'Failed to update'),
+                                          backgroundColor: AppTheme.errorRed,
+                                        ),
+                                      );
+                                    }
+                                    setState(() => isSaving = false);
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Something went wrong. Please try again.'),
+                                        backgroundColor: AppTheme.errorRed,
+                                      ),
+                                    );
+                                  }
+                                  setState(() => isSaving = false);
+                                }
+                              }
+                            },
+                      child: isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.white,
+                              ),
+                            )
+                          : Text(isEditing ? 'Save' : 'Edit'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
         ),
       ),
     );
@@ -390,7 +550,7 @@ class _AppDrawerState extends State<AppDrawer> {
               children: [
                 Icon(Icons.email, size: 20),
                 SizedBox(width: 8),
-                Text('support@cancan.app'),
+                Text('support@cancanindia.com'),
               ],
             ),
             SizedBox(height: 8),
@@ -398,7 +558,7 @@ class _AppDrawerState extends State<AppDrawer> {
               children: [
                 Icon(Icons.phone, size: 20),
                 SizedBox(width: 8),
-                Text('+91 98765 43210'),
+                Text('90253 20535'),
               ],
             ),
           ],

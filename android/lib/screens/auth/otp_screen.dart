@@ -67,7 +67,7 @@ class _OTPScreenState extends State<OTPScreen> {
           );
         }
       } else {
-        _showError(result['message'] ?? 'Invalid OTP. Please try again.');
+        _showError(result['message'] ?? 'Invalid OTP. For testing, use: 000000');
       }
     } catch (e) {
       _showError('Verification failed. Please try again.');

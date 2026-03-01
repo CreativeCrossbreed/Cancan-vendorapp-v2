@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../models/order.dart';
-import '../../widgets/custom_widgets.dart';
+import '../../widgets/bottom_nav_bar.dart';
 import 'widgets/update_status_modal.dart';
 import 'widgets/app_drawer.dart';
 import '../history/history_screen.dart';
@@ -14,14 +14,22 @@ import '../settings/settings_screen.dart';
 
 /// Home Screen - Main Dashboard with Bottom Navigation
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -56,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       drawer: const AppDrawer(),
       body: currentScreen,
-      bottomNavigationBar: CanCanBottomNavigation(
+      bottomNavigationBar: AppBottomNavBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
@@ -75,10 +83,8 @@ class HomeTabScreen extends StatefulWidget {
 class _HomeTabScreenState extends State<HomeTabScreen> {
   final _orderService = OrderService();
   bool _isLoading = true;
-  bool _showPending = true;
 
   List<Order> _pendingOrders = [];
-  List<Order> _completedOrders = [];
   int _totalCans = 0;
   double _totalEarnings = 0.0;
 
@@ -94,21 +100,18 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     try {
       final results = await Future.wait([
         _orderService.getTodayOrders(status: 'pending'),
-        _orderService.getTodayOrders(status: 'completed'),
         _orderService.getDailySummary(),
       ]);
 
       setState(() {
         _pendingOrders = results[0] as List<Order>;
-        _completedOrders = results[1] as List<Order>;
-        final summary = results[2] as Map<String, dynamic>;
+        final summary = results[1] as Map<String, dynamic>;
         _totalCans = summary['totalCans'] ?? 0;
         _totalEarnings = summary['totalEarnings'] ?? 0.0;
         _isLoading = false;
       });
 
-      print(
-          '✅ Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
+      print('✅ Loaded ${_pendingOrders.length} pending orders');
     } catch (e) {
       print('❌ Error loading data: $e');
       setState(() => _isLoading = false);
@@ -128,7 +131,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: AppTheme.paddingXXL,
               child: Column(
                 children: [
                   Row(
@@ -157,6 +160,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                                   color: AppTheme.white.withValues(alpha: 0.9),
                                 ),
                           ),
+                          const SizedBox(height: AppTheme.spacingXS),
                           Text(
                             dateStr,
                             style: Theme.of(context)
@@ -172,7 +176,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       const SizedBox(width: 48),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTheme.spacingXXL),
                   Row(
                     children: [
                       Expanded(
@@ -185,7 +189,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppTheme.spacingL),
                       Expanded(
                         child: _buildSummaryCard(
                           context,
@@ -209,23 +213,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          _buildTab(
-                              _pendingOrders.length, 'Pending', _showPending,
-                              () {
-                            setState(() => _showPending = true);
-                          }),
-                          const SizedBox(width: 16),
-                          _buildTab(_completedOrders.length, 'Completed',
-                              !_showPending, () {
-                            setState(() => _showPending = false);
-                          }),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: AppTheme.spacingXXL),
                     Expanded(
                       child: _isLoading
                           ? const Center(child: CircularProgressIndicator())
@@ -245,21 +233,19 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   }
 
   Widget _buildOrdersList() {
-    final orders = _showPending ? _pendingOrders : _completedOrders;
-
-    if (orders.isEmpty) {
+    if (_pendingOrders.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              _showPending ? Icons.inbox_outlined : Icons.check_circle_outline,
+            const Icon(
+              Icons.inbox_outlined,
               size: 64,
               color: AppTheme.mediumGray,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingL),
             Text(
-              _showPending ? 'No pending orders' : 'No completed orders',
+              'No pending orders',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -270,12 +256,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: orders.length,
+      padding: AppTheme.screenPaddingHorizontal,
+      itemCount: _pendingOrders.length,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: _buildOrderCard(context, orders[index]),
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingL),
+          child: _buildOrderCard(context, _pendingOrders[index]),
         );
       },
     );
@@ -283,7 +269,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Widget _buildSummaryCard(BuildContext context, String value, String label) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: AppTheme.paddingXL,
       decoration: BoxDecoration(
         color: AppTheme.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
@@ -302,7 +288,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppTheme.spacingXS),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -314,61 +300,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  Widget _buildTab(int count, String label, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: isActive ? AppTheme.pendingBg : AppTheme.lightGray,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color:
-                      isActive ? AppTheme.warningOrange : AppTheme.mediumGray,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isActive
-                        ? AppTheme.textPrimary
-                        : AppTheme.textSecondary,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildOrderCard(BuildContext context, Order order) {
     final customer = order.customer;
     if (customer == null) return const SizedBox();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(12),
@@ -388,7 +325,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             children: [
               const Icon(Icons.wb_sunny_outlined,
                   size: 16, color: AppTheme.warningOrange),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppTheme.spacingXS),
               Text(
                 order.timeSlot,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -398,52 +335,79 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: AppTheme.spacingM),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer.name,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 14, color: AppTheme.errorRed),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            customer.fullAddress,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+              Text(
+                customer.name,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppTheme.spacingS),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _openGoogleMaps(customer.fullAddress),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingS,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGray,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppTheme.mediumGray.withValues(alpha: 0.5),
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 14, color: AppTheme.errorRed),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                customer.fullAddress,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.darkGray,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.call, color: AppTheme.white, size: 20),
-                  onPressed: () => _makePhoneCall(customer.phone),
-                ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.successGreen,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.call,
+                          color: AppTheme.white, size: 20),
+                      onPressed: () => _makePhoneCall(customer.phone),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
               color: AppTheme.lightGray,
               borderRadius: BorderRadius.circular(8),
@@ -454,14 +418,14 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 Row(
                   children: [
                     const Icon(Icons.receipt_outlined, size: 16),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppTheme.spacingXS),
                     Text(
                       'Order Details',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppTheme.spacingS),
                 ...order.items.map((item) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
@@ -475,7 +439,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ],
                       ),
                     )),
-                const Divider(height: 24),
+                const Divider(height: AppTheme.spacingXL),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -484,7 +448,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
-                      'Rs.${order.totalAmount.toStringAsFixed(0)}',
+                      'Rs. ${order.totalAmount.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: AppTheme.successGreen,
                             fontWeight: FontWeight.bold,
@@ -495,19 +459,18 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               ],
             ),
           ),
-          if (_showPending) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => _showUpdateStatusModal(context, order),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkGray,
-                ),
-                child: const Text('Update Status'),
+          const SizedBox(height: AppTheme.spacingM),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _showUpdateStatusModal(context, order),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                foregroundColor: AppTheme.white,
               ),
+              child: const Text('Update Status'),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -536,14 +499,30 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     }
   }
 
+  Future<void> _openGoogleMaps(String address) async {
+    final encodedAddress = Uri.encodeComponent(address);
+    final uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google Maps')),
+        );
+      }
+    }
+  }
+
   void _showDeliveryBreakdown() {
     // Calculate breakdown by product/brand
     final Map<String, int> productBreakdown = {};
-    
+
     for (final order in _pendingOrders) {
       for (final item in order.items) {
         final productName = item.product?.name ?? 'Unknown Product';
-        productBreakdown[productName] = 
+        productBreakdown[productName] =
             (productBreakdown[productName] ?? 0) + item.quantity;
       }
     }
@@ -606,7 +585,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   final entry = productBreakdown.entries.elementAt(index);
                   final productName = entry.key;
                   final quantity = entry.value;
-                  
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Container(
