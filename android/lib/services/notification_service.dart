@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../utils/logger.dart';
 
@@ -35,18 +36,16 @@ class NotificationService {
         throw Exception('Vendor not authenticated');
       }
 
-      var query = _supabase
-          .from('notifications')
-          .select('*')
-          .eq('vendor_id', vendorId)
-          .order('created_at', ascending: false)
-          .limit(limit);
+      var query =
+          _supabase.from('notifications').select('*').eq('vendor_id', vendorId);
 
       if (unreadOnly) {
         query = query.eq('is_read', false);
       }
 
-      return List<Map<String, dynamic>>.from(await query);
+      final result =
+          await query.order('created_at', ascending: false).limit(limit);
+      return List<Map<String, dynamic>>.from(result);
     } catch (e, stackTrace) {
       AppLogger.e('Error fetching notification history: $e', e, stackTrace);
       return [];
@@ -54,15 +53,13 @@ class NotificationService {
   }
 
   /// Mark notification as read
-  Future<Map<String, dynamic>> markNotificationAsRead(String notificationId) async {
+  Future<Map<String, dynamic>> markNotificationAsRead(
+      String notificationId) async {
     try {
-      await _supabase
-          .from('notifications')
-          .update({
-            'is_read': true,
-            'read_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', notificationId);
+      await _supabase.from('notifications').update({
+        'is_read': true,
+        'read_at': DateTime.now().toIso8601String(),
+      }).eq('id', notificationId);
 
       return {
         'success': true,
@@ -121,17 +118,18 @@ class NotificationService {
           .eq('vendor_id', vendorId)
           .single();
 
-      return result ?? {
-        'vendor_id': vendorId,
-        'new_order_notifications': true,
-        'payment_notifications': true,
-        'inventory_alerts': true,
-        'customer_notifications': true,
-        'promotional_notifications': false,
-        'email_notifications': true,
-        'push_notifications': true,
-        'sms_notifications': false,
-      };
+      return result ??
+          {
+            'vendor_id': vendorId,
+            'new_order_notifications': true,
+            'payment_notifications': true,
+            'inventory_alerts': true,
+            'customer_notifications': true,
+            'promotional_notifications': false,
+            'email_notifications': true,
+            'push_notifications': true,
+            'sms_notifications': false,
+          };
     } catch (e) {
       AppLogger.e('Error fetching notification preferences: $e');
       return {};
@@ -147,13 +145,11 @@ class NotificationService {
         throw Exception('Vendor not authenticated');
       }
 
-      await _supabase
-          .from('notification_preferences')
-          .upsert({
-            'vendor_id': vendorId,
-            ...preferences,
-            'updated_at': DateTime.now().toIso8601String(),
-          });
+      await _supabase.from('notification_preferences').upsert({
+        'vendor_id': vendorId,
+        ...preferences,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
 
       return {
         'success': true,
@@ -204,34 +200,43 @@ class NotificationService {
   Future<void> _setupRealtimeListeners() async {
     try {
       // Listen for new orders
-      _supabase.channel('new_orders').onPostgresChanges(
-        event: 'INSERT',
-        schema: 'public',
-        table: 'orders',
-        callback: (payload) {
-          _handleNewOrderNotification(payload.newRecord);
-        },
-      ).subscribe();
+      _supabase
+          .channel('new_orders')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'orders',
+            callback: (payload) {
+              _handleNewOrderNotification(payload.newRecord);
+            },
+          )
+          .subscribe();
 
       // Listen for payment updates
-      _supabase.channel('payment_updates').onPostgresChanges(
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'payments',
-        callback: (payload) {
-          _handlePaymentNotification(payload.newRecord);
-        },
-      ).subscribe();
+      _supabase
+          .channel('payment_updates')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'payments',
+            callback: (payload) {
+              _handlePaymentNotification(payload.newRecord);
+            },
+          )
+          .subscribe();
 
       // Listen for inventory alerts
-      _supabase.channel('inventory_alerts').onPostgresChanges(
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'vendor_products',
-        callback: (payload) {
-          _handleInventoryAlert(payload.newRecord);
-        },
-      ).subscribe();
+      _supabase
+          .channel('inventory_alerts')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'vendor_products',
+            callback: (payload) {
+              _handleInventoryAlert(payload.newRecord);
+            },
+          )
+          .subscribe();
 
       AppLogger.i('Real-time listeners set up successfully');
     } catch (e) {
@@ -278,7 +283,9 @@ class NotificationService {
   void _handleInventoryAlert(Map<String, dynamic> product) {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
-      if (vendorId != null && product['vendor_id'] == vendorId && product['is_low_stock'] == true) {
+      if (vendorId != null &&
+          product['vendor_id'] == vendorId &&
+          product['is_low_stock'] == true) {
         // Create notification for low stock alert
         _createNotification({
           'vendor_id': vendorId,
@@ -293,7 +300,8 @@ class NotificationService {
     }
   }
 
-  Future<void> _createNotification(Map<String, dynamic> notificationData) async {
+  Future<void> _createNotification(
+      Map<String, dynamic> notificationData) async {
     try {
       await _supabase.from('notifications').insert({
         ...notificationData,

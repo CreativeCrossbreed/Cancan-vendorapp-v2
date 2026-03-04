@@ -54,9 +54,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     
       if (!mounted) return;
     
-      print('📊 Result: ${result['success']}');
-      print('📊 Message: ${result['message']}');
-      print('📊 Test Mode: ${result['testMode']}');
+      AppLogger.d('📊 Result: ${result['success']}');
+      AppLogger.d('📊 Message: ${result['message']}');
+      AppLogger.d('📊 Test Mode: ${result['testMode']}');
     
       if (result['success']) {
         // Check if in test mode

@@ -1,5 +1,6 @@
 import '../config/supabase_config.dart';
 import '../models/order.dart';
+import '../utils/logger.dart';
 
 /// Payment Service - Handles payment operations
 class PaymentService {
@@ -48,7 +49,7 @@ class PaymentService {
         'notes': notes,
       });
 
-      print('✅ Payment of ₹$amount recorded for order $orderId');
+      AppLogger.d('✅ Payment of ₹$amount recorded for order $orderId');
 
       return {
         'success': true,
@@ -58,7 +59,7 @@ class PaymentService {
         'paymentStatus': newTotalPaid >= totalAmount ? 'paid' : 'partial',
       };
     } catch (e) {
-      print('❌ Error recording payment: $e');
+      AppLogger.d('❌ Error recording payment: $e');
       return {
         'success': false,
         'message': 'Failed to record payment: ${e.toString()}',
@@ -79,7 +80,7 @@ class PaymentService {
           .map((p) => Payment.fromJson(p as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Error fetching payments: $e');
+      AppLogger.d('❌ Error fetching payments: $e');
       return [];
     }
   }
@@ -106,7 +107,7 @@ class PaymentService {
         'payments': payments,
       };
     } catch (e) {
-      print('❌ Error fetching payment summary: $e');
+      AppLogger.d('❌ Error fetching payment summary: $e');
       return {
         'success': false,
         'message': 'Failed to fetch payment summary',
@@ -141,7 +142,7 @@ class PaymentService {
           .map((p) => Payment.fromJson(p as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Error fetching all payments: $e');
+      AppLogger.d('❌ Error fetching all payments: $e');
       return [];
     }
   }
@@ -188,7 +189,7 @@ class PaymentService {
         'paymentCount': response.length,
       };
     } catch (e) {
-      print('❌ Error fetching today\'s payments: $e');
+      AppLogger.d('❌ Error fetching today\'s payments: $e');
       return {'totalCollected': 0.0, 'paymentCount': 0};
     }
   }

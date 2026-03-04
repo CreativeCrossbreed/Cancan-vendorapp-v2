@@ -15,6 +15,7 @@ import 'widgets/date_range_selector.dart';
 import '../orders/orders_screen.dart';
 import '../payments/payments_screen.dart';
 import '../inventory/inventory_screen.dart';
+import '../../utils/logger.dart';
 
 /// Enhanced Home Screen - Main Dashboard with Analytics
 class HomeScreenEnhanced extends StatefulWidget {
@@ -149,9 +150,9 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
+      AppLogger.d('✅ Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
     } catch (e) {
-      print('❌ Error loading data: $e');
+      AppLogger.d('❌ Error loading data: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -182,7 +183,7 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
         'quickStats': quickStats,
       };
     } catch (e) {
-      print('Error loading analytics data: $e');
+      AppLogger.d('Error loading analytics data: $e');
       // Return empty data on error
       return {
         'revenueData': [],

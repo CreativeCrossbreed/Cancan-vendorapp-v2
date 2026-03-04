@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/supabase_config.dart';
+import '../utils/logger.dart';
 
 /// Vendor Data Service - Caches vendor profile to reduce API calls
 /// Loads data once on app launch and caches it locally
@@ -30,7 +31,7 @@ class VendorDataService {
   }) async {
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && isCacheValid) {
-      print('📦 Using cached vendor data');
+      AppLogger.d('📦 Using cached vendor data');
       return _cachedVendorData;
     }
 
@@ -39,17 +40,17 @@ class VendorDataService {
       final cached = await _loadFromPrefs();
       if (cached != null) {
         _cachedVendorData = cached;
-        print('📦 Loaded vendor data from local cache');
+        AppLogger.d('📦 Loaded vendor data from local cache');
         return cached;
       }
     }
 
     // Fetch from Supabase
-    print('🌐 Fetching vendor data from Supabase...');
+    AppLogger.d('🌐 Fetching vendor data from Supabase...');
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        print('⚠️ No vendor ID found');
+        AppLogger.d('⚠️ No vendor ID found');
         return null;
       }
 
@@ -63,12 +64,12 @@ class VendorDataService {
         _cachedVendorData = data;
         _lastFetchTime = DateTime.now();
         await _saveToPrefs(data);
-        print('✅ Vendor data cached: ${data['name']}');
+        AppLogger.d('✅ Vendor data cached: ${data['name']}');
       }
 
       return data;
     } catch (e) {
-      print('❌ Error fetching vendor profile: $e');
+      AppLogger.d('❌ Error fetching vendor profile: $e');
       // Return cached data even if expired, as fallback
       return _cachedVendorData;
     }
@@ -81,7 +82,7 @@ class VendorDataService {
       await prefs.setString(_vendorDataKey, jsonEncode(data));
       await prefs.setString(_lastFetchKey, DateTime.now().toIso8601String());
     } catch (e) {
-      print('❌ Error saving vendor data to prefs: $e');
+      AppLogger.d('❌ Error saving vendor data to prefs: $e');
     }
   }
 
@@ -104,7 +105,7 @@ class VendorDataService {
         }
       }
     } catch (e) {
-      print('❌ Error loading vendor data from prefs: $e');
+      AppLogger.d('❌ Error loading vendor data from prefs: $e');
     }
     return null;
   }
@@ -117,9 +118,9 @@ class VendorDataService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_vendorDataKey);
       await prefs.remove(_lastFetchKey);
-      print('🗑️ Vendor data cache cleared');
+      AppLogger.d('🗑️ Vendor data cache cleared');
     } catch (e) {
-      print('❌ Error clearing cache: $e');
+      AppLogger.d('❌ Error clearing cache: $e');
     }
   }
 
@@ -128,13 +129,13 @@ class VendorDataService {
     _cachedVendorData = newData;
     _lastFetchTime = DateTime.now();
     await _saveToPrefs(newData);
-    print('✅ Vendor data cache updated');
+    AppLogger.d('✅ Vendor data cache updated');
   }
 
   /// Initialize - Load vendor data on app launch
   /// Call this in main.dart after Supabase initialization
   static Future<void> initialize() async {
-    print('🚀 Initializing VendorDataService...');
+    AppLogger.d('🚀 Initializing VendorDataService...');
     await getVendorProfile(forceRefresh: false);
   }
 }

@@ -49,14 +49,13 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
         return;
       }
 
-      // Fetch vendor info and WhatsApp number in parallel
-      final results = await Future.wait([
-        _supabase.from('vendors').select().eq('id', vendorId).single(),
-        AppSettingsService.getWhatsAppBusinessNumber(),
-      ]);
+      // Fetch vendor info
+      final data =
+          await _supabase.from('vendors').select().eq('id', vendorId).single();
 
-      final data = results[0] as Map<String, dynamic>;
-      final businessNumber = results[1] as String;
+      // Fetch WhatsApp Business number from app_config table
+      final businessNumber =
+          await AppSettingsService.getWhatsAppBusinessNumber();
 
       final name = data['name'] as String? ?? 'Vendor';
       final business = data['business_name'] as String? ?? 'Business';

@@ -11,6 +11,7 @@ import '../history/history_screen.dart';
 import '../payments/payments_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../utils/logger.dart';
 
 /// Home Screen - Main Dashboard with Bottom Navigation
 class HomeScreen extends StatefulWidget {
@@ -111,9 +112,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_pendingOrders.length} pending orders');
+      AppLogger.d('✅ Loaded ${_pendingOrders.length} pending orders');
     } catch (e) {
-      print('❌ Error loading data: $e');
+      AppLogger.d('❌ Error loading data: $e');
       setState(() => _isLoading = false);
     }
   }

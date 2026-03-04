@@ -6,6 +6,7 @@ import '../../services/order_service.dart';
 import '../../services/payment_service.dart';
 import '../../models/order.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
 /// Payments Screen - Track pending payments and earnings
 class PaymentsScreen extends StatefulWidget {
@@ -57,10 +58,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         _isLoading = false;
       });
 
-      print('💰 Payments loaded: ${unpaid.length} unpaid orders');
-      print('📊 Total Pending: Rs.$pendingAmount');
+      AppLogger.d('💰 Payments loaded: ${unpaid.length} unpaid orders');
+      AppLogger.d('📊 Total Pending: Rs.$pendingAmount');
     } catch (e) {
-      print('❌ Error loading payments: $e');
+      AppLogger.d('❌ Error loading payments: $e');
       setState(() => _isLoading = false);
     }
   }

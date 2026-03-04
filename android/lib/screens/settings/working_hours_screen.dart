@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
 /// Working Hours Screen - Set business hours
 class WorkingHoursScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _WorkingHoursScreenState extends State<WorkingHoursScreen> {
         }
       }
     } catch (e) {
-      print('❌ Error loading working hours: $e');
+      AppLogger.d('❌ Error loading working hours: $e');
     } finally {
       setState(() => _isLoading = false);
     }

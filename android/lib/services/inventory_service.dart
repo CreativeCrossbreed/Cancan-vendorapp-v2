@@ -1,4 +1,5 @@
 import '../config/supabase_config.dart';
+import '../utils/logger.dart';
 
 /// Inventory Service - Handles inventory operations
 class InventoryService {
@@ -53,10 +54,10 @@ class InventoryService {
           await _supabase.from('vendor_products').update(
               {'current_stock': newStock}).eq('id', vendorProducts['id']);
 
-          print(
+          AppLogger.d(
               '✅ Deducted $quantity from product $productId. New stock: $newStock');
         } else {
-          print('⚠️ Vendor product not found for product_id: $productId');
+          AppLogger.d('⚠️ Vendor product not found for product_id: $productId');
         }
       }
 
@@ -65,7 +66,7 @@ class InventoryService {
         'message': 'Stock deducted successfully',
       };
     } catch (e) {
-      print('❌ Error deducting stock: $e');
+      AppLogger.d('❌ Error deducting stock: $e');
       return {
         'success': false,
         'message': 'Failed to deduct stock: $e',
@@ -86,7 +87,7 @@ class InventoryService {
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('❌ Error fetching vendor products: $e');
+      AppLogger.d('❌ Error fetching vendor products: $e');
       return [];
     }
   }
@@ -109,7 +110,7 @@ class InventoryService {
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('❌ Error fetching low stock products: $e');
+      AppLogger.d('❌ Error fetching low stock products: $e');
       return [];
     }
   }
@@ -128,7 +129,7 @@ class InventoryService {
         'lowStockCount': lowStock.length,
       };
     } catch (e) {
-      print('❌ Error computing stats: $e');
+      AppLogger.d('❌ Error computing stats: $e');
       return {'totalProducts': 0, 'lowStockCount': 0};
     }
   }

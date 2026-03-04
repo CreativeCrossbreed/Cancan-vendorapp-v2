@@ -971,7 +971,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating stock: $e');
+      AppLogger.d('❌ Error updating stock: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1001,7 +1001,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating product: $e');
+      AppLogger.d('❌ Error updating product: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1058,7 +1058,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error creating product: $e');
+      AppLogger.d('❌ Error creating product: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

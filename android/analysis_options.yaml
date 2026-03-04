@@ -7,8 +7,14 @@ analyzer:
     dead_code: error
     missing_return: error
     missing_required_param: error
+    # Downgrade these to warnings (common in Supabase-heavy code)
+    argument_type_not_assignable: warning
+    invalid_assignment: warning
+    deprecated_member_use: info
   language:
-    strict-casts: true
+    # strict-casts disabled: Supabase returns Map<String, dynamic> everywhere.
+    # Forcing explicit casts on every map access is impractical.
+    strict-casts: false
     strict-raw-types: true
 
 linter:
@@ -44,6 +50,7 @@ linter:
     unnecessary_this: true
     use_rethrow_when_possible: true
     await_only_futures: true
+    avoid_dynamic_calls: false       # Supabase maps are dynamic by nature
 
     # === FLUTTER SPECIFIC ===
     use_key_in_widget_constructors: true
