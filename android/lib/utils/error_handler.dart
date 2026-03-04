@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'logger.dart';
 import '../config/theme.dart';
@@ -27,31 +26,21 @@ class AppException implements Exception {
 /// Network related exceptions
 class NetworkException extends AppException {
   NetworkException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// Authentication related exceptions
 class AuthException extends AppException {
   AuthException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// Centralized Error Handler

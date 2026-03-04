@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'config/app_config.dart';
 import 'config/supabase_config.dart';
 import 'config/theme.dart';
@@ -11,32 +10,22 @@ import 'screens/home/home_tab_screen_enhanced.dart';
 import 'utils/logger.dart';
 
 void main() async {
-  // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables and app configuration
-  try {
-    await AppConfig.initialize();
-
-    if (!AppConfig.isValidConfig) {
-      throw Exception(
-        'Invalid configuration. Please check your .env file.\n'
-        'Required: SUPABASE_URL, SUPABASE_ANON_KEY\n'
-        'Copy .env.example to .env and fill in the values.',
-      );
-    }
-
-    // Log debug information in development mode
-    if (AppConfig.shouldEnableVerboseLogging) {
-      AppLogger.d('App configuration: ${AppConfig.debugInfo}');
-    }
-  } catch (e) {
-    AppLogger.critical('Environment setup failed: $e');
-    runApp(ErrorApp(error: e.toString()));
+  // Validate compile-time config
+  if (!AppConfig.isValidConfig) {
+    runApp(const ErrorApp(
+      error: 'Missing SUPABASE_URL or SUPABASE_ANON_KEY.\n'
+          'Run with: flutter run --dart-define-from-file=api-keys.json',
+    ));
     return;
   }
 
-  // Set preferred orientations (portrait only for now)
+  if (AppConfig.shouldEnableVerboseLogging) {
+    AppLogger.d('App configuration: ${AppConfig.debugInfo}');
+  }
+
+  // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -52,7 +41,7 @@ void main() async {
     return;
   }
 
-  // Initialize local session storage (SharedPreferences)
+  // Initialize local session storage
   await SessionService.init();
 
   runApp(const CanCanApp());
@@ -67,13 +56,9 @@ class CanCanApp extends StatelessWidget {
       title: 'Can Can',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-
-      // Check authentication state and navigate accordingly
       home: SupabaseConfig.isAuthenticated
           ? const HomeScreenEnhanced()
           : const LoginScreen(),
-
-      // Define routes
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
@@ -127,7 +112,6 @@ class ErrorApp extends StatelessWidget {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
-                    // User should fix the error and restart the app
                     SystemNavigator.pop();
                   },
                   style: ElevatedButton.styleFrom(

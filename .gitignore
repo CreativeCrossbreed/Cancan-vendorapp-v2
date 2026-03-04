@@ -1,6 +1,39 @@
-# ------------------------------
-# Flutter / Dart
-# ------------------------------
+# ──────────────────────────────────────────
+# Can Can — Monorepo .gitignore
+# Two active projects: frontend/ and android/
+# ──────────────────────────────────────────
+
+# ── Secrets (NEVER commit) ────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+android/key.properties
+api-keys.json
+
+# ── Node / Next.js (frontend/) ────────────
+node_modules/
+**/node_modules/
+.next/
+out/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.pnp
+.pnp.js
+.eslintcache
+.npm
+coverage/
+*.tsbuildinfo
+.cache/
+
+# ── Flutter / Dart (android/) ─────────────
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -241,3 +274,5 @@ Thumbs.db
 *.jks
 *.keystore
 android/key.properties
+
+#hahahahahahah

@@ -1,32 +1,45 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'app_config.dart';
 import '../services/session_service.dart';
-import '../utils/logger.dart';
 
 /// Supabase configuration and initialization
+///
+/// This class uses compile-time constants for API keys via --dart-define.
+/// Example usage:
+/// ```bash
+/// flutter run --dart-define-from-file=api-keys.json
+/// flutter build apk --release --dart-define-from-file=api-keys.json --obfuscate
+/// ```
 class SupabaseConfig {
+  /// Supabase URL from compile-time constants
+  static const String _supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
+
+  /// Supabase Anon Key from compile-time constants
+  static const String _supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
+
   static Future<void> initialize() async {
-    try {
-      // Get credentials from AppConfig
-      final supabaseUrl = AppConfig.supabaseUrl;
-      final supabaseAnonKey = AppConfig.supabaseAnonKey;
-
-      AppLogger.i('Initializing Supabase with URL: ${supabaseUrl.substring(0, 20)}...');
-
-      // Initialize Supabase
-      await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey,
-        authOptions: const FlutterAuthClientOptions(
-          authFlowType: AuthFlowType.pkce, // More secure
-        ),
+    // Validate credentials
+    if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
+      throw Exception(
+        'Supabase credentials not configured.\n'
+        'Please use --dart-define to pass SUPABASE_URL and SUPABASE_ANON_KEY.\n'
+        'Example: flutter run --dart-define-from-file=api-keys.json',
       );
-
-      AppLogger.i('Supabase initialized successfully');
-    } catch (e) {
-      AppLogger.e('Failed to initialize Supabase: $e');
-      rethrow;
     }
+
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: _supabaseUrl,
+      anonKey: _supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce, // More secure
+      ),
+    );
   }
 
   /// Get Supabase client instance

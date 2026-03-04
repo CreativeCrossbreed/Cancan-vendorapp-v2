@@ -1,0 +1,21 @@
+Running Gradle task 'assembleDebug'...                          
+Error: unable to find directory entry in pubspec.yaml: D:\vendor_app\android\assets\images\
+Error: unable to locate asset entry in pubspec.yaml: "assets/fonts/Agrandir-Regular.otf".
+Target debug_android_application failed: Exception: Failed to bundle asset files.
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command 'C:\flutter\bin\flutter.bat'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 7s
+Running Gradle task 'assembleDebug'...                              7.4s
+Gradle task assembleDebug failed with exit code 1

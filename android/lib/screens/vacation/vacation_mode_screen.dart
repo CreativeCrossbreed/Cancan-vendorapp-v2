@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
+import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
 
 /// Vacation Mode Screen - Enable/disable vacation mode with dates
@@ -142,26 +143,25 @@ class _VacationModeScreenState extends State<VacationModeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScreenWithNav(
+      title: 'Vacation Mode',
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Vacation Mode'),
-        actions: [
-          if (!_isLoading)
-            TextButton(
-              onPressed: _isSaving ? null : _saveVacationMode,
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  color: _isSaving
-                      ? AppTheme.white.withValues(alpha: 0.5)
-                      : AppTheme.white,
-                  fontWeight: FontWeight.w600,
-                ),
+      currentNavIndex: 0,
+      actions: [
+        if (!_isLoading)
+          TextButton(
+            onPressed: _isSaving ? null : _saveVacationMode,
+            child: Text(
+              'Save',
+              style: TextStyle(
+                color: _isSaving
+                    ? AppTheme.white.withValues(alpha: 0.5)
+                    : AppTheme.white,
+                fontWeight: FontWeight.w600,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -179,7 +179,7 @@ class _VacationModeScreenState extends State<VacationModeScreen> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.info_outline,
+                          Icons.info_rounded,
                           color: AppTheme.primaryBlue,
                         ),
                         const SizedBox(width: 12),

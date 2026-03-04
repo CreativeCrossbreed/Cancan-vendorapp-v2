@@ -51,7 +51,7 @@ class TopProductsChart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 48,
                 color: AppTheme.errorRed,
@@ -89,7 +89,7 @@ class TopProductsChart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.inventory_2_outlined,
                 size: 48,
                 color: AppTheme.mediumGray,
@@ -165,8 +165,8 @@ class TopProductsChart extends StatelessWidget {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -241,7 +241,7 @@ class TopProductsChart extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
+                    return const FlLine(
                       color: AppTheme.chartGridColor,
                       strokeWidth: 1,
                       dashArray: [5, 5],

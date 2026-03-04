@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
+import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
+import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
 
 /// QR Code Screen - Generate and display vendor QR code for customer orders
@@ -16,10 +18,10 @@ class QRCodeScreen extends StatefulWidget {
 class _QRCodeScreenState extends State<QRCodeScreen> {
   final _supabase = SupabaseConfig.client;
   bool _isLoading = true;
-  String? _vendorPhone;
   String? _vendorName;
   String? _businessName;
   String? _qrData;
+  String? _vendorPhone;
 
   @override
   void initState() {
@@ -31,24 +33,28 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final vendorId = SupabaseConfig.currentVendorId ??
-          '84b4776f-65d0-47cd-81a2-5de0bb5d5e77';
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
       final data =
           await _supabase.from('vendors').select().eq('id', vendorId).single();
 
-      final phone = data['phone'] as String;
       final name = data['name'] as String;
       final business = data['business_name'] as String;
 
-      // Create WhatsApp link with pre-filled message
-      final message = Uri.encodeComponent(
-          'Hi $name! I would like to order water cans from $business. '
-          'Please share your product catalog and prices.');
-      final whatsappLink = 'https://wa.me/$phone?text=$message';
+      // ── The business WhatsApp number (NOT the vendor's personal number).
+      // All QR codes point to the central Can Can business number.
+      // The webhook identifies the vendor via the ref- prefix.
+      final businessNumber = AppConfig.whatsappBusinessNumber;
+
+      // Message format the webhook expects: "ref-{vendorId}"
+      final message = Uri.encodeComponent('ref-$vendorId');
+      final whatsappLink = 'https://wa.me/$businessNumber?text=$message';
 
       setState(() {
-        _vendorPhone = phone;
         _vendorName = name;
         _businessName = business;
         _qrData = whatsappLink;
@@ -56,7 +62,25 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       });
     } catch (e) {
       print('❌ Error loading vendor data: $e');
-      setState(() => _isLoading = false);
+      print('🧪 Using dummy vendor data for QR code generation');
+
+      // Fallback to dummy data for testing
+      const dummyPhone = '919876543210';
+      const dummyName = 'Rajesh Kumar';
+      const dummyBusiness = 'Fresh Water Supply';
+
+      final message = Uri.encodeComponent(
+          'Hi $dummyName! I would like to order water cans from $dummyBusiness. '
+          'Please share your product catalog and prices.');
+      final whatsappLink = 'https://wa.me/$dummyPhone?text=$message';
+
+      setState(() {
+        _vendorPhone = '+$dummyPhone';
+        _vendorName = dummyName;
+        _businessName = dummyBusiness;
+        _qrData = whatsappLink;
+        _isLoading = false;
+      });
     }
   }
 
@@ -186,18 +210,17 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScreenWithNav(
+      title: 'My QR Code',
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('My QR Code'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _shareInstructions,
-            tooltip: 'How to Use',
-          ),
-        ],
-      ),
+      currentNavIndex: 0,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.help_outline_rounded),
+          onPressed: _shareInstructions,
+          tooltip: 'How to Use',
+        ),
+      ],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

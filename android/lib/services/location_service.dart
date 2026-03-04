@@ -36,7 +36,7 @@ class LocationService {
       }
 
       // Check if location services are enabled
-      bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      final bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!isLocationServiceEnabled) {
         return {
           'error': 'Location services disabled',
@@ -45,7 +45,7 @@ class LocationService {
       }
 
       // Get location with high accuracy
-      Position position = await Geolocator.getCurrentPosition(
+      final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best,
         forceAndroidLocationManager: forceLocationManager,
         timeLimit: timeout,
@@ -54,7 +54,7 @@ class LocationService {
       AppLogger.i('Location obtained: ${position.latitude}, ${position.longitude}');
 
       // Get address from coordinates (optional - requires geocoding service)
-      String? address = await _getAddressFromCoordinates(
+      final String? address = await _getAddressFromCoordinates(
         position.latitude,
         position.longitude,
       );
@@ -220,10 +220,6 @@ class LocationService {
           .eq('id', vendorId)
           .single();
 
-      if (vendor == null) {
-        return null;
-      }
-
       return {
         'latitude': vendor['latitude'],
         'longitude': vendor['longitude'],
@@ -274,7 +270,7 @@ class LocationService {
       }
 
       // Check radius (default geofencing)
-      if (vendorLatitude != null && vendorLongitude != null && serviceRadiusKm != null) {
+      if (serviceRadiusKm != null) {
         final double distance = _calculateDistance(
           vendorLatitude,
           vendorLongitude,
@@ -338,13 +334,13 @@ class LocationService {
   ) {
     const double earthRadius = 6371; // Earth's radius in kilometers
 
-    double dLat = _toRadians(lat2 - lat1);
-    double dLon = _toRadians(lon2 - lon1);
+    final double dLat = _toRadians(lat2 - lat1);
+    final double dLon = _toRadians(lon2 - lon1);
 
-    double a = (dLat / 2).sin() * (dLat / 2).sin() +
+    final double a = (dLat / 2).sin() * (dLat / 2).sin() +
         (lat1.toRadians().cos() * lat2.toRadians().cos()) *
             (dLon / 2).sin() * (dLon / 2).sin();
-    double c = 2 * a.asin().sqrt();
+    final double c = 2 * a.asin().sqrt();
 
     return earthRadius * c;
   }
@@ -367,7 +363,7 @@ class LocationService {
     double strokeWidth = 2.0,
   }) {
     // Convert radius in km to meters (approximately)
-    double radiusInMeters = radiusKm * 1000;
+    final double radiusInMeters = radiusKm * 1000;
 
     return {
       Circle(
@@ -484,8 +480,8 @@ class LocationService {
     double averageSpeedKmPerHour = 30, // Average delivery speed
     int preparationTimeMinutes = 15, // Preparation time
   }) {
-    double travelTimeHours = distanceKm / averageSpeedKmPerHour;
-    int travelTimeMinutes = (travelTimeHours * 60).round();
+    final double travelTimeHours = distanceKm / averageSpeedKmPerHour;
+    final int travelTimeMinutes = (travelTimeHours * 60).round();
     return preparationTimeMinutes + travelTimeMinutes;
   }
 
@@ -503,7 +499,7 @@ class LocationService {
           .eq('id', vendorId)
           .single();
 
-      if (vendor == null || vendor['is_on_vacation'] == true) {
+      if (vendor['is_on_vacation'] == true) {
         return false;
       }
 

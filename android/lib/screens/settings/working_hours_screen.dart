@@ -147,6 +147,10 @@ class _WorkingHoursScreenState extends State<WorkingHoursScreen> {
       drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Working Hours'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (!_isLoading)
             TextButton(

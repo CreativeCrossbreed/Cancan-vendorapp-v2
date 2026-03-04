@@ -51,12 +51,30 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         businessName: _businessNameController.text.trim(),
         address: _addressController.text.trim(),
       );
-
+    
       if (!mounted) return;
-
-      AppLogger.d('Profile save result: ${result['success']} - ${result['message']}');
-
+    
+      print('📊 Result: ${result['success']}');
+      print('📊 Message: ${result['message']}');
+      print('📊 Test Mode: ${result['testMode']}');
+    
       if (result['success']) {
+        // Check if in test mode
+        final isInTestMode = result['testMode'] == true;
+        
+        if (isInTestMode) {
+          // Show info message for test mode
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile created in TEST MODE. Data will be available for this session.'),
+                backgroundColor: AppTheme.warningOrange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+        
         // Navigate to Home Screen
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -117,7 +135,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     Text(
                       'Let\'s set up your vendor profile',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.white.withOpacity(0.9),
+                            color: AppTheme.white.withValues(alpha: 0.9),
                           ),
                     ),
                   ],

@@ -17,7 +17,7 @@ class _CustomersScreenState extends State<CustomersScreen>
   final _customerService = CustomerService();
   bool _isLoading = true;
   List<Map<String, dynamic>> _customers = [];
-  Map<String, dynamic> _insights = {};
+  final Map<String, dynamic> _insights = {};
   late TabController _tabController;
   final _searchController = TextEditingController();
 
@@ -165,7 +165,7 @@ class _CustomersScreenState extends State<CustomersScreen>
                 ),
                 child: Text(
                   '${customer['totalOrders'] ?? 0} Orders',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.primaryBlue,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,

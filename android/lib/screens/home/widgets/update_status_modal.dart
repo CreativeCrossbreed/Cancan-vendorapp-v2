@@ -95,10 +95,11 @@ class _UpdateStatusModalState extends State<UpdateStatusModal> {
 
           // Confirm Button
           ElevatedButton(
-            onPressed: _isLoading ? null : _updateStatus,
+            onPressed: (_isLoading || !_isDelivered) ? null : _updateStatus,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: AppTheme.primaryBlue,
+              disabledBackgroundColor: AppTheme.mediumGray,
             ),
             child: _isLoading
                 ? const SizedBox(
@@ -181,10 +182,10 @@ class _UpdateStatusModalState extends State<UpdateStatusModal> {
   }
 
   Future<void> _updateStatus() async {
-    if (!_isDelivered && !_isPaid) {
+    if (!_isDelivered) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select at least one status to update'),
+          content: Text('Please mark "Delivered" to confirm'),
           backgroundColor: AppTheme.warningOrange,
         ),
       );

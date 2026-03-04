@@ -1,7 +1,6 @@
 // This is a basic Flutter test file.
 // More comprehensive tests should be added later.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cancan_vendor/main.dart';

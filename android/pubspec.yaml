@@ -42,10 +42,7 @@ dependencies:
 
   
   # Permissions
-  permission_handler: ^12.0.1
-
-  # Environment Variables
-  flutter_dotenv: ^6.0.0
+  permission_handler: ^11.1.0
 
   # Loading & Alerts
   flutter_spinkit: ^5.2.1
@@ -57,6 +54,8 @@ dependencies:
   share_plus: ^7.2.1  # Share functionality
   path_provider: ^2.1.1  # File system access
 
+  geolocator: any
+  google_maps_flutter: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -66,19 +65,24 @@ dev_dependencies:
 # App Icon Configuration
 flutter_launcher_icons:
   android: true
-  ios: false  # We'll add iOS later
+  ios: true
   image_path: "assets/icons/app_icon.png"
-  adaptive_icon_background: "#5B8DEF"
-  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
-  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
 
 flutter:
   uses-material-design: true
 
   # Assets
   assets:
-    - .env
+    # - assets/images/
     - assets/icons/
-    - assets/images/
 
-  # Fonts (using Google Fonts, no need to bundle)
+  # Fonts - Agrandir
+  # fonts:
+  #   - family: Agrandir
+  #     fonts:
+  #       - asset: assets/fonts/Agrandir-Regular.otf
+  #         weight: 400
+  #       - asset: assets/fonts/Agrandir-TextBold.otf
+  #         weight: 700
