@@ -1,6 +1,5 @@
 import '../config/supabase_config.dart';
 import '../models/analytics_data.dart';
-import '../models/order.dart';
 import '../utils/logger.dart';
 
 /// Analytics Service - Handles data aggregation and analytics calculations
@@ -703,9 +702,9 @@ class AnalyticsService {
           ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
           : 0.0;
 
-      final orderValueGrowth = 0.0; // Would need historical data for accurate calculation
-      final customerGrowth = 0.0; // Would need historical customer data
-      final deliveryGrowth = 0.0; // Would need historical delivery data
+      const orderValueGrowth = 0.0; // Would need historical data for accurate calculation
+      const customerGrowth = 0.0; // Would need historical customer data
+      const deliveryGrowth = 0.0; // Would need historical delivery data
 
       return {
         'totalCustomers': uniqueCustomers,

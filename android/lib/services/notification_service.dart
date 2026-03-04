@@ -209,7 +209,7 @@ class NotificationService {
         schema: 'public',
         table: 'orders',
         callback: (payload) {
-          _handleNewOrderNotification(payload.newRecord as Map<String, dynamic>);
+          _handleNewOrderNotification(payload.newRecord);
         },
       ).subscribe();
 
@@ -219,7 +219,7 @@ class NotificationService {
         schema: 'public',
         table: 'payments',
         callback: (payload) {
-          _handlePaymentNotification(payload.newRecord as Map<String, dynamic>);
+          _handlePaymentNotification(payload.newRecord);
         },
       ).subscribe();
 
@@ -229,7 +229,7 @@ class NotificationService {
         schema: 'public',
         table: 'vendor_products',
         callback: (payload) {
-          _handleInventoryAlert(payload.newRecord as Map<String, dynamic>);
+          _handleInventoryAlert(payload.newRecord);
         },
       ).subscribe();
 

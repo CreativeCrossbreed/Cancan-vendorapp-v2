@@ -18,7 +18,7 @@ class CanCanCard extends StatelessWidget {
   final double? minHeight;
 
   const CanCanCard({
-    Key? key,
+    super.key,
     required this.child,
     this.margin,
     this.padding,
@@ -29,7 +29,7 @@ class CanCanCard extends StatelessWidget {
     this.showShadow = true,
     this.minWidth,
     this.minHeight,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +80,7 @@ class CanCanButton extends StatelessWidget {
   final ButtonSize? size;
 
   const CanCanButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.isOutlined = false,
@@ -90,7 +90,7 @@ class CanCanButton extends StatelessWidget {
     this.width,
     this.height,
     this.size,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +137,7 @@ class CanCanButton extends StatelessWidget {
     final borderRadius = BorderRadius.circular(ResponsiveConfig.radiusMedium);
 
     if (isOutlined) {
-      return Container(
+      return SizedBox(
         width: responsiveWidth,
         height: responsiveHeight,
         child: OutlinedButton(
@@ -155,7 +155,7 @@ class CanCanButton extends StatelessWidget {
       );
     }
 
-    return Container(
+    return SizedBox(
       width: responsiveWidth,
       height: responsiveHeight,
       child: ElevatedButton(
@@ -233,12 +233,12 @@ class CanCanStatusBadge extends StatelessWidget {
   final double? fontSize;
 
   const CanCanStatusBadge({
-    Key? key,
+    super.key,
     required this.text,
     required this.status,
     this.showIcon = true,
     this.fontSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +333,7 @@ class CanCanTextField extends StatelessWidget {
   final bool enabled;
 
   const CanCanTextField({
-    Key? key,
+    super.key,
     this.label,
     this.hint,
     this.prefixIcon,
@@ -345,7 +345,7 @@ class CanCanTextField extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.enabled = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -379,13 +379,13 @@ class CanCanAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
 
   const CanCanAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.actions,
     this.automaticallyImplyLeading = true,
     this.onBackPressed,
     this.leading,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -420,10 +420,10 @@ class CanCanBottomNavigation extends StatelessWidget {
   final Function(int) onTap;
 
   const CanCanBottomNavigation({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -500,10 +500,10 @@ class CanCanLoadingIndicator extends StatelessWidget {
   final double? size;
 
   const CanCanLoadingIndicator({
-    Key? key,
+    super.key,
     this.message,
     this.size = 24,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -514,7 +514,7 @@ class CanCanLoadingIndicator extends StatelessWidget {
           SizedBox(
             width: size,
             height: size,
-            child: CircularProgressIndicator(
+            child: const CircularProgressIndicator(
               strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
             ),
@@ -544,14 +544,14 @@ class CanCanEmptyState extends StatelessWidget {
   final Color? iconColor;
 
   const CanCanEmptyState({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
     this.actionText,
     this.onActionPressed,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

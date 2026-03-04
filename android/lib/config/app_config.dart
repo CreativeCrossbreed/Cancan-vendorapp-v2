@@ -1,106 +1,90 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 import '../utils/logger.dart';
 
 /// Application Configuration Service
+///
+/// All values come from compile-time constants via `--dart-define`.
+/// Usage:
+///   flutter run --dart-define-from-file=api-keys.json
+///   flutter build apk --release --dart-define-from-file=api-keys.json
 class AppConfig {
-  static bool _initialized = false;
+  // ── Core (required) ───────────────────────────────────────────
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
 
-  /// Initialize the app configuration
-  static Future<void> initialize() async {
-    if (_initialized) return;
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
 
-    try {
-      await dotenv.load(fileName: ".env");
-      _initialized = true;
-      AppLogger.i('App configuration loaded successfully');
-    } catch (e) {
-      AppLogger.e('Failed to load .env file: $e');
-      // Still mark as initialized to prevent repeated attempts
-      _initialized = true;
-    }
-  }
-
-  // Supabase Configuration
-  static String get supabaseUrl {
-    final url = dotenv.env['SUPABASE_URL'] ?? '';
-    if (url.isEmpty) {
-      throw Exception('SUPABASE_URL not found in environment variables');
-    }
-    return url;
-  }
-
-  static String get supabaseAnonKey {
-    final key = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-    if (key.isEmpty) {
-      throw Exception('SUPABASE_ANON_KEY not found in environment variables');
-    }
-    return key;
-  }
-
-  // Environment
-  static String get environment => dotenv.env['ENV'] ?? 'development';
+  // ── Environment ───────────────────────────────────────────────
+  static const String environment = String.fromEnvironment(
+    'ENV',
+    defaultValue: 'development',
+  );
   static bool get isDevelopment => environment == 'development';
   static bool get isStaging => environment == 'staging';
   static bool get isProduction => environment == 'production';
 
-  // Development Mode
-  static bool get devMode => dotenv.env['DEV_MODE'] == 'true';
-  static bool get debugMode => dotenv.env['DEBUG_MODE'] == 'true';
+  // ── Dev flags (only meaningful in debug builds) ───────────────
+  static const bool _devModeEnv =
+      bool.fromEnvironment('DEV_MODE', defaultValue: false);
+  static const bool _debugModeEnv =
+      bool.fromEnvironment('DEBUG_MODE', defaultValue: false);
 
-  // API Configuration
-  static int get apiTimeout {
-    final timeout = dotenv.env['API_TIMEOUT'] ?? '30000';
-    return int.tryParse(timeout) ?? 30000;
-  }
+  /// True only in debug builds AND when the env flag is set.
+  static bool get devMode => kDebugMode && _devModeEnv;
+  static bool get debugMode => kDebugMode && _debugModeEnv;
 
-  // Feature Flags
-  static bool get isPushNotificationsEnabled => dotenv.env['ENABLE_PUSH_NOTIFICATIONS'] == 'true';
-  static bool get isAnalyticsEnabled => dotenv.env['ENABLE_ANALYTICS'] == 'true';
-  static bool get isCrashReportingEnabled => dotenv.env['ENABLE_CRASH_REPORTING'] == 'true';
+  // ── API config ────────────────────────────────────────────────
+  static const int apiTimeout = int.fromEnvironment(
+    'API_TIMEOUT',
+    defaultValue: 30000,
+  );
 
-  // External Service Keys (Optional)
-  static String? get fcmServerKey => dotenv.env['FCM_SERVER_KEY'];
-  static String? get razorpayKeyId => dotenv.env['RAZORPAY_KEY_ID'];
-  static String? get razorpayKeySecret => dotenv.env['RAZORPAY_KEY_SECRET'];
-  static String? get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'];
-  static String? get whatsappApiKey => dotenv.env['WHATSAPP_API_KEY'];
-  static String? get whatsappPhoneNumberId => dotenv.env['WHATSAPP_PHONE_NUMBER_ID'];
-  // Central business WhatsApp number (with country code, no +).
-  // e.g. "919876543210" — ALL QR codes point here, not the vendor's personal number.
-  static String get whatsappBusinessNumber =>
-      dotenv.env['WHATSAPP_BUSINESS_NUMBER'] ?? '';
+  // ── Feature Flags ─────────────────────────────────────────────
+  static const bool isPushNotificationsEnabled =
+      bool.fromEnvironment('ENABLE_PUSH_NOTIFICATIONS', defaultValue: false);
+  static const bool isAnalyticsEnabled =
+      bool.fromEnvironment('ENABLE_ANALYTICS', defaultValue: false);
+  static const bool isCrashReportingEnabled =
+      bool.fromEnvironment('ENABLE_CRASH_REPORTING', defaultValue: false);
 
+  // ── External Service Keys (optional, compile-time) ────────────
+  static const String fcmServerKey = String.fromEnvironment('FCM_SERVER_KEY');
+  static const String razorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
+  static const String razorpayKeySecret =
+      String.fromEnvironment('RAZORPAY_KEY_SECRET');
+  static const String googleMapsApiKey =
+      String.fromEnvironment('GOOGLE_MAPS_API_KEY');
 
-  // Validation
+  // ── WhatsApp ──────────────────────────────────────────────────
+  // The WhatsApp Business number is fetched from Supabase at runtime
+  // via AppSettingsService — NOT stored here.
+  // This keeps it updatable without redeploying the app.
+
+  // ── Validation ────────────────────────────────────────────────
   static bool get isValidConfig {
-    try {
-      // Check required fields
-      supabaseUrl;
-      supabaseAnonKey;
-      return true;
-    } catch (e) {
-      AppLogger.e('Invalid configuration: $e');
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      AppLogger.e(
+        'Invalid config: SUPABASE_URL or SUPABASE_ANON_KEY is empty.\n'
+        'Use --dart-define-from-file=api-keys.json',
+      );
       return false;
     }
+    return true;
   }
 
-  // Logging configuration based on environment
-  static bool get shouldEnableVerboseLogging => debugMode || isDevelopment;
-  static bool get shouldEnableAnalyticsLogging => isAnalyticsEnabled && !isDevelopment;
+  // ── Logging helpers ───────────────────────────────────────────
+  static bool get shouldEnableVerboseLogging => kDebugMode;
+  static bool get shouldEnableAnalyticsLogging =>
+      isAnalyticsEnabled && !isDevelopment;
 
-  // API URLs for different environments
-  static String get apiBaseUrl {
-    switch (environment) {
-      case 'production':
-        return supabaseUrl;
-      case 'staging':
-        return supabaseUrl;
-      default:
-        return supabaseUrl;
-    }
-  }
+  static String get apiBaseUrl => supabaseUrl;
 
-  // Debug information
+  // ── Debug info (safe — gated by kDebugMode in logger) ─────────
   static Map<String, dynamic> get debugInfo => {
         'environment': environment,
         'devMode': devMode,

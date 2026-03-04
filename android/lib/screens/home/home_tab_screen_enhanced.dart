@@ -96,7 +96,7 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
   final _analyticsService = AnalyticsService();
   bool _isLoading = true;
   bool _showAnalyticsView = true;
-  bool _showPending = true;
+  final bool _showPending = true;
 
   List<Order> _pendingOrders = [];
   List<Order> _completedOrders = [];
@@ -228,7 +228,7 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                       Column(
                         children: [
                           Text(
-                            _showAnalyticsView ? "Analytics Dashboard" : "Today's Deliveries",
+                            _showAnalyticsView ? 'Analytics Dashboard' : "Today's Deliveries",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium

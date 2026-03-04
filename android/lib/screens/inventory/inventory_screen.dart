@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
@@ -20,9 +19,12 @@ class _InventoryScreenState extends State<InventoryScreen>
     with SingleTickerProviderStateMixin {
   final _inventoryService = InventoryService();
   final _supabase = Supabase.instance.client;
+  late final TabController _tabController;
   bool _isLoading = true;
   List<Map<String, dynamic>> _products = [];
-  
+  List<Map<String, dynamic>> _lowStockProducts = [];
+  Map<String, dynamic> _statistics = {};
+
   // Dummy data flag - set to false when ready for production
   static const bool _useDummyData = false;
 
@@ -56,7 +58,8 @@ class _InventoryScreenState extends State<InventoryScreen>
         _isLoading = false;
       });
 
-      AppLogger.i('✅ Loaded ${_products.length} products, ${_lowStockProducts.length} low stock');
+      AppLogger.i(
+          '✅ Loaded ${_products.length} products, ${_lowStockProducts.length} low stock');
     } catch (e) {
       AppLogger.e('❌ Error loading inventory: $e');
       setState(() => _isLoading = false);
@@ -103,7 +106,8 @@ class _InventoryScreenState extends State<InventoryScreen>
                                   .textTheme
                                   .bodyMedium
                                   ?.copyWith(
-                                    color: AppTheme.white.withValues(alpha: 0.9),
+                                    color:
+                                        AppTheme.white.withValues(alpha: 0.9),
                                   ),
                             ),
                             const SizedBox(height: AppTheme.spacingXS),
@@ -144,7 +148,9 @@ class _InventoryScreenState extends State<InventoryScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddProductDialog,
         icon: const Icon(Icons.add_rounded, color: AppTheme.primaryBlue),
-        label: const Text('Add Product', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+        label: const Text('Add Product',
+            style: TextStyle(
+                color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.white,
         elevation: 6,
       ),
@@ -250,10 +256,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                     Expanded(
                       child: Text(
                         productInfo['name'] ?? 'Product',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -283,10 +286,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                   children: [
                     Text(
                       'Cost of one can : Rs. ${(product['selling_price'] as num).toStringAsFixed(0)}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.textSecondary,
                           ),
                     ),
@@ -302,7 +302,8 @@ class _InventoryScreenState extends State<InventoryScreen>
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.cancel_rounded, size: 14, color: AppTheme.white),
+                            Icon(Icons.cancel_rounded,
+                                size: 14, color: AppTheme.white),
                             SizedBox(width: 4),
                             Text(
                               'Out of Stock',
@@ -444,125 +445,127 @@ class _InventoryScreenState extends State<InventoryScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              const Text(
-                'Product Name',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                const Text(
+                  'Product Name',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  hintText: 'e.g., 20L Water Can',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g., 20L Water Can',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
                 ),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Selling Price',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                const SizedBox(height: 16),
+                const Text(
+                  'Selling Price',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: priceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                ],
-                decoration: const InputDecoration(
-                  hintText: 'Enter price',
-                  prefixText: 'Rs. ',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priceController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: 'Enter price',
+                    prefixText: 'Rs. ',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Deposit Amount (optional)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                const SizedBox(height: 16),
+                const Text(
+                  'Deposit Amount (optional)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Refundable deposit per can (0 if none)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
+                const SizedBox(height: 4),
+                const Text(
+                  'Refundable deposit per can (0 if none)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: depositController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                ],
-                decoration: const InputDecoration(
-                  hintText: 'Enter deposit amount',
-                  prefixText: 'Rs. ',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: depositController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: 'Enter deposit amount',
+                    prefixText: 'Rs. ',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Initial Stock',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                const SizedBox(height: 16),
+                const Text(
+                  'Initial Stock',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: stockController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  hintText: 'Enter number of cans',
-                  suffixText: 'cans',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: stockController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    hintText: 'Enter number of cans',
+                    suffixText: 'cans',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Low Stock Threshold',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                const SizedBox(height: 16),
+                const Text(
+                  'Low Stock Threshold',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Alert when stock falls below this number',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
+                const SizedBox(height: 4),
+                const Text(
+                  'Alert when stock falls below this number',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: thresholdController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  hintText: 'Enter threshold number',
-                  suffixText: 'cans',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: thresholdController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    hintText: 'Enter threshold number',
+                    suffixText: 'cans',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
               ],
             ),
           ),
@@ -663,9 +666,8 @@ class _InventoryScreenState extends State<InventoryScreen>
                         backgroundColor: isAdding
                             ? AppTheme.successGreen
                             : AppTheme.lightGray,
-                        foregroundColor: isAdding
-                            ? AppTheme.white
-                            : AppTheme.textSecondary,
+                        foregroundColor:
+                            isAdding ? AppTheme.white : AppTheme.textSecondary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -700,12 +702,10 @@ class _InventoryScreenState extends State<InventoryScreen>
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: !isAdding
-                            ? AppTheme.errorRed
-                            : AppTheme.lightGray,
-                        foregroundColor: !isAdding
-                            ? AppTheme.white
-                            : AppTheme.textSecondary,
+                        backgroundColor:
+                            !isAdding ? AppTheme.errorRed : AppTheme.lightGray,
+                        foregroundColor:
+                            !isAdding ? AppTheme.white : AppTheme.textSecondary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -857,7 +857,8 @@ class _InventoryScreenState extends State<InventoryScreen>
               const SizedBox(height: 8),
               TextField(
                 controller: priceController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
@@ -887,7 +888,8 @@ class _InventoryScreenState extends State<InventoryScreen>
               const SizedBox(height: 8),
               TextField(
                 controller: depositController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
@@ -1029,7 +1031,9 @@ class _InventoryScreenState extends State<InventoryScreen>
       // 1. Create / ensure a product record
       final productInsert = await _supabase
           .from('products')
-          .insert({'name': name}).select().single();
+          .insert({'name': name})
+          .select()
+          .single();
 
       final productId = productInsert['id'] as String;
 
@@ -1083,8 +1087,10 @@ class _InventoryScreenState extends State<InventoryScreen>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppTheme.errorRed),
-              title: const Text('Delete Product', style: TextStyle(color: AppTheme.errorRed)),
+              leading:
+                  const Icon(Icons.delete_outline, color: AppTheme.errorRed),
+              title: const Text('Delete Product',
+                  style: TextStyle(color: AppTheme.errorRed)),
               onTap: () {
                 Navigator.pop(context);
                 // Show delete confirmation
@@ -1092,7 +1098,8 @@ class _InventoryScreenState extends State<InventoryScreen>
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('Delete Product'),
-                    content: const Text('Are you sure you want to delete this product?'),
+                    content: const Text(
+                        'Are you sure you want to delete this product?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
@@ -1109,11 +1116,13 @@ class _InventoryScreenState extends State<InventoryScreen>
                             _loadInventory();
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Failed to delete product')),
+                              const SnackBar(
+                                  content: Text('Failed to delete product')),
                             );
                           }
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.errorRed),
                         child: const Text('Delete'),
                       ),
                     ],

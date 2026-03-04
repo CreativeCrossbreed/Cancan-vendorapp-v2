@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../utils/logger.dart';
 
@@ -42,7 +41,7 @@ class CustomerService {
 
       AppLogger.i('Fetched ${response.length} customers');
 
-      return response as List<Map<String, dynamic>>;
+      return response;
     } catch (e) {
       AppLogger.e('Error fetching customers: $e');
       return [];
@@ -70,7 +69,7 @@ class CustomerService {
         return null;
       }
 
-      return response as Map<String, dynamic>;
+      return response;
     } catch (e) {
       AppLogger.e('Error fetching customer: $e');
       return null;
@@ -112,7 +111,7 @@ class CustomerService {
 
       AppLogger.i('Found ${response.length} customers matching search');
 
-      return response as List<Map<String, dynamic>>;
+      return response;
     } catch (e) {
       AppLogger.e('Error searching customers: $e');
       return [];

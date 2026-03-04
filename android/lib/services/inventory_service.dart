@@ -47,14 +47,14 @@ class InventoryService {
 
         if (vendorProducts != null) {
           final currentStock = vendorProducts['current_stock'] as int;
-          final newStock = (currentStock - quantity).clamp(0, double.infinity).toInt();
+          final newStock =
+              (currentStock - quantity).clamp(0, double.infinity).toInt();
 
-          await _supabase
-              .from('vendor_products')
-              .update({'current_stock': newStock})
-              .eq('id', vendorProducts['id']);
+          await _supabase.from('vendor_products').update(
+              {'current_stock': newStock}).eq('id', vendorProducts['id']);
 
-          print('✅ Deducted $quantity from product $productId. New stock: $newStock');
+          print(
+              '✅ Deducted $quantity from product $productId. New stock: $newStock');
         } else {
           print('⚠️ Vendor product not found for product_id: $productId');
         }
@@ -79,13 +79,10 @@ class InventoryService {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) return [];
 
-      final response = await _supabase
-          .from('vendor_products')
-          .select('''
+      final response = await _supabase.from('vendor_products').select('''
             *,
             products!inner(id, name)
-          ''')
-          .eq('vendor_id', vendorId);
+          ''').eq('vendor_id', vendorId);
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
@@ -93,5 +90,46 @@ class InventoryService {
       return [];
     }
   }
-}
 
+  /// Get low stock vendor products
+  Future<List<Map<String, dynamic>>> getLowStockProducts() async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) return [];
+
+      final response = await _supabase
+          .from('vendor_products')
+          .select('''
+            *,
+            products!inner(id, name)
+          ''')
+          .eq('vendor_id', vendorId)
+          .lte('current_stock', 10); // default threshold
+      // Ideally should use low_stock_threshold column if it exists
+
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      print('❌ Error fetching low stock products: $e');
+      return [];
+    }
+  }
+
+  /// Get inventory statistics
+  Future<Map<String, dynamic>> getInventoryStatistics() async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) return {'totalProducts': 0, 'lowStockCount': 0};
+
+      final products = await getVendorProducts();
+      final lowStock = await getLowStockProducts();
+
+      return {
+        'totalProducts': products.length,
+        'lowStockCount': lowStock.length,
+      };
+    } catch (e) {
+      print('❌ Error computing stats: $e');
+      return {'totalProducts': 0, 'lowStockCount': 0};
+    }
+  }
+}

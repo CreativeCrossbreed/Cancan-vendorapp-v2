@@ -323,7 +323,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     children: [
                       // Tab Selector and Date Navigator
                       Container(
-                        padding: EdgeInsets.fromLTRB(
+                        padding: const EdgeInsets.fromLTRB(
                             AppTheme.spacingL,
                             AppTheme.spacingXXL,
                             AppTheme.spacingL,

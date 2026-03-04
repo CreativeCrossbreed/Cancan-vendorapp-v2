@@ -50,7 +50,7 @@ class CustomerInsightsCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 48,
                 color: AppTheme.errorRed,
@@ -87,7 +87,7 @@ class CustomerInsightsCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.people_outline,
                 size: 48,
                 color: AppTheme.mediumGray,

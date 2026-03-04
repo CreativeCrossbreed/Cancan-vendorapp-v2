@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/session_service.dart';
-import '../utils/logger.dart';
 
 /// Supabase configuration and initialization
 ///
@@ -31,6 +30,7 @@ class SupabaseConfig {
         'Please use --dart-define to pass SUPABASE_URL and SUPABASE_ANON_KEY.\n'
         'Example: flutter run --dart-define-from-file=api-keys.json',
       );
+    }
 
     // Initialize Supabase
     await Supabase.initialize(

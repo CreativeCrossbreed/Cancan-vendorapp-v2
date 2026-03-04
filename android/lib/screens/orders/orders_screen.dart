@@ -478,8 +478,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         children: [
                           ...List.generate(
                             totalCans.clamp(1, 5),
-                            (index) => Padding(
-                              padding: const EdgeInsets.only(right: 4),
+                            (index) => const Padding(
+                              padding: EdgeInsets.only(right: 4),
                               child: Icon(
                                 Icons.water_drop,
                                 size: 28,
@@ -504,7 +504,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       // Amount
                       Column(
                         children: [
-                          Text(
+                          const Text(
                             'Amount',
                             style: TextStyle(
                               fontSize: 12,

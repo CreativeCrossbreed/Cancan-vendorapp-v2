@@ -306,7 +306,7 @@ class _VacationScreenState extends State<VacationScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, color: AppTheme.primaryBlue),
+              const Icon(Icons.info_outline, color: AppTheme.primaryBlue),
               const SizedBox(width: 8),
               Text(
                 'About Vacation Mode',
@@ -368,7 +368,7 @@ class _VacationScreenState extends State<VacationScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline,
+          const Icon(Icons.check_circle_outline,
                size: 20,
                color: AppTheme.primaryBlue),
           const SizedBox(width: 12),

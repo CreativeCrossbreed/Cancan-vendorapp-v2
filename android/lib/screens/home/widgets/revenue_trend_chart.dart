@@ -52,7 +52,7 @@ class RevenueTrendChart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 48,
                 color: AppTheme.errorRed,
@@ -90,7 +90,7 @@ class RevenueTrendChart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.trending_up_outlined,
                 size: 48,
                 color: AppTheme.mediumGray,
@@ -150,7 +150,7 @@ class RevenueTrendChart extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
+                    return const FlLine(
                       color: AppTheme.chartGridColor,
                       strokeWidth: 1,
                       dashArray: [5, 5],
@@ -159,8 +159,8 @@ class RevenueTrendChart extends StatelessWidget {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -208,11 +208,11 @@ class RevenueTrendChart extends StatelessWidget {
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: Border(
+                  border: const Border(
                     bottom: BorderSide(color: AppTheme.chartGridColor, width: 1),
                     left: BorderSide(color: AppTheme.chartGridColor, width: 1),
-                    right: const BorderSide(color: Colors.transparent),
-                    top: const BorderSide(color: Colors.transparent),
+                    right: BorderSide(color: Colors.transparent),
+                    top: BorderSide(color: Colors.transparent),
                   ),
                 ),
                 minX: 0,
