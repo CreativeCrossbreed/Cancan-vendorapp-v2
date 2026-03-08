@@ -36,24 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authService = AuthService();
-
-      // DEV MODE: Auto-login for phone 1111111111
-      if (_phoneController.text == '1111111111') {
-        final result = await authService.verifyOTP(
-          phoneNumber: _phoneController.text,
-          otp: '123456', // Any OTP works in dev mode
-        );
-
-        if (!mounted) return;
-
-        if (result['success']) {
-          // Go directly to home screen
-          Navigator.pushReplacementNamed(context, '/home');
-          return;
-        }
-      }
-
-      // Normal flow for other numbers or when dev mode is off
       final result =
           await authService.sendOTP(phoneNumber: _phoneController.text);
 
