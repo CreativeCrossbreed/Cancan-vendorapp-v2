@@ -43,6 +43,12 @@ void main() async {
   // Initialize local session storage
   await SessionService.init();
 
+  // One-time migration: clear stale fake dev session if it exists
+  if (SessionService.vendorId == 'dev-vendor-123') {
+    AppLogger.w('Clearing stale dev session (dev-vendor-123)');
+    await SessionService.clearSession();
+  }
+
   runApp(const CanCanApp());
 }
 
