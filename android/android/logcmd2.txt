@@ -1,0 +1,738 @@
+> Task :gradle:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+> Task :app:ReleaseMinSdkCheck
+> Task :app:compileFlutterBuildRelease
+> Task :app:packJniLibsflutterBuildRelease
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :app:configureCMakeRelease[arm64-v8a]
+> Task :app:buildCMakeRelease[arm64-v8a]
+> Task :app:configureCMakeRelease[armeabi-v7a]
+> Task :app:buildCMakeRelease[armeabi-v7a]
+> Task :app:configureCMakeRelease[x86_64]
+> Task :app:buildCMakeRelease[x86_64]
+> Task :app:mergeReleaseJniLibFolders
+> Task :app_links:preBuild UP-TO-DATE
+> Task :app_links:preReleaseBuild UP-TO-DATE
+> Task :app_links:mergeReleaseJniLibFolders
+> Task :app_links:mergeReleaseNativeLibs NO-SOURCE
+> Task :flutter_plugin_android_lifecycle:preBuild UP-TO-DATE
+> Task :flutter_plugin_android_lifecycle:preReleaseBuild UP-TO-DATE
+> Task :app_links:copyReleaseJniLibsProjectOnly
+> Task :flutter_plugin_android_lifecycle:mergeReleaseJniLibFolders
+> Task :flutter_plugin_android_lifecycle:mergeReleaseNativeLibs NO-SOURCE
+> Task :geolocator_android:preBuild UP-TO-DATE
+> Task :flutter_plugin_android_lifecycle:copyReleaseJniLibsProjectOnly
+> Task :geolocator_android:preReleaseBuild UP-TO-DATE
+> Task :geolocator_android:mergeReleaseJniLibFolders
+> Task :geolocator_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :google_maps_flutter_android:preBuild UP-TO-DATE
+> Task :google_maps_flutter_android:preReleaseBuild UP-TO-DATE
+> Task :geolocator_android:copyReleaseJniLibsProjectOnly
+> Task :google_maps_flutter_android:mergeReleaseJniLibFolders
+> Task :google_maps_flutter_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :image_picker_android:preBuild UP-TO-DATE
+> Task :image_picker_android:preReleaseBuild UP-TO-DATE
+> Task :google_maps_flutter_android:copyReleaseJniLibsProjectOnly
+> Task :image_picker_android:mergeReleaseJniLibFolders
+> Task :image_picker_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :package_info_plus:preBuild UP-TO-DATE
+> Task :image_picker_android:copyReleaseJniLibsProjectOnly
+> Task :package_info_plus:preReleaseBuild UP-TO-DATE
+> Task :package_info_plus:mergeReleaseJniLibFolders
+> Task :package_info_plus:mergeReleaseNativeLibs NO-SOURCE
+> Task :path_provider_android:preBuild UP-TO-DATE
+> Task :package_info_plus:copyReleaseJniLibsProjectOnly
+> Task :path_provider_android:preReleaseBuild UP-TO-DATE
+> Task :path_provider_android:mergeReleaseJniLibFolders
+> Task :path_provider_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :permission_handler_android:preBuild UP-TO-DATE
+> Task :permission_handler_android:preReleaseBuild UP-TO-DATE
+> Task :path_provider_android:copyReleaseJniLibsProjectOnly
+> Task :permission_handler_android:mergeReleaseJniLibFolders
+> Task :permission_handler_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :share_plus:preBuild UP-TO-DATE
+> Task :permission_handler_android:copyReleaseJniLibsProjectOnly
+> Task :share_plus:preReleaseBuild UP-TO-DATE
+> Task :share_plus:mergeReleaseJniLibFolders
+> Task :share_plus:mergeReleaseNativeLibs NO-SOURCE
+> Task :share_plus:copyReleaseJniLibsProjectOnly
+> Task :shared_preferences_android:preBuild UP-TO-DATE
+> Task :shared_preferences_android:preReleaseBuild UP-TO-DATE
+> Task :shared_preferences_android:mergeReleaseJniLibFolders
+> Task :shared_preferences_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :shared_preferences_android:copyReleaseJniLibsProjectOnly
+> Task :sqflite_android:preBuild UP-TO-DATE
+> Task :sqflite_android:preReleaseBuild UP-TO-DATE
+> Task :sqflite_android:mergeReleaseJniLibFolders
+> Task :sqflite_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :url_launcher_android:preBuild UP-TO-DATE
+> Task :sqflite_android:copyReleaseJniLibsProjectOnly
+> Task :url_launcher_android:preReleaseBuild UP-TO-DATE
+> Task :url_launcher_android:mergeReleaseJniLibFolders
+> Task :url_launcher_android:mergeReleaseNativeLibs NO-SOURCE
+> Task :url_launcher_android:copyReleaseJniLibsProjectOnly
+> Task :app_links:generateReleaseResValues
+> Task :app_links:generateReleaseResources
+> Task :app_links:packageReleaseResources
+> Task :flutter_plugin_android_lifecycle:generateReleaseResValues
+> Task :flutter_plugin_android_lifecycle:generateReleaseResources
+> Task :app_links:javaPreCompileRelease
+> Task :flutter_plugin_android_lifecycle:packageReleaseResources
+> Task :flutter_plugin_android_lifecycle:javaPreCompileRelease
+> Task :google_maps_flutter_android:generateReleaseResValues
+> Task :google_maps_flutter_android:generateReleaseResources
+> Task :google_maps_flutter_android:packageReleaseResources
+> Task :google_maps_flutter_android:javaPreCompileRelease
+> Task :image_picker_android:generateReleaseResValues
+> Task :image_picker_android:generateReleaseResources
+> Task :app_links:parseReleaseLocalResources
+> Task :flutter_plugin_android_lifecycle:parseReleaseLocalResources
+> Task :google_maps_flutter_android:parseReleaseLocalResources
+> Task :image_picker_android:packageReleaseResources
+> Task :image_picker_android:javaPreCompileRelease
+> Task :geolocator_android:generateReleaseResValues
+> Task :geolocator_android:generateReleaseResources
+> Task :image_picker_android:parseReleaseLocalResources
+> Task :geolocator_android:packageReleaseResources
+> Task :flutter_plugin_android_lifecycle:generateReleaseRFile
+> Task :google_maps_flutter_android:generateReleaseRFile
+> Task :app_links:generateReleaseRFile
+> Task :image_picker_android:generateReleaseRFile
+> Task :geolocator_android:parseReleaseLocalResources
+> Task :app_links:compileReleaseJavaWithJavac
+> Task :app_links:mergeReleaseGeneratedProguardFiles
+> Task :app_links:exportReleaseConsumerProguardFiles
+> Task :flutter_plugin_android_lifecycle:compileReleaseJavaWithJavac
+> Task :flutter_plugin_android_lifecycle:mergeReleaseGeneratedProguardFiles
+> Task :flutter_plugin_android_lifecycle:exportReleaseConsumerProguardFiles
+> Task :package_info_plus:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :geolocator_android:javaPreCompileRelease
+> Task :geolocator_android:generateReleaseRFile
+> Task :package_info_plus:generateReleaseResValues
+> Task :flutter_plugin_android_lifecycle:bundleLibCompileToJarRelease
+> Task :app:mergeReleaseNativeLibs
+
+> Task :geolocator_android:compileReleaseJavaWithJavac
+Java compiler version 23 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :app:stripReleaseDebugSymbols
+> Task :google_maps_flutter_android:compileReleaseJavaWithJavac
+> Task :google_maps_flutter_android:mergeReleaseGeneratedProguardFiles
+> Task :google_maps_flutter_android:exportReleaseConsumerProguardFiles
+> Task :app:extractReleaseNativeSymbolTables
+> Task :image_picker_android:compileReleaseJavaWithJavac
+> Task :image_picker_android:mergeReleaseGeneratedProguardFiles
+> Task :image_picker_android:exportReleaseConsumerProguardFiles
+> Task :geolocator_android:mergeReleaseGeneratedProguardFiles
+> Task :geolocator_android:exportReleaseConsumerProguardFiles
+> Task :package_info_plus:generateReleaseResources
+> Task :package_info_plus:packageReleaseResources
+> Task :package_info_plus:javaPreCompileRelease
+> Task :package_info_plus:parseReleaseLocalResources
+> Task :path_provider_android:generateReleaseResValues
+> Task :package_info_plus:generateReleaseRFile
+> Task :path_provider_android:generateReleaseResources
+> Task :path_provider_android:packageReleaseResources
+> Task :path_provider_android:parseReleaseLocalResources
+> Task :path_provider_android:javaPreCompileRelease
+> Task :permission_handler_android:generateReleaseResValues
+> Task :path_provider_android:generateReleaseRFile
+> Task :permission_handler_android:generateReleaseResources
+> Task :path_provider_android:compileReleaseJavaWithJavac
+> Task :path_provider_android:mergeReleaseGeneratedProguardFiles
+> Task :path_provider_android:exportReleaseConsumerProguardFiles
+> Task :permission_handler_android:packageReleaseResources
+> Task :share_plus:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :permission_handler_android:javaPreCompileRelease
+> Task :share_plus:generateReleaseResValues
+> Task :permission_handler_android:parseReleaseLocalResources
+> Task :share_plus:generateReleaseResources
+> Task :permission_handler_android:generateReleaseRFile
+> Task :share_plus:packageReleaseResources
+
+> Task :permission_handler_android:compileReleaseJavaWithJavac
+Java compiler version 23 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :permission_handler_android:mergeReleaseGeneratedProguardFiles
+> Task :permission_handler_android:exportReleaseConsumerProguardFiles
+> Task :shared_preferences_android:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :share_plus:javaPreCompileRelease
+> Task :share_plus:parseReleaseLocalResources
+> Task :shared_preferences_android:generateReleaseResValues
+> Task :share_plus:generateReleaseRFile
+> Task :shared_preferences_android:generateReleaseResources
+> Task :shared_preferences_android:packageReleaseResources
+> Task :shared_preferences_android:parseReleaseLocalResources
+> Task :shared_preferences_android:javaPreCompileRelease
+> Task :sqflite_android:generateReleaseResValues
+> Task :shared_preferences_android:generateReleaseRFile
+> Task :sqflite_android:generateReleaseResources
+> Task :sqflite_android:packageReleaseResources
+> Task :sqflite_android:parseReleaseLocalResources
+> Task :sqflite_android:javaPreCompileRelease
+> Task :sqflite_android:generateReleaseRFile
+> Task :url_launcher_android:generateReleaseBuildConfig
+> Task :app:mergeReleaseNativeDebugMetadata
+> Task :sqflite_android:compileReleaseJavaWithJavac
+> Task :sqflite_android:mergeReleaseGeneratedProguardFiles
+> Task :sqflite_android:exportReleaseConsumerProguardFiles
+> Task :url_launcher_android:generateReleaseResValues
+> Task :url_launcher_android:generateReleaseResources
+> Task :url_launcher_android:packageReleaseResources
+> Task :url_launcher_android:javaPreCompileRelease
+> Task :url_launcher_android:parseReleaseLocalResources
+> Task :app:buildKotlinToolingMetadata
+> Task :url_launcher_android:generateReleaseRFile
+> Task :app:checkReleaseDuplicateClasses
+> Task :url_launcher_android:compileReleaseJavaWithJavac
+> Task :url_launcher_android:mergeReleaseGeneratedProguardFiles
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :url_launcher_android:exportReleaseConsumerProguardFiles
+> Task :app_links:writeReleaseAarMetadata
+> Task :flutter_plugin_android_lifecycle:writeReleaseAarMetadata
+> Task :geolocator_android:writeReleaseAarMetadata
+> Task :google_maps_flutter_android:writeReleaseAarMetadata
+> Task :image_picker_android:writeReleaseAarMetadata
+> Task :package_info_plus:writeReleaseAarMetadata
+> Task :path_provider_android:writeReleaseAarMetadata
+> Task :permission_handler_android:writeReleaseAarMetadata
+> Task :share_plus:writeReleaseAarMetadata
+> Task :shared_preferences_android:writeReleaseAarMetadata
+> Task :sqflite_android:writeReleaseAarMetadata
+> Task :url_launcher_android:writeReleaseAarMetadata
+> Task :app:cleanMergeReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseShaders
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app_links:mergeReleaseShaders
+> Task :app_links:compileReleaseShaders NO-SOURCE
+> Task :app_links:generateReleaseAssets UP-TO-DATE
+> Task :app_links:mergeReleaseAssets
+> Task :flutter_plugin_android_lifecycle:mergeReleaseShaders
+> Task :flutter_plugin_android_lifecycle:compileReleaseShaders NO-SOURCE
+> Task :flutter_plugin_android_lifecycle:generateReleaseAssets UP-TO-DATE
+> Task :flutter_plugin_android_lifecycle:mergeReleaseAssets
+> Task :geolocator_android:mergeReleaseShaders
+> Task :geolocator_android:compileReleaseShaders NO-SOURCE
+> Task :geolocator_android:generateReleaseAssets UP-TO-DATE
+> Task :geolocator_android:mergeReleaseAssets
+> Task :app:checkReleaseAarMetadata
+> Task :google_maps_flutter_android:mergeReleaseShaders
+> Task :google_maps_flutter_android:compileReleaseShaders NO-SOURCE
+> Task :google_maps_flutter_android:generateReleaseAssets UP-TO-DATE
+> Task :google_maps_flutter_android:mergeReleaseAssets
+> Task :image_picker_android:mergeReleaseShaders
+> Task :image_picker_android:compileReleaseShaders NO-SOURCE
+> Task :image_picker_android:generateReleaseAssets UP-TO-DATE
+> Task :image_picker_android:mergeReleaseAssets
+> Task :package_info_plus:mergeReleaseShaders
+> Task :package_info_plus:compileReleaseShaders NO-SOURCE
+> Task :package_info_plus:generateReleaseAssets UP-TO-DATE
+> Task :package_info_plus:mergeReleaseAssets
+> Task :path_provider_android:mergeReleaseShaders
+> Task :path_provider_android:compileReleaseShaders NO-SOURCE
+> Task :path_provider_android:generateReleaseAssets UP-TO-DATE
+> Task :path_provider_android:mergeReleaseAssets
+> Task :permission_handler_android:mergeReleaseShaders
+> Task :permission_handler_android:compileReleaseShaders NO-SOURCE
+> Task :permission_handler_android:generateReleaseAssets UP-TO-DATE
+> Task :permission_handler_android:mergeReleaseAssets
+> Task :share_plus:mergeReleaseShaders
+> Task :share_plus:compileReleaseShaders NO-SOURCE
+> Task :share_plus:generateReleaseAssets UP-TO-DATE
+> Task :share_plus:mergeReleaseAssets
+> Task :shared_preferences_android:mergeReleaseShaders
+> Task :shared_preferences_android:compileReleaseShaders NO-SOURCE
+> Task :shared_preferences_android:generateReleaseAssets UP-TO-DATE
+> Task :shared_preferences_android:mergeReleaseAssets
+> Task :sqflite_android:mergeReleaseShaders
+> Task :sqflite_android:compileReleaseShaders NO-SOURCE
+> Task :sqflite_android:generateReleaseAssets UP-TO-DATE
+> Task :sqflite_android:mergeReleaseAssets
+> Task :url_launcher_android:mergeReleaseShaders
+> Task :url_launcher_android:compileReleaseShaders NO-SOURCE
+> Task :url_launcher_android:generateReleaseAssets UP-TO-DATE
+> Task :url_launcher_android:mergeReleaseAssets
+> Task :app:mergeReleaseAssets
+> Task :app:copyFlutterAssetsRelease
+> Task :app:generateReleaseResValues
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
+> Task :app:packageReleaseResources
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease
+> Task :app_links:extractDeepLinksRelease
+> Task :flutter_plugin_android_lifecycle:extractDeepLinksRelease
+> Task :app:parseReleaseLocalResources
+> Task :geolocator_android:extractDeepLinksRelease
+> Task :google_maps_flutter_android:extractDeepLinksRelease
+> Task :image_picker_android:extractDeepLinksRelease
+> Task :package_info_plus:extractDeepLinksRelease
+> Task :path_provider_android:extractDeepLinksRelease
+> Task :permission_handler_android:extractDeepLinksRelease
+> Task :share_plus:extractDeepLinksRelease
+
+> Task :google_maps_flutter_android:processReleaseManifest
+package="io.flutter.plugins.googlemaps" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.19.2\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.googlemaps" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.19.2\android\src\main\AndroidManifest.xml.
+
+> Task :permission_handler_android:processReleaseManifest
+package="com.baseflow.permissionhandler" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.1.0\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.baseflow.permissionhandler" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.1.0\android\src\main\AndroidManifest.xml.
+
+> Task :app_links:processReleaseManifest
+package="com.llfbandit.app_links" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\app_links-6.4.1\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.llfbandit.app_links" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\app_links-6.4.1\android\src\main\AndroidManifest.xml.
+
+> Task :shared_preferences_android:extractDeepLinksRelease
+
+> Task :package_info_plus:processReleaseManifest
+package="dev.fluttercommunity.plus.packageinfo" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="dev.fluttercommunity.plus.packageinfo" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\android\src\main\AndroidManifest.xml.
+
+> Task :share_plus:processReleaseManifest
+package="dev.fluttercommunity.plus.share" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="dev.fluttercommunity.plus.share" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\src\main\AndroidManifest.xml.
+
+> Task :image_picker_android:processReleaseManifest
+package="io.flutter.plugins.imagepicker" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+10\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.imagepicker" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+10\android\src\main\AndroidManifest.xml.
+
+> Task :geolocator_android:processReleaseManifest
+package="com.baseflow.geolocator" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.baseflow.geolocator" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\android\src\main\AndroidManifest.xml.
+
+> Task :path_provider_android:processReleaseManifest
+package="io.flutter.plugins.pathprovider" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.22\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.pathprovider" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.22\android\src\main\AndroidManifest.xml.
+
+> Task :flutter_plugin_android_lifecycle:processReleaseManifest
+package="io.flutter.plugins.flutter_plugin_android_lifecycle" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.33\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.flutter_plugin_android_lifecycle" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.33\android\src\main\AndroidManifest.xml.
+
+> Task :sqflite_android:extractDeepLinksRelease
+
+> Task :shared_preferences_android:processReleaseManifest
+package="io.flutter.plugins.sharedpreferences" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.17\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.sharedpreferences" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.17\android\src\main\AndroidManifest.xml.
+
+> Task :url_launcher_android:extractDeepLinksRelease
+
+> Task :sqflite_android:processReleaseManifest
+package="com.tekartik.sqflite" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\sqflite_android-2.4.2+2\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.tekartik.sqflite" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\sqflite_android-2.4.2+2\android\src\main\AndroidManifest.xml.
+
+> Task :app_links:bundleLibCompileToJarRelease
+
+> Task :url_launcher_android:processReleaseManifest
+package="io.flutter.plugins.urllauncher" found in source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.urllauncher" from the source AndroidManifest.xml: C:\Users\crcla\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\src\main\AndroidManifest.xml.
+
+> Task :geolocator_android:bundleLibCompileToJarRelease
+> Task :app:processReleaseMainManifest
+> Task :app:mergeReleaseResources
+> Task :app:outputReleaseAppLinkSettings
+> Task :app:processReleaseManifest
+> Task :path_provider_android:bundleLibCompileToJarRelease
+> Task :permission_handler_android:bundleLibCompileToJarRelease
+> Task :image_picker_android:bundleLibCompileToJarRelease
+> Task :sqflite_android:bundleLibCompileToJarRelease
+> Task :app:javaPreCompileRelease
+> Task :url_launcher_android:bundleLibCompileToJarRelease
+> Task :app_links:prepareReleaseArtProfile
+> Task :google_maps_flutter_android:bundleLibCompileToJarRelease
+> Task :flutter_plugin_android_lifecycle:prepareReleaseArtProfile
+> Task :geolocator_android:prepareReleaseArtProfile
+> Task :google_maps_flutter_android:prepareReleaseArtProfile
+> Task :image_picker_android:prepareReleaseArtProfile
+> Task :package_info_plus:prepareReleaseArtProfile
+> Task :path_provider_android:prepareReleaseArtProfile
+> Task :permission_handler_android:prepareReleaseArtProfile
+> Task :share_plus:prepareReleaseArtProfile
+> Task :shared_preferences_android:prepareReleaseArtProfile
+> Task :sqflite_android:prepareReleaseArtProfile
+> Task :url_launcher_android:prepareReleaseArtProfile
+> Task :app_links:bundleLibRuntimeToJarRelease
+> Task :flutter_plugin_android_lifecycle:bundleLibRuntimeToJarRelease
+> Task :app:mergeReleaseArtProfile
+> Task :geolocator_android:bundleLibRuntimeToJarRelease
+> Task :path_provider_android:bundleLibRuntimeToJarRelease
+> Task :image_picker_android:bundleLibRuntimeToJarRelease
+> Task :app:processReleaseManifestForPackage
+> Task :permission_handler_android:bundleLibRuntimeToJarRelease
+> Task :sqflite_android:bundleLibRuntimeToJarRelease
+> Task :google_maps_flutter_android:bundleLibRuntimeToJarRelease
+> Task :url_launcher_android:bundleLibRuntimeToJarRelease
+> Task :app:extractProguardFiles
+> Task :app_links:processReleaseJavaRes NO-SOURCE
+> Task :flutter_plugin_android_lifecycle:processReleaseJavaRes NO-SOURCE
+> Task :geolocator_android:processReleaseJavaRes NO-SOURCE
+> Task :google_maps_flutter_android:processReleaseJavaRes NO-SOURCE
+> Task :image_picker_android:processReleaseJavaRes NO-SOURCE
+> Task :path_provider_android:processReleaseJavaRes NO-SOURCE
+> Task :permission_handler_android:processReleaseJavaRes NO-SOURCE
+> Task :sqflite_android:processReleaseJavaRes NO-SOURCE
+> Task :url_launcher_android:processReleaseJavaRes NO-SOURCE
+> Task :app:mergeReleaseStartupProfile
+> Task :app:compressReleaseAssets
+> Task :app:extractReleaseVersionControlInfo
+> Task :app_links:createFullJarRelease
+> Task :app_links:extractProguardFiles
+> Task :app_links:generateReleaseLintModel
+> Task :app_links:prepareLintJarForPublish
+> Task :flutter_plugin_android_lifecycle:createFullJarRelease
+> Task :flutter_plugin_android_lifecycle:extractProguardFiles
+> Task :flutter_plugin_android_lifecycle:generateReleaseLintModel
+> Task :flutter_plugin_android_lifecycle:prepareLintJarForPublish
+> Task :geolocator_android:createFullJarRelease
+> Task :geolocator_android:extractProguardFiles
+> Task :geolocator_android:generateReleaseLintModel
+> Task :geolocator_android:prepareLintJarForPublish
+> Task :google_maps_flutter_android:createFullJarRelease
+> Task :google_maps_flutter_android:extractProguardFiles
+> Task :google_maps_flutter_android:generateReleaseLintModel
+> Task :google_maps_flutter_android:prepareLintJarForPublish
+> Task :image_picker_android:createFullJarRelease
+> Task :image_picker_android:extractProguardFiles
+> Task :image_picker_android:generateReleaseLintModel
+> Task :image_picker_android:prepareLintJarForPublish
+> Task :package_info_plus:extractProguardFiles
+> Task :package_info_plus:prepareLintJarForPublish
+> Task :path_provider_android:createFullJarRelease
+> Task :path_provider_android:extractProguardFiles
+> Task :path_provider_android:generateReleaseLintModel
+> Task :path_provider_android:prepareLintJarForPublish
+> Task :permission_handler_android:createFullJarRelease
+> Task :permission_handler_android:extractProguardFiles
+> Task :package_info_plus:compileReleaseKotlin
+> Task :permission_handler_android:generateReleaseLintModel
+> Task :package_info_plus:compileReleaseJavaWithJavac NO-SOURCE
+> Task :package_info_plus:mergeReleaseGeneratedProguardFiles
+> Task :package_info_plus:exportReleaseConsumerProguardFiles
+> Task :package_info_plus:bundleLibCompileToJarRelease
+> Task :package_info_plus:bundleLibRuntimeToJarRelease
+> Task :package_info_plus:processReleaseJavaRes
+> Task :package_info_plus:createFullJarRelease
+> Task :package_info_plus:generateReleaseLintModel
+> Task :permission_handler_android:prepareLintJarForPublish
+> Task :share_plus:extractProguardFiles
+> Task :share_plus:prepareLintJarForPublish
+> Task :shared_preferences_android:extractProguardFiles
+> Task :shared_preferences_android:prepareLintJarForPublish
+> Task :sqflite_android:createFullJarRelease
+> Task :sqflite_android:extractProguardFiles
+> Task :sqflite_android:generateReleaseLintModel
+> Task :sqflite_android:prepareLintJarForPublish
+> Task :url_launcher_android:createFullJarRelease
+> Task :url_launcher_android:extractProguardFiles
+> Task :url_launcher_android:generateReleaseLintModel
+> Task :app_links:stripReleaseDebugSymbols NO-SOURCE
+> Task :url_launcher_android:prepareLintJarForPublish
+> Task :app_links:copyReleaseJniLibsProjectAndLocalJars
+> Task :app_links:extractDeepLinksForAarRelease
+> Task :app_links:extractReleaseAnnotations
+> Task :app_links:mergeReleaseConsumerProguardFiles
+> Task :google_maps_flutter_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :google_maps_flutter_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :google_maps_flutter_android:extractDeepLinksForAarRelease
+
+> Task :share_plus:compileReleaseKotlin
+w: file:///C:/Users/crcla/AppData/Local/Pub/Cache/hosted/pub.dev/share_plus-7.2.2/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:141:55 'fun queryIntentActivities(p0: Intent, p1: Int): (Mutable)List<ResolveInfo!>' is deprecated. Deprecated in Java.
+w: file:///C:/Users/crcla/AppData/Local/Pub/Cache/hosted/pub.dev/share_plus-7.2.2/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:195:18 Unnecessary non-null assertion (!!) on a non-null receiver of type 'List<String>'.
+w: file:///C:/Users/crcla/AppData/Local/Pub/Cache/hosted/pub.dev/share_plus-7.2.2/android/src/main/kotlin/dev/fluttercommunity/plus/share/SharePlusPendingIntent.kt:31:20 'fun <T : Parcelable!> getParcelableExtra(p0: String!): T?' is deprecated. Deprecated in Java.
+
+> Task :google_maps_flutter_android:extractReleaseAnnotations
+> Task :share_plus:compileReleaseJavaWithJavac NO-SOURCE
+> Task :share_plus:mergeReleaseGeneratedProguardFiles
+> Task :share_plus:exportReleaseConsumerProguardFiles
+> Task :share_plus:bundleLibCompileToJarRelease
+> Task :share_plus:bundleLibRuntimeToJarRelease
+> Task :share_plus:processReleaseJavaRes
+> Task :share_plus:createFullJarRelease
+> Task :app:processReleaseResources
+> Task :share_plus:generateReleaseLintModel
+> Task :google_maps_flutter_android:mergeReleaseConsumerProguardFiles
+> Task :app_links:mergeReleaseJavaResource
+> Task :google_maps_flutter_android:mergeReleaseJavaResource
+> Task :app_links:syncReleaseLibJars
+> Task :app_links:bundleReleaseLocalLintAar
+> Task :google_maps_flutter_android:syncReleaseLibJars
+> Task :google_maps_flutter_android:bundleReleaseLocalLintAar
+> Task :image_picker_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :image_picker_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :image_picker_android:extractDeepLinksForAarRelease
+> Task :image_picker_android:extractReleaseAnnotations
+> Task :image_picker_android:mergeReleaseConsumerProguardFiles
+> Task :flutter_plugin_android_lifecycle:stripReleaseDebugSymbols NO-SOURCE
+> Task :image_picker_android:mergeReleaseJavaResource
+> Task :flutter_plugin_android_lifecycle:copyReleaseJniLibsProjectAndLocalJars
+> Task :image_picker_android:syncReleaseLibJars
+> Task :image_picker_android:bundleReleaseLocalLintAar
+> Task :flutter_plugin_android_lifecycle:extractDeepLinksForAarRelease
+> Task :flutter_plugin_android_lifecycle:extractReleaseAnnotations
+> Task :flutter_plugin_android_lifecycle:mergeReleaseConsumerProguardFiles
+> Task :geolocator_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :flutter_plugin_android_lifecycle:mergeReleaseJavaResource
+> Task :geolocator_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :flutter_plugin_android_lifecycle:syncReleaseLibJars
+> Task :flutter_plugin_android_lifecycle:bundleReleaseLocalLintAar
+> Task :geolocator_android:extractDeepLinksForAarRelease
+> Task :geolocator_android:extractReleaseAnnotations
+> Task :geolocator_android:mergeReleaseConsumerProguardFiles
+> Task :package_info_plus:stripReleaseDebugSymbols NO-SOURCE
+> Task :geolocator_android:mergeReleaseJavaResource
+> Task :package_info_plus:copyReleaseJniLibsProjectAndLocalJars
+> Task :package_info_plus:extractDeepLinksForAarRelease
+> Task :geolocator_android:syncReleaseLibJars
+> Task :geolocator_android:bundleReleaseLocalLintAar
+> Task :package_info_plus:extractReleaseAnnotations
+> Task :package_info_plus:mergeReleaseConsumerProguardFiles
+> Task :path_provider_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :path_provider_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :path_provider_android:extractDeepLinksForAarRelease
+> Task :path_provider_android:extractReleaseAnnotations
+> Task :path_provider_android:mergeReleaseConsumerProguardFiles
+> Task :permission_handler_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :path_provider_android:mergeReleaseJavaResource
+> Task :permission_handler_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :path_provider_android:syncReleaseLibJars
+> Task :path_provider_android:bundleReleaseLocalLintAar
+> Task :permission_handler_android:extractDeepLinksForAarRelease
+> Task :package_info_plus:mergeReleaseJavaResource
+> Task :package_info_plus:syncReleaseLibJars
+> Task :package_info_plus:bundleReleaseLocalLintAar
+
+> Task :shared_preferences_android:compileReleaseKotlin
+w: file:///C:/Users/crcla/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.17/android/src/main/kotlin/io/flutter/plugins/sharedpreferences/SharedPreferencesPlugin.kt:451:52 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+
+> Task :permission_handler_android:mergeReleaseConsumerProguardFiles
+> Task :shared_preferences_android:compileReleaseJavaWithJavac
+> Task :shared_preferences_android:mergeReleaseGeneratedProguardFiles
+> Task :shared_preferences_android:exportReleaseConsumerProguardFiles
+> Task :shared_preferences_android:bundleLibCompileToJarRelease
+> Task :shared_preferences_android:bundleLibRuntimeToJarRelease
+> Task :shared_preferences_android:processReleaseJavaRes
+> Task :permission_handler_android:extractReleaseAnnotations
+> Task :shared_preferences_android:createFullJarRelease
+> Task :shared_preferences_android:generateReleaseLintModel
+> Task :share_plus:stripReleaseDebugSymbols NO-SOURCE
+> Task :permission_handler_android:mergeReleaseJavaResource
+> Task :share_plus:copyReleaseJniLibsProjectAndLocalJars
+> Task :share_plus:extractDeepLinksForAarRelease
+> Task :permission_handler_android:syncReleaseLibJars
+> Task :permission_handler_android:bundleReleaseLocalLintAar
+> Task :share_plus:extractReleaseAnnotations
+> Task :share_plus:mergeReleaseConsumerProguardFiles
+> Task :shared_preferences_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :share_plus:mergeReleaseJavaResource
+> Task :shared_preferences_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :shared_preferences_android:extractDeepLinksForAarRelease
+> Task :share_plus:syncReleaseLibJars
+> Task :share_plus:bundleReleaseLocalLintAar
+> Task :shared_preferences_android:extractReleaseAnnotations
+> Task :shared_preferences_android:mergeReleaseConsumerProguardFiles
+> Task :sqflite_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :sqflite_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :sqflite_android:extractDeepLinksForAarRelease
+> Task :shared_preferences_android:mergeReleaseJavaResource
+> Task :sqflite_android:extractReleaseAnnotations
+> Task :shared_preferences_android:syncReleaseLibJars
+> Task :shared_preferences_android:bundleReleaseLocalLintAar
+> Task :sqflite_android:mergeReleaseConsumerProguardFiles
+> Task :url_launcher_android:stripReleaseDebugSymbols NO-SOURCE
+> Task :url_launcher_android:copyReleaseJniLibsProjectAndLocalJars
+> Task :url_launcher_android:extractDeepLinksForAarRelease
+> Task :sqflite_android:mergeReleaseJavaResource
+> Task :url_launcher_android:extractReleaseAnnotations
+> Task :sqflite_android:syncReleaseLibJars
+> Task :sqflite_android:bundleReleaseLocalLintAar
+> Task :url_launcher_android:mergeReleaseConsumerProguardFiles
+> Task :url_launcher_android:mergeReleaseJavaResource
+> Task :url_launcher_android:syncReleaseLibJars
+> Task :url_launcher_android:bundleReleaseLocalLintAar
+> Task :app_links:writeReleaseLintModelMetadata
+> Task :flutter_plugin_android_lifecycle:writeReleaseLintModelMetadata
+> Task :geolocator_android:writeReleaseLintModelMetadata
+> Task :google_maps_flutter_android:writeReleaseLintModelMetadata
+> Task :image_picker_android:writeReleaseLintModelMetadata
+> Task :package_info_plus:writeReleaseLintModelMetadata
+> Task :path_provider_android:writeReleaseLintModelMetadata
+> Task :app:compileReleaseKotlin
+
+> Task :google_maps_flutter_android:lintVitalAnalyzeRelease
+e: file:///C:/Users/crcla/.gradle/caches/8.12/transforms/2f7c815e3d225826ad69f2363394ff8b/transformed/jetified-android-maps-utils-4.1.0/jars/classes.jar!/META-INF/library_release.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///C:/Users/crcla/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.3.10/8b80e2f80a3b7daa99c16017f91d4c72cd8b31a6/kotlin-stdlib-2.3.10.jar!/META-INF/kotlin-stdlib-jdk7.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///C:/Users/crcla/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.3.10/8b80e2f80a3b7daa99c16017f91d4c72cd8b31a6/kotlin-stdlib-2.3.10.jar!/META-INF/kotlin-stdlib-jdk8.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///C:/Users/crcla/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.3.10/8b80e2f80a3b7daa99c16017f91d4c72cd8b31a6/kotlin-stdlib-2.3.10.jar!/META-INF/kotlin-stdlib.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+
+> Task :permission_handler_android:lintVitalAnalyzeRelease
+> Task :app_links:lintVitalAnalyzeRelease
+> Task :flutter_plugin_android_lifecycle:lintVitalAnalyzeRelease
+> Task :geolocator_android:lintVitalAnalyzeRelease
+> Task :path_provider_android:lintVitalAnalyzeRelease
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseGeneratedProguardFiles
+> Task :app:processReleaseJavaRes
+> Task :image_picker_android:lintVitalAnalyzeRelease
+> Task :app:generateReleaseLintVitalReportModel
+> Task :permission_handler_android:writeReleaseLintModelMetadata
+> Task :share_plus:writeReleaseLintModelMetadata
+> Task :shared_preferences_android:writeReleaseLintModelMetadata
+> Task :app:expandReleaseArtProfileWildcards
+> Task :sqflite_android:writeReleaseLintModelMetadata
+> Task :url_launcher_android:writeReleaseLintModelMetadata
+> Task :app_links:generateReleaseLintVitalModel
+> Task :flutter_plugin_android_lifecycle:generateReleaseLintVitalModel
+> Task :geolocator_android:generateReleaseLintVitalModel
+> Task :google_maps_flutter_android:generateReleaseLintVitalModel
+> Task :image_picker_android:generateReleaseLintVitalModel
+> Task :package_info_plus:generateReleaseLintVitalModel
+> Task :path_provider_android:generateReleaseLintVitalModel
+> Task :permission_handler_android:generateReleaseLintVitalModel
+> Task :share_plus:generateReleaseLintVitalModel
+> Task :shared_preferences_android:generateReleaseLintVitalModel
+> Task :sqflite_android:generateReleaseLintVitalModel
+> Task :url_launcher_android:generateReleaseLintVitalModel
+> Task :package_info_plus:lintVitalAnalyzeRelease
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
+> Task :app:validateSigningRelease
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :app_links:bundleReleaseAar
+> Task :app_links:mapReleaseSourceSetPaths
+> Task :sqflite_android:lintVitalAnalyzeRelease
+> Task :app:mergeReleaseJavaResource
+> Task :app_links:mergeReleaseResources
+> Task :flutter_plugin_android_lifecycle:bundleReleaseAar
+> Task :flutter_plugin_android_lifecycle:mapReleaseSourceSetPaths
+> Task :url_launcher_android:lintVitalAnalyzeRelease
+> Task :app_links:verifyReleaseResources
+> Task :flutter_plugin_android_lifecycle:mergeReleaseResources
+> Task :app_links:assembleRelease
+> Task :geolocator_android:bundleReleaseAar
+> Task :geolocator_android:mapReleaseSourceSetPaths
+> Task :flutter_plugin_android_lifecycle:verifyReleaseResources
+
+> Task :app:minifyReleaseWithR8
+Supplied proguard configuration does not exist: D:\vendor_app\android\android\app\proguard-rules.pro
+
+> Task :share_plus:lintVitalAnalyzeRelease
+> Task :geolocator_android:mergeReleaseResources
+> Task :flutter_plugin_android_lifecycle:assembleRelease
+> Task :google_maps_flutter_android:bundleReleaseAar
+> Task :google_maps_flutter_android:mapReleaseSourceSetPaths
+> Task :flutter_plugin_android_lifecycle:compileReleaseLibraryResources
+> Task :geolocator_android:verifyReleaseResources
+> Task :shared_preferences_android:lintVitalAnalyzeRelease
+> Task :google_maps_flutter_android:mergeReleaseResources
+> Task :geolocator_android:assembleRelease
+> Task :image_picker_android:bundleReleaseAar
+> Task :image_picker_android:mapReleaseSourceSetPaths
+> Task :image_picker_android:mergeReleaseResources
+> Task :package_info_plus:bundleReleaseAar
+> Task :package_info_plus:mapReleaseSourceSetPaths
+> Task :image_picker_android:verifyReleaseResources
+> Task :google_maps_flutter_android:verifyReleaseResources
+> Task :app:lintVitalAnalyzeRelease
+> Task :package_info_plus:mergeReleaseResources
+> Task :google_maps_flutter_android:assembleRelease
+> Task :image_picker_android:assembleRelease
+> Task :path_provider_android:bundleReleaseAar
+> Task :path_provider_android:mapReleaseSourceSetPaths
+> Task :app:lintVitalReportRelease
+> Task :package_info_plus:verifyReleaseResources
+> Task :path_provider_android:mergeReleaseResources
+> Task :app:lintVitalRelease
+> Task :package_info_plus:assembleRelease
+> Task :permission_handler_android:bundleReleaseAar
+> Task :permission_handler_android:mapReleaseSourceSetPaths
+> Task :path_provider_android:verifyReleaseResources
+> Task :permission_handler_android:mergeReleaseResources
+> Task :path_provider_android:assembleRelease
+> Task :share_plus:bundleReleaseAar
+> Task :share_plus:mapReleaseSourceSetPaths
+> Task :share_plus:mergeReleaseResources
+> Task :shared_preferences_android:bundleReleaseAar
+> Task :shared_preferences_android:mapReleaseSourceSetPaths
+> Task :permission_handler_android:verifyReleaseResources
+> Task :share_plus:verifyReleaseResources
+> Task :shared_preferences_android:mergeReleaseResources
+> Task :permission_handler_android:assembleRelease
+> Task :share_plus:assembleRelease
+> Task :sqflite_android:bundleReleaseAar
+> Task :sqflite_android:mapReleaseSourceSetPaths
+> Task :sqflite_android:mergeReleaseResources
+> Task :url_launcher_android:bundleReleaseAar
+> Task :url_launcher_android:mapReleaseSourceSetPaths
+> Task :sqflite_android:verifyReleaseResources
+> Task :url_launcher_android:mergeReleaseResources
+> Task :sqflite_android:assembleRelease
+> Task :shared_preferences_android:verifyReleaseResources
+> Task :shared_preferences_android:assembleRelease
+> Task :url_launcher_android:verifyReleaseResources
+> Task :url_launcher_android:assembleRelease
+
+> Task :app:minifyReleaseWithR8
+WARNING: R8: An error occurred when parsing kotlin metadata. This normally happens when using a newer version of kotlin than the kotlin version released when this version of R8 was created. To find compatible kotlin versions, please see: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+WARNING: R8: An error occurred when parsing kotlin metadata. This normally happens when using a newer version of kotlin than the kotlin version released when this version of R8 was created. To find compatible kotlin versions, please see: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+WARNING: R8: An error occurred when parsing kotlin metadata. This normally happens when using a newer version of kotlin than the kotlin version released when this version of R8 was created. To find compatible kotlin versions, please see: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+WARNING: R8: An error occurred when parsing kotlin metadata. This normally happens when using a newer version of kotlin than the kotlin version released when this version of R8 was created. To find compatible kotlin versions, please see: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+WARNING: R8: An error occurred when parsing kotlin metadata. This normally happens when using a newer version of kotlin than the kotlin version released when this version of R8 was created. To find compatible kotlin versions, please see: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+
+> Task :app:convertShrunkResourcesToBinaryRelease
+> Task :app:compileReleaseArtProfile
+> Task :app:optimizeReleaseResources
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+
+[Incubating] Problems report is available at: file:///D:/vendor_app/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 58s
+516 actionable tasks: 511 executed, 5 up-to-date

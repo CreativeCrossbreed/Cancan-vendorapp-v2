@@ -78,11 +78,4 @@ flutter:
     # - assets/images/
     - assets/icons/
 
-  # Fonts - Agrandir
-  # fonts:
-  #   - family: Agrandir
-  #     fonts:
-  #       - asset: assets/fonts/Agrandir-Regular.otf
-  #         weight: 400
-  #       - asset: assets/fonts/Agrandir-TextBold.otf
-  #         weight: 700
+  # Fonts: Using google_fonts package (Poppins + Roboto) — no local font files needed

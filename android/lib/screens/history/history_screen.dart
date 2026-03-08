@@ -248,9 +248,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             color: AppTheme.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: AppTheme.white),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          child: Builder(
+                            builder: (context) => IconButton(
+                              icon:
+                                  const Icon(Icons.menu, color: AppTheme.white),
+                              onPressed: () =>
+                                  Scaffold.of(context).openDrawer(),
+                            ),
                           ),
                         ),
                         // Center title/subtitle

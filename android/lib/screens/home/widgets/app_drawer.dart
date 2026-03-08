@@ -144,7 +144,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const HomeTabScreenEnhanced(),
+                              builder: (context) => const HomeScreenEnhanced(),
                             ),
                           );
                         },
@@ -180,7 +180,8 @@ class _AppDrawerState extends State<AppDrawer> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ProductCatalogScreen(),
+                              builder: (context) =>
+                                  const ProductCatalogScreen(),
                             ),
                           );
                         },
@@ -308,9 +309,12 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   void _showBusinessDetails(BuildContext context) {
-    final nameController = TextEditingController(text: _vendorData?['name'] ?? '');
-    final businessNameController = TextEditingController(text: _vendorData?['business_name'] ?? '');
-    final addressController = TextEditingController(text: _vendorData?['address'] ?? '');
+    final nameController =
+        TextEditingController(text: _vendorData?['name'] ?? '');
+    final businessNameController =
+        TextEditingController(text: _vendorData?['business_name'] ?? '');
+    final addressController =
+        TextEditingController(text: _vendorData?['address'] ?? '');
     bool isEditing = false;
     bool isSaving = false;
 
@@ -443,9 +447,11 @@ class _AppDrawerState extends State<AppDrawer> {
                                 // Save changes
                                 setState(() => isSaving = true);
                                 try {
-                                  final result = await _vendorService.updateVendorProfile(
+                                  final result =
+                                      await _vendorService.updateVendorProfile(
                                     name: nameController.text.trim(),
-                                    businessName: businessNameController.text.trim(),
+                                    businessName:
+                                        businessNameController.text.trim(),
                                     address: addressController.text.trim(),
                                   );
 
@@ -454,19 +460,24 @@ class _AppDrawerState extends State<AppDrawer> {
                                   if (result['success']) {
                                     await _loadVendorData();
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         const SnackBar(
-                                          content: Text('Business details updated successfully!'),
-                                          backgroundColor: AppTheme.successGreen,
+                                          content: Text(
+                                              'Business details updated successfully!'),
+                                          backgroundColor:
+                                              AppTheme.successGreen,
                                         ),
                                       );
                                       Navigator.pop(context);
                                     }
                                   } else {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
-                                          content: Text(result['message'] ?? 'Failed to update'),
+                                          content: Text(result['message'] ??
+                                              'Failed to update'),
                                           backgroundColor: AppTheme.errorRed,
                                         ),
                                       );
@@ -477,7 +488,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Something went wrong. Please try again.'),
+                                        content: Text(
+                                            'Something went wrong. Please try again.'),
                                         backgroundColor: AppTheme.errorRed,
                                       ),
                                     );

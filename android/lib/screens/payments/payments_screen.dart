@@ -36,11 +36,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
     try {
       // Get ALL completed orders (across all dates) that are unpaid
-      final allCompleted = await _orderService.getTodayOrders(status: 'completed');
-      
+      final allCompleted =
+          await _orderService.getTodayOrders(status: 'completed');
+
       // For production, we'd need to fetch all unpaid orders, but for now use today's
       // In a real scenario, you'd query all completed orders with payment_status = 'unpaid'
-      
+
       // Filter unpaid orders
       final unpaid = allCompleted
           .where((order) => order.paymentStatus == 'unpaid')
@@ -96,9 +97,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                             color: AppTheme.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: AppTheme.white),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          child: Builder(
+                            builder: (context) => IconButton(
+                              icon:
+                                  const Icon(Icons.menu, color: AppTheme.white),
+                              onPressed: () =>
+                                  Scaffold.of(context).openDrawer(),
+                            ),
                           ),
                         ),
                         // Center title/subtitle
@@ -110,7 +115,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                                   .textTheme
                                   .bodyMedium
                                   ?.copyWith(
-                                    color: AppTheme.white.withValues(alpha: 0.9),
+                                    color:
+                                        AppTheme.white.withValues(alpha: 0.9),
                                   ),
                             ),
                             const SizedBox(height: AppTheme.spacingXS),
@@ -193,7 +199,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                                                 fontWeight: FontWeight.w600,
                                               ),
                                         ),
-                                        const SizedBox(height: AppTheme.spacingXS),
+                                        const SizedBox(
+                                            height: AppTheme.spacingXS),
                                         Text(
                                           'Rs. ${_totalPending.toStringAsFixed(0)}',
                                           style: Theme.of(context)
@@ -217,7 +224,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                               ),
                             ),
                             const SizedBox(height: AppTheme.spacingL),
-                            
+
                             // Remind All Button
                             if (_unpaidOrders.isNotEmpty)
                               SizedBox(
@@ -237,10 +244,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                             // Customer List Header
                             Text(
                               'Customers with Pending Payments',
-                              style:
-                                  Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -266,7 +275,6 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       ),
     );
   }
-
 
   Widget _buildCustomersList() {
     if (_unpaidOrders.isEmpty) {
@@ -306,9 +314,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
   Widget _buildCustomerCard(Order order) {
     final customer = order.customer;
     if (customer == null) return const SizedBox();
-    
+
     // Get remaining amount (stored in order or calculate)
-    final pendingAmount = order.totalAmount; // In real app, this would track partial payments
+    final pendingAmount =
+        order.totalAmount; // In real app, this would track partial payments
 
     return Container(
       padding: AppTheme.cardPadding,
@@ -377,10 +386,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       ),
     );
   }
-  
+
   Future<void> _remindAllToPay() async {
     if (_unpaidOrders.isEmpty) return;
-    
+
     for (final order in _unpaidOrders) {
       final customer = order.customer;
       if (customer != null) {
@@ -393,7 +402,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         await Future.delayed(const Duration(milliseconds: 500));
       }
     }
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -403,10 +412,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       );
     }
   }
-  
+
   void _showPaymentDialog(Order order, double pendingAmount) {
     final amountController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -430,7 +439,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
             const SizedBox(height: 8),
             TextField(
               controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
               ],
@@ -459,7 +469,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 );
                 return;
               }
-              
+
               if (receivedAmount >= pendingAmount) {
                 // Full payment
                 await _markAsPaid(order);
@@ -491,8 +501,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     final cleanPhone = phone.replaceAll(RegExp(r'[+\s]'), '');
     final message =
         'Hi $name! This is a friendly reminder about your pending water can payment of Rs. ${amount.toStringAsFixed(0)}. Please pay at your earliest convenience. Thank you!';
-    final uri =
-        Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
+    final uri = Uri.parse(
+        'https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

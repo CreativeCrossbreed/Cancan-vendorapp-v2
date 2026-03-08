@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../models/order.dart';
 import '../../utils/logger.dart';
+import '../home/widgets/app_drawer.dart';
 
 /// Orders Screen - Simple, accessible delivery app-style interface
 /// Optimized for illiterate users (Blinkit/Rapido/Zomato inspired)
@@ -44,7 +45,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         _isLoading = false;
       });
 
-      AppLogger.i('Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
+      AppLogger.i(
+          'Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
     } catch (e) {
       AppLogger.e('Error loading orders: $e');
       setState(() => _isLoading = false);
@@ -57,6 +59,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final dateStr = DateFormat('EEEE, d MMM').format(now);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppTheme.primaryGradient,
@@ -106,11 +109,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   color: AppTheme.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.menu, color: AppTheme.white),
-                  onPressed: () {
-                    Scaffold.of(context).openDrawer();
-                  },
+                child: Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu, color: AppTheme.white),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
                 ),
               ),
               Column(
@@ -285,13 +290,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: (_showPending ? AppTheme.warningOrange : AppTheme.successGreen).withValues(alpha: 0.1),
+                color: (_showPending
+                        ? AppTheme.warningOrange
+                        : AppTheme.successGreen)
+                    .withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _showPending ? Icons.inventory_2_outlined : Icons.check_circle_outline,
+                _showPending
+                    ? Icons.inventory_2_outlined
+                    : Icons.check_circle_outline,
                 size: 64,
-                color: _showPending ? AppTheme.warningOrange : AppTheme.successGreen,
+                color: _showPending
+                    ? AppTheme.warningOrange
+                    : AppTheme.successGreen,
               ),
             ),
             const SizedBox(height: 24),
@@ -304,7 +316,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _showPending ? 'All caught up!' : 'Start delivering to see orders here',
+              _showPending
+                  ? 'All caught up!'
+                  : 'Start delivering to see orders here',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -334,7 +348,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
     if (customer == null) return const SizedBox();
 
     // Calculate total cans
-    final totalCans = order.items.fold<int>(0, (sum, item) => sum + item.quantity);
+    final totalCans =
+        order.items.fold<int>(0, (sum, item) => sum + item.quantity);
 
     return Container(
       decoration: BoxDecoration(
@@ -348,7 +363,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
         border: Border.all(
-          color: isPending ? AppTheme.warningOrange.withValues(alpha: 0.3) : AppTheme.successGreen.withValues(alpha: 0.3),
+          color: isPending
+              ? AppTheme.warningOrange.withValues(alpha: 0.3)
+              : AppTheme.successGreen.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -375,7 +392,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: isPending ? AppTheme.warningOrange : AppTheme.successGreen,
+                        color: isPending
+                            ? AppTheme.warningOrange
+                            : AppTheme.successGreen,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -388,7 +407,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Text(
                       isPending ? 'PENDING' : 'DELIVERED',
                       style: TextStyle(
-                        color: isPending ? AppTheme.warningOrange : AppTheme.successGreen,
+                        color: isPending
+                            ? AppTheme.warningOrange
+                            : AppTheme.successGreen,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         letterSpacing: 1,
@@ -398,7 +419,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
+                    const Icon(Icons.access_time,
+                        size: 16, color: AppTheme.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       order.timeSlot,
@@ -555,35 +577,35 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ),
                       ),
                     ),
-                if (isPending) ...[
-                  const SizedBox(width: 12),
-                  // MARK DELIVERED button - BIG green
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _markAsDelivered(order),
-                        icon: const Icon(Icons.check_circle, size: 24),
-                        label: const Text(
-                          'DONE',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                    if (isPending) ...[
+                      const SizedBox(width: 12),
+                      // MARK DELIVERED button - BIG green
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _markAsDelivered(order),
+                            icon: const Icon(Icons.check_circle, size: 24),
+                            label: const Text(
+                              'DONE',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.successGreen,
+                              foregroundColor: AppTheme.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.successGreen,
-                          foregroundColor: AppTheme.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
                   ],
                 ),
               ],
