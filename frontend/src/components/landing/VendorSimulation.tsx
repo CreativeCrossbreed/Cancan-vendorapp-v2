@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playKaChing } from './SoundEngine';
-import s from './VendorSimulation.module.css';
 
 interface Order {
     id: number;
@@ -74,7 +73,7 @@ function INRCounter({ value }: { value: number }) {
     }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <span className={s.inrValue}>
+        <span className="text-[1.4rem] font-black tabular-nums tracking-tighter text-emerald-500">
             ₹{display.toLocaleString('en-IN')}
         </span>
     );
@@ -110,66 +109,66 @@ export default function VendorSimulation({ soundEnabled }: { soundEnabled: boole
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className={s.dashboard}>
+        <div className="w-full max-w-[480px] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shadow-3xl">
             {/* Header */}
-            <div className={s.dashHeader}>
-                <div className={s.dashTitle}>
-                    <div className={s.dashDot} />
+            <div className="px-6 py-5 border-b border-white/10 bg-slate-900/50 backdrop-blur-md">
+                <div className="flex items-center gap-2.5 text-[#f8fafc] text-[15px] font-black">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse" />
                     Vendor Dashboard — Live
                 </div>
-                <div className={s.dashSubtitle}>Simulation of real vendor experience</div>
+                <div className="text-slate-500 text-[11px] mt-1 font-medium italic">Simulation of real vendor experience</div>
             </div>
 
             {/* Stats Row */}
-            <div className={s.statsRow}>
-                <div className={s.statBox}>
-                    <span className={s.statLabel}>Today&apos;s Collection</span>
+            <div className="grid grid-cols-3 border-b border-white/5">
+                <div className="p-5 flex flex-col gap-1.5 text-center border-r border-white/5">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Collection</span>
                     <INRCounter value={total} />
                 </div>
-                <div className={s.statBox}>
-                    <span className={s.statLabel}>Orders</span>
+                <div className="p-5 flex flex-col gap-1.5 text-center border-r border-white/5">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Orders</span>
                     <motion.span
-                        className={s.statNumber}
+                        className="text-[1.4rem] font-black tabular-nums tracking-tighter text-[#f8fafc]"
                         key={orderCount}
-                        initial={{ scale: 1.3, color: '#22c55e' }}
+                        initial={{ scale: 1.3, color: '#10b981' }}
                         animate={{ scale: 1, color: '#f8fafc' }}
                         transition={{ duration: 0.4 }}
                     >
                         {orderCount}
                     </motion.span>
                 </div>
-                <div className={s.statBox}>
-                    <span className={s.statLabel}>Avg Order</span>
-                    <span className={s.statNumber}>
+                <div className="p-5 flex flex-col gap-1.5 text-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avg Order</span>
+                    <span className="text-[1.4rem] font-black tabular-nums tracking-tighter text-[#f8fafc]">
                         ₹{orderCount > 0 ? Math.round(total / orderCount) : 0}
                     </span>
                 </div>
             </div>
 
             {/* Order Feed */}
-            <div className={s.feed}>
-                <div className={s.feedHeader}>Recent Orders</div>
-                <div className={s.feedList}>
+            <div className="bg-slate-900/40">
+                <div className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">Recent Orders</div>
+                <div className="max-h-[300px] overflow-y-auto scrollbar-hide">
                     <AnimatePresence mode="popLayout">
                         {orders.map((order) => (
                             <motion.div
                                 key={order.id}
-                                className={s.orderRow}
-                                initial={{ opacity: 0, x: -30, height: 0 }}
+                                className="flex justify-between items-center px-6 py-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                                initial={{ opacity: 0, x: -20, height: 0 }}
                                 animate={{ opacity: 1, x: 0, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                                 layout
                             >
-                                <div className={s.orderLeft}>
-                                    <span className={s.orderCustomer}>{order.customer}</span>
-                                    <span className={s.orderDetail}>
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[#f8fafc] text-[14px] font-black">{order.customer}</span>
+                                    <span className="text-slate-500 text-[11px] font-medium">
                                         {order.qty}x {order.brand} · {order.area}
                                     </span>
                                 </div>
-                                <div className={s.orderRight}>
-                                    <span className={s.orderAmount}>₹{order.amount}</span>
-                                    <span className={s.orderTime}>{order.time}</span>
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-emerald-500 text-[15px] font-black tabular-nums">₹{order.amount}</span>
+                                    <span className="text-slate-600 text-[10px] font-bold">{order.time}</span>
                                 </div>
                             </motion.div>
                         ))}
