@@ -227,7 +227,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
               ),
             ),
             if (_selectedRangeType == DateRangeType.custom)
-              Icon(
+              const Icon(
                 Icons.keyboard_arrow_down,
                 size: 20,
                 color: AppTheme.primaryBlue,

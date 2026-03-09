@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import s from './onboard.module.css';
 
@@ -18,10 +18,11 @@ interface FormData {
     longitude: number | null;
 }
 
-export default function OnboardPage() {
+function OnboardForm() {
     const searchParams = useSearchParams();
     const vendorId = searchParams.get('v');
     const phone = searchParams.get('p');
+
 
     const [vendorName, setVendorName] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -405,3 +406,12 @@ export default function OnboardPage() {
         </div>
     );
 }
+
+export default function OnboardPage() {
+    return (
+        <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+            <OnboardForm />
+        </Suspense>
+    );
+}
+

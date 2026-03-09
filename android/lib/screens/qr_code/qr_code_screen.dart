@@ -7,7 +7,6 @@ import '../../config/supabase_config.dart';
 import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
 
-
 /// QR Code Screen - Generate and display vendor QR code for customer orders
 class QRCodeScreen extends StatefulWidget {
   const QRCodeScreen({super.key});
@@ -22,6 +21,7 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
   String? _vendorName;
   String? _businessName;
   String? _qrData;
+  String? _vendorPhone;
 
   @override
   void initState() {
@@ -65,9 +65,9 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       print('🧪 Using dummy vendor data for QR code generation');
 
       // Fallback to dummy data for testing
-      final dummyPhone = '919876543210';
-      final dummyName = 'Rajesh Kumar';
-      final dummyBusiness = 'Fresh Water Supply';
+      const dummyPhone = '919876543210';
+      const dummyName = 'Rajesh Kumar';
+      const dummyBusiness = 'Fresh Water Supply';
 
       final message = Uri.encodeComponent(
           'Hi $dummyName! I would like to order water cans from $dummyBusiness. '
@@ -83,7 +83,6 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       });
     }
   }
-
 
   void _copyLink() {
     if (_qrData != null) {

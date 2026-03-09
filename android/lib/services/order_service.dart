@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../models/order.dart';
 import '../utils/logger.dart';
@@ -74,7 +73,7 @@ class OrderService {
       AppLogger.i('Fetched ${response.length} orders');
 
       // Parse response to Order objects
-      return response.map((data) => Order.fromJson(data as Map<String, dynamic>)).toList();
+      return response.map((data) => Order.fromJson(data)).toList();
     } catch (e) {
       AppLogger.e('Error fetching orders: $e');
       return [];
@@ -141,7 +140,7 @@ class OrderService {
 
       final response = await query.order('created_at', ascending: false);
 
-      return response.map((data) => Order.fromJson(data as Map<String, dynamic>)).toList();
+      return response.map((data) => Order.fromJson(data)).toList();
     } catch (e) {
       AppLogger.e('Error fetching orders by date: $e');
       return [];
@@ -216,7 +215,7 @@ class OrderService {
         return null;
       }
 
-      return Order.fromJson(response as Map<String, dynamic>);
+      return Order.fromJson(response);
     } catch (e) {
       AppLogger.e('Error fetching order: $e');
       return null;

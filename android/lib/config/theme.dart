@@ -6,7 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 /// Based on official Can Can Design Guidelines
 class AppTheme {
   // Brand Colors from Design Guidelines
-  static const Color successBackground = Color(0xFFa3cf00); // Success Background
+  static const Color successBackground =
+      Color(0xFFa3cf00); // Success Background
   static const Color surfaceColor = Color(0xFFf0efec); // Surface Colors
   static const Color cautionColor = Color(0xFF9f7200); // Caution
   static const Color stopColor = Color(0xFFff073a); // Stop/Error
@@ -33,6 +34,32 @@ class AppTheme {
   static const Color textPrimary = Color(0xFF1a1a1a);
   static const Color textSecondary = Color(0xFF666666);
 
+  // Spacing and Layout
+  static const double spacingXS = 4.0;
+  static const double spacingS = 8.0;
+  static const double spacingM = 16.0;
+  static const double spacingL = 24.0;
+  static const double spacingXL = 32.0;
+  static const double spacingXXL = 40.0;
+  static const double spacingXXXL = 48.0;
+
+  // Padding
+  static const EdgeInsets paddingS = EdgeInsets.all(spacingS);
+  static const EdgeInsets paddingM = EdgeInsets.all(spacingM);
+  static const EdgeInsets paddingL = EdgeInsets.all(spacingL);
+  static const EdgeInsets paddingXL = EdgeInsets.all(spacingXL);
+  static const EdgeInsets paddingXXL = EdgeInsets.all(spacingXXL);
+  static const EdgeInsets screenPadding = EdgeInsets.all(spacingM);
+  static const EdgeInsets screenPaddingHorizontal =
+      EdgeInsets.symmetric(horizontal: spacingM);
+  static const EdgeInsets cardPadding = EdgeInsets.all(spacingM);
+  static const EdgeInsets paddingVerticalS =
+      EdgeInsets.symmetric(vertical: spacingS);
+  static const EdgeInsets paddingVerticalM =
+      EdgeInsets.symmetric(vertical: spacingM);
+  static const EdgeInsets paddingVerticalL =
+      EdgeInsets.symmetric(vertical: spacingL);
+
   // Status Colors (updated to match brand)
   static const Color pendingBg = Color(0xFFfff3cd); // Light warning
   static const Color completedBg = Color(0xFFd4edda); // Light success
@@ -40,10 +67,10 @@ class AppTheme {
 
   // Chart Colors (updated to match brand palette)
   static const List<Color> chartColors = [
-    primaryGreen,      // Chart 1 - Primary Green
-    infoColor,         // Chart 2 - Info Blue
-    warningOrange,     // Chart 3 - Warning Orange
-    errorRed,          // Chart 4 - Error Red
+    primaryGreen, // Chart 1 - Primary Green
+    infoColor, // Chart 2 - Info Blue
+    warningOrange, // Chart 3 - Warning Orange
+    errorRed, // Chart 4 - Error Red
     Color(0xFF6f42c1), // Chart 5 - Purple
   ];
 
@@ -249,11 +276,11 @@ class AppTheme {
         fillColor: surfaceLight,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: mediumGray, width: 1),
+          borderSide: const BorderSide(color: mediumGray, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: mediumGray, width: 1),
+          borderSide: const BorderSide(color: mediumGray, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -267,7 +294,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: errorRed, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         hintStyle: GoogleFonts.roboto(
           color: textSecondary,
           fontSize: 14,
@@ -321,7 +349,7 @@ class AppTheme {
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
-        side: BorderSide(color: mediumGray),
+        side: const BorderSide(color: mediumGray),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -336,14 +364,14 @@ class AppTheme {
 
       // Switch Theme
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryGreen;
           }
           return mediumGray;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryGreen.withOpacity(0.5);
           }
           return mediumGray.withOpacity(0.5);
@@ -352,13 +380,13 @@ class AppTheme {
 
       // Checkbox Theme
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryGreen;
           }
           return Colors.transparent;
         }),
-        checkColor: MaterialStateProperty.all(white),
+        checkColor: WidgetStateProperty.all(white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
@@ -366,8 +394,8 @@ class AppTheme {
 
       // Radio Theme
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryGreen;
           }
           return mediumGray;
@@ -375,7 +403,7 @@ class AppTheme {
       ),
 
       // Divider Theme
-      dividerTheme: DividerThemeData(
+      dividerTheme: const DividerThemeData(
         color: mediumGray,
         thickness: 1,
         space: 1,

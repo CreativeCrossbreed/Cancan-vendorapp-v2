@@ -69,7 +69,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               const SnackBar(
                 content: Text('Profile created in TEST MODE. Data will be available for this session.'),
                 backgroundColor: AppTheme.warningOrange,
-                duration: const Duration(seconds: 3),
+                duration: Duration(seconds: 3),
               ),
             );
           }

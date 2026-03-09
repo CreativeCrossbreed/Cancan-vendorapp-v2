@@ -1,37 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
 
-:root {
-  --cancan-primary: #6DD3DC;
-  --cancan-primary-dark: #4BBFC9;
-  --cancan-secondary: #A9E06D;
-  --cancan-secondary-dark: #8FCA53;
-  --cancan-soft: #E3F0B6;
-  --cancan-bg: #FAF8F0;
-  --cancan-card: #ffffff;
-  --cancan-text: #0f172a;
-  --cancan-muted: #64748b;
-  --cancan-max: 1140px;
+@theme {
+  --color-cancan-primary: #6DD3DC;
+  --color-cancan-primary-dark: #4BBFC9;
+  --color-cancan-secondary: #A9E06D;
+  --color-cancan-secondary-dark: #8FCA53;
+  --color-cancan-soft: #E3F0B6;
+  --color-cancan-bg: #FAF8F0;
+  --color-cancan-text: #0f172a;
+
+  --max-w-cancan: 1140px;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* Luxury Base Styles */
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-cancan-bg text-cancan-text antialiased;
+    font-family: var(--font-inter);
+  }
+
+  /* Ensure margins and paddings are reset properly by Tailwind Preflight */
+  * {
+    @apply border-slate-200;
+  }
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* Luxury Utilities */
+@layer utilities {
+  .luxury-shadow {
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.08);
+  }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: var(--cancan-text);
-  background: var(--cancan-bg);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
+  .glass-header {
+    @apply bg-white/70 backdrop-blur-2xl border-b border-white/20;
+  }
 }

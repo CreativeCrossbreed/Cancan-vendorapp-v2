@@ -29,13 +29,6 @@ class PaymentService {
           .eq('id', orderId)
           .single();
 
-      if (order == null) {
-        return {
-          'success': false,
-          'message': 'Order not found',
-        };
-      }
-
       final totalAmount = (order['total_amount'] as num).toDouble();
       final currentAmountPaid = (order['amount_paid'] as num).toDouble();
       final newTotalPaid = currentAmountPaid + amount;
@@ -100,13 +93,6 @@ class PaymentService {
           .select('total_amount, amount_paid, remaining_amount, payment_status')
           .eq('id', orderId)
           .single();
-
-      if (order == null) {
-        return {
-          'success': false,
-          'message': 'Order not found',
-        };
-      }
 
       final payments = await getOrderPayments(orderId: orderId);
 
