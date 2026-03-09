@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playWaterDrop, playDing } from './SoundEngine';
-import s from './WhatsAppSimulator.module.css';
 
 interface Message {
     id: number;
@@ -64,14 +63,9 @@ export default function WhatsAppSimulator({ soundEnabled }: { soundEnabled: bool
     const [choices, setChoices] = useState<Record<number, string>>({});
     const [isComplete, setIsComplete] = useState(false);
     const [started, setStarted] = useState(false);
-    const [msgId, setMsgId] = useState(0);
 
     const addMessage = useCallback((type: 'bot' | 'user', text: string) => {
-        setMsgId((prev) => {
-            const id = prev + 1;
-            setMessages((msgs) => [...msgs, { id, type, text }]);
-            return id;
-        });
+        setMessages((msgs) => [...msgs, { id: Date.now() + Math.random(), type, text }]);
     }, []);
 
     const startConversation = useCallback(() => {
@@ -131,37 +125,53 @@ export default function WhatsAppSimulator({ soundEnabled }: { soundEnabled: bool
         setChoices({});
         setIsComplete(false);
         setStarted(false);
-        setMsgId(0);
     }, []);
 
     const showButtons = started && !isTyping && !isComplete;
     const step = STEPS[currentStep];
 
     return (
-        <div className={s.phone}>
-            <div className={s.notch} />
-            <div className={s.statusBar}>
-                <span className={s.statusTime}>9:41</span>
-                <div className={s.statusIcons}>
-                    <span className={s.signal} />
-                    <span className={s.wifi} />
-                    <span className={s.battery} />
-                </div>
-            </div>
-            <div className={s.chatHeader}>
-                <div className={s.avatar}>CC</div>
-                <div>
-                    <div className={s.chatName}>Can Can Water</div>
-                    <div className={s.chatStatus}>online</div>
+        <div className="w-[300px] sm:w-[320px] h-[580px] rounded-[48px] overflow-hidden bg-[#111b21] flex flex-col shadow-2xl border border-white/10">
+            {/* Notch */}
+            <div className="w-24 h-1.5 rounded-full bg-[#2a3942] mx-auto mt-3 mb-1.5" />
+
+            {/* Status Bar */}
+            <div className="flex justify-between items-center px-5 pt-0.5 pb-2 text-[10px] text-[#8696a0]">
+                <span className="font-bold">9:41</span>
+                <div className="flex gap-1.5">
+                    <div className="w-3 h-2.5 rounded-[2px] bg-[#8696a0]/40" />
+                    <div className="w-3 h-2.5 rounded-[2px] bg-[#8696a0]/40" />
+                    <div className="w-3 h-2.5 rounded-[2px] bg-[#8696a0]/40" />
                 </div>
             </div>
 
-            <div className={s.screen}>
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 bg-[#1f2c34] border-b border-white/[0.04]">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cancan-primary to-cancan-secondary flex items-center justify-center text-white text-[11px] font-black shadow-lg">
+                    CC
+                </div>
+                <div>
+                    <div className="text-[#e9edef] text-[13px] font-bold">Can Can Water</div>
+                    <div className="text-[#8696a0] text-[10px] flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#00a884] animate-pulse" />
+                        online
+                    </div>
+                </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 px-3 py-4 overflow-y-auto flex flex-col gap-2 bg-[#0b141a] scrollbar-hide">
                 {!started && (
-                    <div className={s.startPrompt}>
-                        <p>Try ordering water cans!</p>
-                        <button className={s.startBtn} onClick={startConversation}>
-                            Start Conversation
+                    <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-4">
+                        <div className="w-16 h-16 rounded-3xl bg-[#1f2c34] flex items-center justify-center text-2xl animate-bounce">
+                            💧
+                        </div>
+                        <p className="text-[#8696a0] text-sm font-medium">Experience the Chennai water concierge in WhatsApp</p>
+                        <button
+                            className="w-full py-3.5 rounded-2xl bg-[#00a884] text-white font-black text-sm transition-all hover:bg-[#00c49a] active:scale-95 shadow-xl shadow-[#00a884]/20"
+                            onClick={startConversation}
+                        >
+                            Start Demo Order
                         </button>
                     </div>
                 )}
@@ -170,10 +180,13 @@ export default function WhatsAppSimulator({ soundEnabled }: { soundEnabled: bool
                     {messages.map((msg) => (
                         <motion.div
                             key={msg.id}
-                            className={msg.type === 'bot' ? s.bubbleBot : s.bubbleUser}
-                            initial={{ opacity: 0, y: 16, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            className={`max-w-[85%] px-3.5 py-2.5 text-[12.5px] leading-relaxed relative ${msg.type === 'bot'
+                                    ? 'self-start bg-[#1f2c34] text-[#e9edef] rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-md'
+                                    : 'self-end bg-[#005c4b] text-[#e9edef] rounded-tl-xl rounded-br-xl rounded-bl-xl shadow-md'
+                                }`}
+                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         >
                             {msg.text}
                         </motion.div>
@@ -182,25 +195,26 @@ export default function WhatsAppSimulator({ soundEnabled }: { soundEnabled: bool
 
                 {isTyping && (
                     <motion.div
-                        className={s.typing}
+                        className="self-start flex gap-1.5 px-4 py-3.5 bg-[#1f2c34] rounded-tr-xl rounded-br-xl rounded-bl-xl mt-1 shadow-md"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                     >
-                        <span /><span /><span />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce [animation-duration:1s] [animation-delay:-0.32s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce [animation-duration:1s] [animation-delay:-0.16s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#8696a0] animate-bounce [animation-duration:1s]" />
                     </motion.div>
                 )}
 
                 {showButtons && step && (
                     <motion.div
-                        className={s.buttons}
-                        initial={{ opacity: 0, y: 10 }}
+                        className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[0.04]"
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
                     >
                         {step.buttons.map((btn) => (
                             <button
                                 key={btn.value}
-                                className={s.choiceBtn}
+                                className="px-5 py-2 border border-[#2a3942] rounded-xl text-[#00a884] text-[11.5px] font-black transition-all hover:bg-[#00a884] hover:text-white hover:border-[#00a884] active:scale-95"
                                 onClick={() => handleChoice(btn.label, currentStep)}
                             >
                                 {btn.label}
@@ -211,13 +225,12 @@ export default function WhatsAppSimulator({ soundEnabled }: { soundEnabled: bool
 
                 {isComplete && (
                     <motion.button
-                        className={s.resetBtn}
+                        className="self-center mt-6 px-6 py-2 border border-[#2a3942] rounded-full text-[#8696a0] text-[11px] font-black uppercase tracking-wider hover:text-white hover:border-white transition-all active:scale-95"
                         onClick={reset}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
                     >
-                        Try again
+                        Restart Simulation
                     </motion.button>
                 )}
             </div>
