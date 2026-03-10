@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
 import '../config/supabase_config.dart';
@@ -129,9 +130,8 @@ class QRService {
       // Try to parse as JSON first
       if (qrData.startsWith('{') && qrData.endsWith('}')) {
         return Map<String, dynamic>.from(
-          // This would normally use dart:convert, but for simplicity:
-          <String, dynamic>{}
-        );
+            // This would normally use dart:convert, but for simplicity:
+            <String, dynamic>{});
       }
 
       // Check if it's a URL
@@ -158,7 +158,8 @@ class QRService {
     }
   }
 
-  Future<Map<String, dynamic>> _processVendorOrderQR(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> _processVendorOrderQR(
+      Map<String, dynamic> data) async {
     try {
       final vendorId = data['vendor_id'] as String?;
 

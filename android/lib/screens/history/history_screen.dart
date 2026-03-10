@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../models/order.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
 /// History Screen - View completed and cancelled orders
 class HistoryScreen extends StatefulWidget {
@@ -93,7 +94,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Error loading history: $e');
+      AppLogger.d('❌ Error loading history: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -247,9 +248,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             color: AppTheme.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: AppTheme.white),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          child: Builder(
+                            builder: (context) => IconButton(
+                              icon:
+                                  const Icon(Icons.menu, color: AppTheme.white),
+                              onPressed: () =>
+                                  Scaffold.of(context).openDrawer(),
+                            ),
                           ),
                         ),
                         // Center title/subtitle

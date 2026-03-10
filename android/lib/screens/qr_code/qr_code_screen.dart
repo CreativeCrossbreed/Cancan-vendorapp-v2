@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
-import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
+import '../../services/app_settings_service.dart';
 import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
-/// QR Code Screen - Generate and display vendor QR code for customer orders
+/// QR Code Screen - Generate and display vendor QR code for customer onboarding
+///
+/// Flow:
+/// 1. Fetches vendor name/business from `vendors` table
+/// 2. Fetches central WhatsApp Business number from `app_config` table
+/// 3. Generates QR code: `https://wa.me/<number>?text=ref-<vendorId>`
+/// 4. Customer scans → WhatsApp opens → webhook identifies vendor via ref code
 class QRCodeScreen extends StatefulWidget {
   const QRCodeScreen({super.key});
 
@@ -21,7 +28,7 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
   String? _vendorName;
   String? _businessName;
   String? _qrData;
-  String? _vendorPhone;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -35,20 +42,34 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _errorMessage = 'No vendor session found. Please log in again.';
+          _isLoading = false;
+        });
         return;
       }
 
+      // Fetch vendor info
       final data =
           await _supabase.from('vendors').select().eq('id', vendorId).single();
 
-      final name = data['name'] as String;
-      final business = data['business_name'] as String;
+      // Fetch WhatsApp Business number from app_config table
+      final businessNumber =
+          await AppSettingsService.getWhatsAppBusinessNumber();
 
-      // ── The business WhatsApp number (NOT the vendor's personal number).
-      // All QR codes point to the central Can Can business number.
-      // The webhook identifies the vendor via the ref- prefix.
-      final businessNumber = AppConfig.whatsappBusinessNumber;
+      final name = data['name'] as String? ?? 'Vendor';
+      final business = data['business_name'] as String? ?? 'Business';
+
+      if (businessNumber.isEmpty) {
+        setState(() {
+          _vendorName = name;
+          _businessName = business;
+          _errorMessage =
+              'WhatsApp Business number not configured. Please contact support.';
+          _isLoading = false;
+        });
+        return;
+      }
 
       // Message format the webhook expects: "ref-{vendorId}"
       final message = Uri.encodeComponent('ref-$vendorId');
@@ -60,25 +81,12 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
         _qrData = whatsappLink;
         _isLoading = false;
       });
+
+      AppLogger.i('QR code generated for vendor $vendorId');
     } catch (e) {
-      print('❌ Error loading vendor data: $e');
-      print('🧪 Using dummy vendor data for QR code generation');
-
-      // Fallback to dummy data for testing
-      const dummyPhone = '919876543210';
-      const dummyName = 'Rajesh Kumar';
-      const dummyBusiness = 'Fresh Water Supply';
-
-      final message = Uri.encodeComponent(
-          'Hi $dummyName! I would like to order water cans from $dummyBusiness. '
-          'Please share your product catalog and prices.');
-      final whatsappLink = 'https://wa.me/$dummyPhone?text=$message';
-
+      AppLogger.e('Error loading vendor data for QR: $e');
       setState(() {
-        _vendorPhone = '+$dummyPhone';
-        _vendorName = dummyName;
-        _businessName = dummyBusiness;
-        _qrData = whatsappLink;
+        _errorMessage = 'Failed to load QR code data. Pull down to retry.';
         _isLoading = false;
       });
     }
@@ -115,12 +123,12 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
               _buildInstructionStep(
                 2,
                 'Customers Scan',
-                'When customers scan the QR code with their phone camera, it will open WhatsApp.',
+                'When customers scan the QR code, it opens WhatsApp with your vendor code pre-filled.',
               ),
               _buildInstructionStep(
                 3,
-                'Direct Messaging',
-                'Customers can directly message you to place orders, making it super easy!',
+                'Automatic Onboarding',
+                'The system automatically links the customer to your account via the vendor code.',
               ),
               const SizedBox(height: 16),
               Container(
@@ -223,236 +231,245 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       ],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  // Header
-                  Text(
-                    'Your Business QR Code',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Customers can scan this to order via WhatsApp',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // QR Code Card
-                  Container(
+          : _errorMessage != null && _qrData == null
+              ? _buildErrorState()
+              : RefreshIndicator(
+                  onRefresh: _loadVendorData,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppTheme.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
                     child: Column(
                       children: [
-                        // Business Info
+                        // Header
+                        Text(
+                          'Your Business QR Code',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Customers scan this to join your network via WhatsApp',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: AppTheme.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // QR Code Card
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryBlue,
-                            borderRadius: BorderRadius.circular(16),
+                            color: AppTheme.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
                           child: Column(
                             children: [
-                              const Icon(
-                                Icons.water_drop_rounded,
-                                size: 40,
-                                color: AppTheme.white,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                _businessName ?? 'Business Name',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      color: AppTheme.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _vendorName ?? 'Vendor',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color:
-                                          AppTheme.white.withValues(alpha: 0.9),
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
+                              // Business Info
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: AppTheme.primaryBlue,
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                child: Column(
                                   children: [
                                     const Icon(
-                                      Icons.phone,
-                                      size: 14,
+                                      Icons.water_drop_rounded,
+                                      size: 40,
                                       color: AppTheme.white,
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(height: 12),
                                     Text(
-                                      _vendorPhone ?? '',
-                                      style: const TextStyle(
-                                        color: AppTheme.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      _businessName ?? 'Business Name',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: AppTheme.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _vendorName ?? 'Vendor',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: AppTheme.white
+                                                .withValues(alpha: 0.9),
+                                          ),
                                     ),
                                   ],
                                 ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // QR Code
+                              if (_qrData != null)
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: AppTheme.primaryBlue
+                                          .withValues(alpha: 0.3),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: QrImageView(
+                                    data: _qrData!,
+                                    version: QrVersions.auto,
+                                    size: 200,
+                                    backgroundColor: AppTheme.white,
+                                    eyeStyle: const QrEyeStyle(
+                                      eyeShape: QrEyeShape.square,
+                                      color: AppTheme.primaryBlue,
+                                    ),
+                                    dataModuleStyle: const QrDataModuleStyle(
+                                      dataModuleShape: QrDataModuleShape.square,
+                                      color: AppTheme.primaryBlue,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 16),
+
+                              Text(
+                                'Scan with phone camera',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: AppTheme.textSecondary),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 24),
 
-                        // QR Code
-                        if (_qrData != null)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color:
-                                    AppTheme.primaryBlue.withValues(alpha: 0.3),
-                                width: 2,
-                              ),
-                            ),
-                            child: QrImageView(
-                              data: _qrData!,
-                              version: QrVersions.auto,
-                              size: 200,
-                              backgroundColor: AppTheme.white,
-                              eyeStyle: const QrEyeStyle(
-                                eyeShape: QrEyeShape.square,
-                                color: AppTheme.primaryBlue,
-                              ),
-                              dataModuleStyle: const QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.square,
-                                color: AppTheme.primaryBlue,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-
-                        // Scan instruction
-                        Text(
-                          'Scan with phone camera',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Action Buttons
-                  Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _copyLink,
-                          icon: const Icon(Icons.copy),
-                          label: const Text('Copy WhatsApp Link'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.successGreen,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Take a screenshot to save the QR code!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Save QR Code'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Usage Tips
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightGray,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                        // Action Buttons
+                        Column(
                           children: [
-                            const Icon(
-                              Icons.tips_and_updates,
-                              color: AppTheme.primaryBlue,
-                              size: 20,
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _copyLink,
+                                icon: const Icon(Icons.copy),
+                                label: const Text('Copy WhatsApp Link'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.successGreen,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Usage Tips',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Take a screenshot to save the QR code!'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.download),
+                                label: const Text('Save QR Code'),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        _buildTip('Display at your shop entrance'),
-                        _buildTip('Print on delivery receipts'),
-                        _buildTip('Stick on water cans'),
-                        _buildTip('Share on social media'),
+                        const SizedBox(height: 24),
+
+                        // Usage Tips
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightGray,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.tips_and_updates,
+                                    color: AppTheme.primaryBlue,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Usage Tips',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildTip('Display at your shop entrance'),
+                              _buildTip('Print on delivery receipts'),
+                              _buildTip('Stick on water cans'),
+                              _buildTip('Share on social media'),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: AppTheme.errorRed,
             ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Something went wrong',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadVendorData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

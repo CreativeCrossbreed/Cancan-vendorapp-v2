@@ -8,6 +8,7 @@ import 'notifications_settings_screen.dart';
 import 'working_hours_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
+import '../../utils/logger.dart';
 
 /// Settings Screen - Manage vendor profile and preferences
 class SettingsScreen extends StatefulWidget {
@@ -71,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('❌ Error loading vendor data: $e');
+      AppLogger.d('❌ Error loading vendor data: $e');
       setState(() => _isLoading = false);
     }
   }

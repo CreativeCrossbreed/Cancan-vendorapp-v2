@@ -78,7 +78,7 @@ class VendorService {
 
       final vendorData = {
         'phone': phone,
-        'owner_name': name,
+        'name': name,
         'business_name': businessName,
         'address': address,
         'is_active': true,
@@ -150,7 +150,7 @@ class VendorService {
       AppLogger.d('Updating vendor profile: $vendorId');
 
       final updateData = <String, dynamic>{
-        'owner_name': name,
+        'name': name,
         'business_name': businessName,
         'address': address,
         'updated_at': DateTime.now().toIso8601String(),
@@ -166,10 +166,8 @@ class VendorService {
       if (latitude != null) updateData['latitude'] = latitude;
       if (longitude != null) updateData['longitude'] = longitude;
 
-      final error = await _supabase
-          .from('vendors')
-          .update(updateData)
-          .eq('id', vendorId);
+      final error =
+          await _supabase.from('vendors').update(updateData).eq('id', vendorId);
 
       if (error != null) {
         AppLogger.e('Error updating vendor profile: $error');
@@ -196,7 +194,8 @@ class VendorService {
   }
 
   /// Update business hours
-  Future<Map<String, dynamic>> updateBusinessHours(Map<String, dynamic> businessHours) async {
+  Future<Map<String, dynamic>> updateBusinessHours(
+      Map<String, dynamic> businessHours) async {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
@@ -208,13 +207,10 @@ class VendorService {
 
       AppLogger.d('Updating business hours for vendor: $vendorId');
 
-      final error = await _supabase
-          .from('vendors')
-          .update({
-            'business_hours': businessHours,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', vendorId);
+      final error = await _supabase.from('vendors').update({
+        'business_hours': businessHours,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', vendorId);
 
       if (error != null) {
         AppLogger.e('Error updating business hours: $error');
@@ -257,15 +253,12 @@ class VendorService {
 
       AppLogger.d('Toggling vacation mode for vendor: $vendorId');
 
-      final error = await _supabase
-          .from('vendors')
-          .update({
-            'is_on_vacation': isOnVacation,
-            'vacation_reason': reason,
-            'vacation_end_date': endDate?.toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', vendorId);
+      final error = await _supabase.from('vendors').update({
+        'is_on_vacation': isOnVacation,
+        'vacation_reason': reason,
+        'vacation_end_date': endDate?.toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', vendorId);
 
       if (error != null) {
         AppLogger.e('Error toggling vacation mode: $error');
@@ -279,9 +272,8 @@ class VendorService {
       AppLogger.i('Vacation mode updated successfully');
       return {
         'success': true,
-        'message': isOnVacation
-            ? 'Vacation mode enabled'
-            : 'Vacation mode disabled',
+        'message':
+            isOnVacation ? 'Vacation mode enabled' : 'Vacation mode disabled',
       };
     } catch (e) {
       AppLogger.e('Error toggling vacation mode: $e');

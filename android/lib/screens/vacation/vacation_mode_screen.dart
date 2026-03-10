@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
 import '../../widgets/screen_with_nav.dart';
 import '../home/widgets/app_drawer.dart';
+import '../../utils/logger.dart';
 
 /// Vacation Mode Screen - Enable/disable vacation mode with dates
 class VacationModeScreen extends StatefulWidget {
@@ -47,7 +48,7 @@ class _VacationModeScreenState extends State<VacationModeScreen> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('❌ Error loading vacation status: $e');
+      AppLogger.d('❌ Error loading vacation status: $e');
       setState(() => _isLoading = false);
     }
   }

@@ -92,9 +92,13 @@ class _InventoryScreenState extends State<InventoryScreen>
                             color: AppTheme.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: AppTheme.white),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          child: Builder(
+                            builder: (context) => IconButton(
+                              icon:
+                                  const Icon(Icons.menu, color: AppTheme.white),
+                              onPressed: () =>
+                                  Scaffold.of(context).openDrawer(),
+                            ),
                           ),
                         ),
                         // Center title/subtitle
@@ -971,7 +975,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating stock: $e');
+      AppLogger.d('❌ Error updating stock: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1001,7 +1005,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating product: $e');
+      AppLogger.d('❌ Error updating product: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1058,7 +1062,7 @@ class _InventoryScreenState extends State<InventoryScreen>
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error creating product: $e');
+      AppLogger.d('❌ Error creating product: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

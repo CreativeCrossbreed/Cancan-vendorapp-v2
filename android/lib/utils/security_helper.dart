@@ -2,21 +2,21 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/services.dart';
 
+/// Security utilities for input validation and sanitization.
 class SecurityHelper {
-  /// Sanitize user input
+  /// Sanitize user input — remove potentially harmful characters.
   static String sanitizeInput(String input) {
-    // Remove potentially harmful characters
     return input
-        .replaceAll(RegExp(r'[<>&\'"]'), '')
+        .replaceAll(RegExp('[<>&]'), '')
+        .replaceAll("'", '')
+        .replaceAll('"', '')
         .trim();
   }
 
-  /// Validate phone number (Indian format)
+  /// Validate phone number (Indian format).
   static bool isValidPhoneNumber(String phone) {
-    // Remove any non-digit characters
     final digitsOnly = phone.replaceAll(RegExp(r'\D'), '');
 
-    // Check if it's 10 digits (without country code) or 12 digits (with 91)
     if (digitsOnly.length == 10) {
       return RegExp(r'^[6-9]\d{9}$').hasMatch(digitsOnly);
     } else if (digitsOnly.length == 12 && digitsOnly.startsWith('91')) {
@@ -26,7 +26,7 @@ class SecurityHelper {
     return false;
   }
 
-  /// Mask sensitive data for logging
+  /// Mask sensitive data for logging.
   static String maskSensitiveData(String data, {int visibleChars = 4}) {
     if (data.length <= visibleChars) {
       return '*' * data.length;
@@ -34,9 +34,10 @@ class SecurityHelper {
     return data.substring(0, visibleChars) + '*' * (data.length - visibleChars);
   }
 
-  /// Generate secure random string
+  /// Generate secure random string.
   static String generateSecureRandomString(int length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     final random = Random.secure();
     return String.fromCharCodes(
       Iterable.generate(
@@ -46,40 +47,40 @@ class SecurityHelper {
     );
   }
 
-  /// Validate email format
+  /// Validate email format.
   static bool isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    return RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$').hasMatch(email);
   }
 
-  /// Check if string contains SQL injection patterns
+  /// Check if string contains SQL injection patterns.
   static bool containsSqlInjection(String input) {
     final sqlPatterns = [
-      r'(?i)\b(union|select|insert|update|delete|drop|alter|create|exec)\b',
-      r'(?i)(--|;|\/\*|\*\/|xp_|sp_)',
-      r'(?i)(or\s+1\s*=\s*1|and\s+1\s*=\s*1)',
-      r'(?i)(\'\s*;\s*drop|\'\s*;\s*delete)',
+      RegExp(r'\b(union|select|insert|update|delete|drop|alter|create|exec)\b',
+          caseSensitive: false),
+      RegExp(r'(--|;|\/\*|\*\/|xp_|sp_)', caseSensitive: false),
+      RegExp(r'(or\s+1\s*=\s*1|and\s+1\s*=\s*1)', caseSensitive: false),
     ];
 
     for (final pattern in sqlPatterns) {
-      if (RegExp(pattern).hasMatch(input)) {
+      if (pattern.hasMatch(input)) {
         return true;
       }
     }
     return false;
   }
 
-  /// Sanitize text to prevent script injection
+  /// Sanitize text to prevent script injection.
   static String sanitizeText(String text) {
     return text
-        .replaceAll(RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false), '')
+        .replaceAll(
+            RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false), '')
         .replaceAll(RegExp(r'<[^>]*>', caseSensitive: false), '')
         .replaceAll('javascript:', '');
   }
 
-  /// Copy to clipboard securely
+  /// Copy to clipboard securely (clears after 30s).
   static Future<void> copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
-    // Clear from clipboard after 30 seconds for security
     Timer(const Duration(seconds: 30), () async {
       await Clipboard.setData(const ClipboardData(text: ''));
     });

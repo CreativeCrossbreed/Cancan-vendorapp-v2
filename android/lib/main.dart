@@ -5,7 +5,6 @@ import 'config/supabase_config.dart';
 import 'config/theme.dart';
 import 'services/session_service.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
 import 'screens/home/home_tab_screen_enhanced.dart';
 import 'utils/logger.dart';
 
@@ -44,6 +43,12 @@ void main() async {
   // Initialize local session storage
   await SessionService.init();
 
+  // One-time migration: clear stale fake dev session if it exists
+  if (SessionService.vendorId == 'dev-vendor-123') {
+    AppLogger.w('Clearing stale dev session (dev-vendor-123)');
+    await SessionService.clearSession();
+  }
+
   runApp(const CanCanApp());
 }
 
@@ -61,7 +66,7 @@ class CanCanApp extends StatelessWidget {
           : const LoginScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const HomeScreenEnhanced(),
         '/home_enhanced': (context) => const HomeScreenEnhanced(),
       },
     );

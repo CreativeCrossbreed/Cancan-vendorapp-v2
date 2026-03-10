@@ -1,6 +1,8 @@
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../utils/logger.dart';
 
@@ -36,7 +38,8 @@ class LocationService {
       }
 
       // Check if location services are enabled
-      final bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      final bool isLocationServiceEnabled =
+          await Geolocator.isLocationServiceEnabled();
       if (!isLocationServiceEnabled) {
         return {
           'error': 'Location services disabled',
@@ -46,12 +49,13 @@ class LocationService {
 
       // Get location with high accuracy
       final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-        forceAndroidLocationManager: forceLocationManager,
-        timeLimit: timeout,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+        ),
       );
 
-      AppLogger.i('Location obtained: ${position.latitude}, ${position.longitude}');
+      AppLogger.i(
+          'Location obtained: ${position.latitude}, ${position.longitude}');
 
       // Get address from coordinates (optional - requires geocoding service)
       final String? address = await _getAddressFromCoordinates(
@@ -76,18 +80,6 @@ class LocationService {
         'error': 'Location services disabled',
         'message': 'Please enable location services',
       };
-    } on LocationPermissionDeniedException catch (e) {
-      AppLogger.e('Location permission denied: $e');
-      return {
-        'error': 'Location permission denied',
-        'message': 'Location permission is required',
-      };
-    } on LocationServiceDeniedException catch (e) {
-      AppLogger.e('Location service denied: $e');
-      return {
-        'error': 'Location service denied',
-        'message': 'Location access is denied',
-      };
     } on TimeoutException catch (e) {
       AppLogger.e('Location timeout: $e');
       return {
@@ -107,8 +99,7 @@ class LocationService {
   Future<Stream<Position>> startLocationTracking({
     LocationSettings locationSettings = const LocationSettings(
       accuracy: LocationAccuracy.best,
-      distanceFilter: 10, // Minimum distance in meters
-      timeInterval: Duration(seconds: 30), // Minimum time interval
+      distanceFilter: 10,
     ),
   }) async {
     try {
@@ -165,10 +156,9 @@ class LocationService {
       await _supabase.from('vendor_locations').insert(locationData);
 
       // Update vendor's last location update time
-      await _supabase
-          .from('vendors')
-          .update({'last_location_update': DateTime.now().toIso8601String()})
-          .eq('id', vendorId);
+      await _supabase.from('vendors').update({
+        'last_location_update': DateTime.now().toIso8601String()
+      }).eq('id', vendorId);
 
       // Also update vendor's primary location if not set
       final existingVendor = await _supabase
@@ -177,7 +167,8 @@ class LocationService {
           .eq('id', vendorId)
           .single();
 
-      if (existingVendor['latitude'] == null || existingVendor['longitude'] == null) {
+      if (existingVendor['latitude'] == null ||
+          existingVendor['longitude'] == null) {
         await _supabase.from('vendors').update({
           'latitude': latitude,
           'longitude': longitude,
@@ -208,17 +199,13 @@ class LocationService {
         throw Exception('Vendor not authenticated');
       }
 
-      final vendor = await _supabase
-          .from('vendors')
-          .select('''
+      final vendor = await _supabase.from('vendors').select('''
             latitude,
             longitude,
             service_radius_km,
             service_areas,
             service_pincodes
-          ''')
-          .eq('id', vendorId)
-          .single();
+          ''').eq('id', vendorId).single();
 
       return {
         'latitude': vendor['latitude'],
@@ -248,9 +235,9 @@ class LocationService {
         return false;
       }
 
-      vendorLatitude ??= serviceArea['latitude'];
-      vendorLongitude ??= serviceArea['longitude'];
-      serviceRadiusKm ??= serviceArea['serviceRadiusKm'];
+      vendorLatitude ??= (serviceArea['latitude'] as num?)?.toDouble();
+      vendorLongitude ??= (serviceArea['longitude'] as num?)?.toDouble();
+      serviceRadiusKm ??= (serviceArea['serviceRadiusKm'] as num?)?.toDouble();
 
       if (vendorLatitude == null || vendorLongitude == null) {
         return false;
@@ -304,21 +291,18 @@ class LocationService {
         'p_limit': limit,
       });
 
-      if (response.error != null) {
-        AppLogger.e('Error getting nearby vendors: ${response.error}');
-        return [];
-      }
-
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data.map((vendor) => {
-        'id': vendor['vendor_id'],
-        'businessName': vendor['business_name'],
-        'phone': vendor['phone'],
-        'distance': vendor['distance_km'],
-        'rating': vendor['rating'],
-        'deliveryTime': vendor['delivery_time'],
-        'isAvailable': vendor['is_available'],
-      }).toList();
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .map<Map<String, dynamic>>((vendor) => {
+                'id': vendor['vendor_id'],
+                'businessName': vendor['business_name'],
+                'phone': vendor['phone'],
+                'distance': vendor['distance_km'],
+                'rating': vendor['rating'],
+                'deliveryTime': vendor['delivery_time'],
+                'isAvailable': vendor['is_available'],
+              })
+          .toList();
     } catch (e) {
       AppLogger.e('Error getting nearby vendors: $e');
       return [];
@@ -337,10 +321,12 @@ class LocationService {
     final double dLat = _toRadians(lat2 - lat1);
     final double dLon = _toRadians(lon2 - lon1);
 
-    final double a = (dLat / 2).sin() * (dLat / 2).sin() +
-        (lat1.toRadians().cos() * lat2.toRadians().cos()) *
-            (dLon / 2).sin() * (dLon / 2).sin();
-    final double c = 2 * a.asin().sqrt();
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+    final double c = 2 * asin(sqrt(a));
 
     return earthRadius * c;
   }
@@ -358,21 +344,21 @@ class LocationService {
   Set<Circle> createServiceAreaCircles(
     LatLng center, {
     double radiusKm = 5,
-    Color color = Colors.blue.withOpacity(0.2),
+    Color? color,
     Color borderColor = Colors.blue,
     double strokeWidth = 2.0,
   }) {
-    // Convert radius in km to meters (approximately)
     final double radiusInMeters = radiusKm * 1000;
+    final fillColor = color ?? Colors.blue.withValues(alpha: 0.2);
 
     return {
       Circle(
-        circleId: CircleId('service_area'),
+        circleId: const CircleId('service_area'),
         center: center,
         radius: radiusInMeters,
-        fillColor: color,
+        fillColor: fillColor,
         strokeColor: borderColor,
-        strokeWidth: strokeWidth,
+        strokeWidth: strokeWidth.toInt(),
       ),
     };
   }
@@ -427,14 +413,16 @@ class LocationService {
       if (permission == LocationPermission.deniedForever) {
         return {
           'granted': false,
-          'message': 'Location permission was permanently denied. Please enable it in device settings.',
+          'message':
+              'Location permission was permanently denied. Please enable it in device settings.',
         };
       }
 
-      if (permission == LocationLocationServiceDisabledException) {
+      if (permission == LocationPermission.denied) {
         return {
           'granted': false,
-          'message': 'Location services are disabled. Please enable them in device settings.',
+          'message':
+              'Location services are disabled. Please enable them in device settings.',
         };
       }
 
@@ -467,7 +455,10 @@ class LocationService {
 
   /// Validate location data
   bool isValidLocation(double latitude, double longitude) {
-    return latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    return latitude >= -90 &&
+        latitude <= 90 &&
+        longitude >= -180 &&
+        longitude <= 180;
   }
 
   /// Format location for display
@@ -476,7 +467,8 @@ class LocationService {
   }
 
   /// Calculate estimated delivery time based on distance
-  int estimateDeliveryTime(double distanceKm, {
+  int estimateDeliveryTime(
+    double distanceKm, {
     double averageSpeedKmPerHour = 30, // Average delivery speed
     int preparationTimeMinutes = 15, // Preparation time
   }) {
@@ -509,9 +501,17 @@ class LocationService {
       }
 
       final now = DateTime.now();
-      final weekday = now.weekday == 0 ? 'sunday' : [
-        'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-      ][now.weekday - 1];
+      final weekday = now.weekday == 0
+          ? 'sunday'
+          : [
+              'monday',
+              'tuesday',
+              'wednesday',
+              'thursday',
+              'friday',
+              'saturday',
+              'sunday'
+            ][now.weekday - 1];
 
       final dayHours = businessHours[weekday] as Map<String, dynamic>?;
       if (dayHours == null || dayHours['closed'] == true) {

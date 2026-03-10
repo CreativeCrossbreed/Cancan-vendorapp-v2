@@ -111,3 +111,15 @@ export async function sendReplyButtons(
     };
     return sendWhatsAppMessage(to, message, 'interactive');
 }
+
+// Helper: Send Location Request (Native WhatsApp location pin request)
+export async function sendLocationRequestMessage(to: string, bodyText: string) {
+    const message = {
+        type: 'location_request_message',
+        body: { text: bodyText },
+        action: {
+            name: 'send_location',
+        },
+    };
+    return sendWhatsAppMessage(to, message, 'interactive');
+}

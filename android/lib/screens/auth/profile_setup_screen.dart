@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
-import '../home/home_screen.dart';
+import '../../services/session_service.dart';
+import '../home/home_tab_screen_enhanced.dart';
 import '../../utils/logger.dart';
 
 /// Profile Setup Screen - First-time vendor registration
@@ -51,33 +52,45 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         businessName: _businessNameController.text.trim(),
         address: _addressController.text.trim(),
       );
-    
+
       if (!mounted) return;
-    
-      print('📊 Result: ${result['success']}');
-      print('📊 Message: ${result['message']}');
-      print('📊 Test Mode: ${result['testMode']}');
-    
+
+      AppLogger.d('📊 Result: ${result['success']}');
+      AppLogger.d('📊 Message: ${result['message']}');
+      AppLogger.d('📊 Test Mode: ${result['testMode']}');
+
       if (result['success']) {
+        // Save session with the new vendor ID
+        final newVendorId = result['vendorId'] as String?;
+        if (newVendorId != null) {
+          await SessionService.saveSession(
+            vendorId: newVendorId,
+            vendorPhone: '+91${widget.phoneNumber}',
+            hasProfile: true,
+          );
+          AppLogger.i('Session saved for new vendor: $newVendorId');
+        }
+
         // Check if in test mode
         final isInTestMode = result['testMode'] == true;
-        
+
         if (isInTestMode) {
           // Show info message for test mode
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profile created in TEST MODE. Data will be available for this session.'),
+                content: Text(
+                    'Profile created in TEST MODE. Data will be available for this session.'),
                 backgroundColor: AppTheme.warningOrange,
                 duration: Duration(seconds: 3),
               ),
             );
           }
         }
-        
+
         // Navigate to Home Screen
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const HomeScreenEnhanced()),
           (route) => false,
         );
       } else {

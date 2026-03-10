@@ -14,14 +14,11 @@ class AuthService {
   // In release builds these are constant `false`, so the compiler
   // tree-shakes all dev/test code paths entirely.
   static final bool _testMode = kDebugMode;
-  static final bool _devMode = kDebugMode;
   static const String _testOTP = '123456';
-  static const String _devPhoneNumber = '1111111111';
-  static const String _devVendorId = 'dev-vendor-123';
 
   /// Send OTP to phone number
   Future<Map<String, dynamic>> sendOTP({required String phoneNumber}) async {
-    // TEST MODE — debug builds only
+    // TEST MODE — debug builds only (skip real SMS, accept any phone)
     if (_testMode) {
       AppLogger.d('TEST MODE: OTP would be sent to +91$phoneNumber');
       AppLogger.d('TEST MODE: Use OTP: $_testOTP');
@@ -32,7 +29,6 @@ class AuthService {
         'success': true,
         'message': 'OTP sent successfully (TEST MODE)',
         'testMode': true,
-        // NOTE: Never expose the OTP in the response in production
       };
     }
 
@@ -73,38 +69,79 @@ class AuthService {
   }
 
   /// Verify OTP and sign in
+  ///
+  /// In TEST MODE (debug builds only), accepts the hardcoded OTP '123456'
+  /// and looks up the vendor from Supabase by phone number. The vendor
+  /// MUST exist in the `vendors` table for login to succeed.
   Future<Map<String, dynamic>> verifyOTP({
     required String phoneNumber,
     required String otp,
   }) async {
-    // DEV MODE — debug builds only
-    if (_devMode && phoneNumber == _devPhoneNumber) {
-      AppLogger.d('DEV MODE: Auto-login for phone $phoneNumber');
-
-      await SessionService.saveSession(
-        vendorId: _devVendorId,
-        vendorPhone: '+91$phoneNumber',
-        hasProfile: true,
-      );
-
-      return {
-        'success': true,
-        'message': 'Login successful (DEV MODE)',
-        'hasProfile': true,
-        'vendorId': _devVendorId,
-      };
-    }
-
     // TEST MODE — debug builds only
+    // Accepts the test OTP but looks up the REAL vendor from Supabase
     if (_testMode) {
       AppLogger.d('TEST MODE: Verifying OTP for +91$phoneNumber');
 
-      if (otp == _testOTP) {
-        await Future<void>.delayed(const Duration(seconds: 1));
+      if (otp != _testOTP) {
+        return {
+          'success': false,
+          'message': 'Invalid OTP (TEST MODE: use $_testOTP)',
+        };
+      }
+
+      // Look up real vendor by phone in Supabase
+      try {
+        final fullNumber = '+91$phoneNumber';
+        final vendorData = await _supabase
+            .from('vendors')
+            .select('id')
+            .eq('phone', fullNumber)
+            .maybeSingle();
+
+        if (vendorData == null) {
+          // Also try without +91 prefix
+          final vendorData2 = await _supabase
+              .from('vendors')
+              .select('id')
+              .eq('phone', phoneNumber)
+              .maybeSingle();
+
+          if (vendorData2 == null) {
+            // NEW VENDOR — no profile yet, route to ProfileSetupScreen
+            AppLogger.i(
+                'TEST MODE: No vendor found for $phoneNumber — new signup');
+            return {
+              'success': true,
+              'message': 'New vendor — profile setup needed',
+              'hasProfile': false,
+            };
+          }
+
+          final realVendorId = vendorData2['id'] as String;
+          AppLogger.i(
+              'TEST MODE: Found vendor $realVendorId for phone $phoneNumber');
+
+          await SessionService.saveSession(
+            vendorId: realVendorId,
+            vendorPhone: fullNumber,
+            hasProfile: true,
+          );
+
+          return {
+            'success': true,
+            'message': 'Login successful (TEST MODE)',
+            'hasProfile': true,
+            'vendorId': realVendorId,
+          };
+        }
+
+        final realVendorId = vendorData['id'] as String;
+        AppLogger.i(
+            'TEST MODE: Found vendor $realVendorId for phone $phoneNumber');
 
         await SessionService.saveSession(
-          vendorId: _devVendorId,
-          vendorPhone: '+91$phoneNumber',
+          vendorId: realVendorId,
+          vendorPhone: fullNumber,
           hasProfile: true,
         );
 
@@ -112,12 +149,14 @@ class AuthService {
           'success': true,
           'message': 'Login successful (TEST MODE)',
           'hasProfile': true,
-          'vendorId': _devVendorId,
+          'vendorId': realVendorId,
         };
-      } else {
+      } catch (e) {
+        AppLogger.e('TEST MODE: Error looking up vendor: $e');
         return {
           'success': false,
-          'message': 'Invalid OTP',
+          'message':
+              'Failed to look up vendor. Check your Supabase connection.',
         };
       }
     }

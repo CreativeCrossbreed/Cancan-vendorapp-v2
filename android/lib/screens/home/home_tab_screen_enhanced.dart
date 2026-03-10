@@ -15,6 +15,7 @@ import 'widgets/date_range_selector.dart';
 import '../orders/orders_screen.dart';
 import '../payments/payments_screen.dart';
 import '../inventory/inventory_screen.dart';
+import '../../utils/logger.dart';
 
 /// Enhanced Home Screen - Main Dashboard with Analytics
 class HomeScreenEnhanced extends StatefulWidget {
@@ -34,23 +35,23 @@ class _HomeScreenEnhancedState extends State<HomeScreenEnhanced> {
   }
 
   @override
-Widget build(BuildContext context) {
-  // Build screens directly in the body based on index
-  // Simplified to 3 items: Orders, Inventory, Payments
-  Widget currentScreen;
-  switch (_selectedIndex) {
-    case 0:
-      currentScreen = const OrdersScreen();
-      break;
-    case 1:
-      currentScreen = const InventoryScreen();
-      break;
-    case 2:
-      currentScreen = const PaymentsScreen();
-      break;
-    default:
-      currentScreen = const OrdersScreen();
-  }
+  Widget build(BuildContext context) {
+    // Build screens directly in the body based on index
+    // Simplified to 3 items: Orders, Inventory, Payments
+    Widget currentScreen;
+    switch (_selectedIndex) {
+      case 0:
+        currentScreen = const OrdersScreen();
+        break;
+      case 1:
+        currentScreen = const InventoryScreen();
+        break;
+      case 2:
+        currentScreen = const PaymentsScreen();
+        break;
+      default:
+        currentScreen = const OrdersScreen();
+    }
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -143,15 +144,17 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
         final analytics = results[3] as Map<String, dynamic>;
         _revenueData = analytics['revenueData'] as List<Map<String, dynamic>>;
         _topProducts = analytics['topProducts'] as List<Map<String, dynamic>>;
-        _customerInsights = analytics['customerInsights'] as List<Map<String, dynamic>>;
+        _customerInsights =
+            analytics['customerInsights'] as List<Map<String, dynamic>>;
         _quickStats = analytics['quickStats'] as Map<String, dynamic>;
 
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
+      AppLogger.d(
+          '✅ Loaded ${_pendingOrders.length} pending, ${_completedOrders.length} completed orders');
     } catch (e) {
-      print('❌ Error loading data: $e');
+      AppLogger.d('❌ Error loading data: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -165,7 +168,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
       // Run all analytics queries in parallel
       final results = await Future.wait([
         _analyticsService.getRevenueData(startDate: startDate, endDate: now),
-        _analyticsService.getTopProducts(limit: 5, startDate: startDate, endDate: now),
+        _analyticsService.getTopProducts(
+            limit: 5, startDate: startDate, endDate: now),
         _analyticsService.getTopCustomers(limit: 5),
         _analyticsService.getQuickStats(),
       ]);
@@ -182,7 +186,7 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
         'quickStats': quickStats,
       };
     } catch (e) {
-      print('Error loading analytics data: $e');
+      AppLogger.d('Error loading analytics data: $e');
       // Return empty data on error
       return {
         'revenueData': [],
@@ -218,17 +222,21 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                           color: AppTheme.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.menu, color: AppTheme.white),
-                          onPressed: () {
-                            Scaffold.of(context).openDrawer();
-                          },
+                        child: Builder(
+                          builder: (context) => IconButton(
+                            icon: const Icon(Icons.menu, color: AppTheme.white),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                          ),
                         ),
                       ),
                       Column(
                         children: [
                           Text(
-                            _showAnalyticsView ? 'Analytics Dashboard' : "Today's Deliveries",
+                            _showAnalyticsView
+                                ? 'Analytics Dashboard'
+                                : "Today's Deliveries",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -262,7 +270,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _showAnalyticsView = true),
+                            onTap: () =>
+                                setState(() => _showAnalyticsView = true),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
@@ -286,7 +295,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                         ),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _showAnalyticsView = false),
+                            onTap: () =>
+                                setState(() => _showAnalyticsView = false),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
@@ -349,7 +359,9 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                     topRight: Radius.circular(24),
                   ),
                 ),
-                child: _showAnalyticsView ? _buildAnalyticsView() : _buildOrdersView(),
+                child: _showAnalyticsView
+                    ? _buildAnalyticsView()
+                    : _buildOrdersView(),
               ),
             ),
           ],
@@ -385,15 +397,18 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
               ),
               QuickStatsCard(
                 title: 'Avg Order Value',
-                value: 'Rs.${(_quickStats['avgOrderValue'] as double).toStringAsFixed(0)}',
+                value:
+                    'Rs.${(_quickStats['avgOrderValue'] as double).toStringAsFixed(0)}',
                 changePercentage: _quickStats['orderValueGrowth'],
-                isPositiveChange: (_quickStats['orderValueGrowth'] as double) > 0,
+                isPositiveChange:
+                    (_quickStats['orderValueGrowth'] as double) > 0,
                 icon: Icons.receipt_long_outlined,
                 iconColor: AppTheme.successGreen,
               ),
               QuickStatsCard(
                 title: 'Total Revenue',
-                value: 'Rs.${(_quickStats['totalRevenue'] as double).toStringAsFixed(0)}',
+                value:
+                    'Rs.${(_quickStats['totalRevenue'] as double).toStringAsFixed(0)}',
                 changePercentage: _quickStats['revenueGrowth'],
                 isPositiveChange: (_quickStats['revenueGrowth'] as double) > 0,
                 icon: Icons.trending_up_outlined,
@@ -401,7 +416,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
               ),
               QuickStatsCard(
                 title: 'Delivery Rate',
-                value: '${(_quickStats['deliveryRate'] as double).toStringAsFixed(1)}%',
+                value:
+                    '${(_quickStats['deliveryRate'] as double).toStringAsFixed(1)}%',
                 changePercentage: _quickStats['deliveryGrowth'],
                 isPositiveChange: (_quickStats['deliveryGrowth'] as double) > 0,
                 icon: Icons.local_shipping_outlined,
@@ -468,8 +484,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
           Text(
             'Performance Overview',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -502,7 +518,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
     );
   }
 
-  Widget _buildTrendCard(String title, String percentage, bool isPositive, IconData icon) {
+  Widget _buildTrendCard(
+      String title, String percentage, bool isPositive, IconData icon) {
     final color = isPositive ? AppTheme.successGreen : AppTheme.errorRed;
 
     return Container(
@@ -522,8 +539,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                 Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+                        color: AppTheme.textSecondary,
+                      ),
                 ),
                 Text(
                   percentage,
@@ -556,7 +573,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.warningOrange,
                         borderRadius: BorderRadius.circular(12),
@@ -580,7 +598,8 @@ class _HomeTabScreenEnhancedState extends State<HomeTabScreenEnhanced>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.successGreen,
                         borderRadius: BorderRadius.circular(12),

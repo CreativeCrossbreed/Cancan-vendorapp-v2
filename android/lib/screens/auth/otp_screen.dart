@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import '../../config/theme.dart';
 import '../../services/auth_service.dart';
-import '../home/home_screen.dart';
+import '../home/home_tab_screen_enhanced.dart';
 import 'profile_setup_screen.dart';
 
 /// OTP Verification Screen
@@ -53,7 +53,7 @@ class _OTPScreenState extends State<OTPScreen> {
         if (hasProfile) {
           // Navigate to Home Screen
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const HomeScreenEnhanced()),
             (route) => false,
           );
         } else {
@@ -67,7 +67,8 @@ class _OTPScreenState extends State<OTPScreen> {
           );
         }
       } else {
-        _showError(result['message'] ?? 'Invalid OTP. For testing, use: 000000');
+        _showError(
+            result['message'] ?? 'Invalid OTP. For testing, use: 123456');
       }
     } catch (e) {
       _showError('Verification failed. Please try again.');
