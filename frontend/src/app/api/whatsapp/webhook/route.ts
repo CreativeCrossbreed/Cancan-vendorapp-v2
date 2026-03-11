@@ -62,7 +62,48 @@ export async function POST(req: NextRequest) {
 async function processMessage(message: any, customerPhone: string) {
     if (!customerPhone) return;
 
+    // --- DEDUPLICATION: Skip already-processed messages ---
+    const messageId = message.id;
+    if (messageId) {
+        const { data: existing } = await supabaseAdmin
+            .from('whatsapp_messages')
+            .select('id')
+            .eq('message_id', messageId)
+            .single();
+        if (existing) return; // Already processed
+
+        // Log inbound message
+        await supabaseAdmin.from('whatsapp_messages').insert([{
+            message_id: messageId,
+            customer_phone: customerPhone,
+            message_type: message.type,
+            message_content: message.text?.body || JSON.stringify(message),
+            direction: 'inbound',
+            status: 'received',
+        }]);
+    }
+
+    // --- RATE LIMITING: Max 20 inbound messages per phone per hour ---
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabaseAdmin
+        .from('whatsapp_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_phone', customerPhone)
+        .eq('direction', 'inbound')
+        .gte('created_at', oneHourAgo);
+    if ((recentCount ?? 0) > 20) return; // Silently drop excessive messages
+
     const msgType = message.type;
+
+    // --- EXTRACT VENDOR REF CODE FROM FIRST MESSAGE ---
+    let vendorId: string | null = null;
+    if (msgType === 'text') {
+        const text = message.text.body.trim();
+        const refMatch = text.match(/^ref-([a-f0-9-]+)$/i);
+        if (refMatch) {
+            vendorId = refMatch[1];
+        }
+    }
 
     // Check if customer exists in DB
     const { data: customer } = await supabaseAdmin
@@ -73,7 +114,17 @@ async function processMessage(message: any, customerPhone: string) {
 
     if (!customer) {
         // --- NEW CUSTOMER ONBOARDING STATE MACHINE ---
-        await handleOnboarding(message, customerPhone);
+        await handleOnboarding(message, customerPhone, vendorId);
+        return;
+    }
+
+    // If existing customer sends a ref code, link them to the new vendor
+    if (vendorId) {
+        await supabaseAdmin.from('customer_vendors').upsert(
+            { customer_id: customer.id, vendor_id: vendorId },
+            { onConflict: 'customer_id,vendor_id' }
+        );
+        await sendWhatsAppMessage(customerPhone, `👋 Welcome back, ${customer.name}! You've been linked to a new vendor.\n\nSend "order" to place a water can order.`);
         return;
     }
 
@@ -145,7 +196,7 @@ async function processMessage(message: any, customerPhone: string) {
 // CONVERSATIONAL ONBOARDING HANDLER
 // ────────────────────────────────────────────────────
 
-async function handleOnboarding(message: any, phone: string) {
+async function handleOnboarding(message: any, phone: string, vendorId: string | null = null) {
     const msgType = message.type;
 
     // Check if a session already exists
@@ -156,14 +207,23 @@ async function handleOnboarding(message: any, phone: string) {
         .single();
 
     if (!session) {
-        // Start brand new onboarding session
+        // Start brand new onboarding session (store vendor_id if present)
         await supabaseAdmin.from('whatsapp_sessions').insert({
             phone_number: phone,
+            vendor_id: vendorId,
             state: 'awaiting_name'
         });
 
         await sendWhatsAppMessage(phone, "👋 Welcome to Can Can Water Delivery!\n\nLet's get you set up so you can order water instantly. What is your Full Name?");
         return;
+    }
+
+    // If we got a vendor ref on a later message, update the session
+    if (vendorId && !session.vendor_id) {
+        await supabaseAdmin.from('whatsapp_sessions')
+            .update({ vendor_id: vendorId })
+            .eq('id', session.id);
+        session.vendor_id = vendorId;
     }
 
     // --- STATE: AWAITING NAME ---
@@ -208,20 +268,28 @@ async function handleOnboarding(message: any, phone: string) {
         const address = message.text.body.trim();
 
         // Finalize! Create the actual customer in the DB.
-        const { error } = await supabaseAdmin.from('customers').insert({
+        const { data: newCustomer, error } = await supabaseAdmin.from('customers').insert({
             phone,
             name: session.name,
-            address: address, // combining flat/house directly into address
+            address: address,
             latitude: session.latitude,
             longitude: session.longitude,
             is_verified: true,
             is_active: true
-        });
+        }).select('id').single();
 
-        if (error) {
+        if (error || !newCustomer) {
             console.error("Failed to create customer:", error);
             await sendWhatsAppMessage(phone, "Sorry, something went wrong saving your profile. Please try again.");
             return;
+        }
+
+        // --- LINK CUSTOMER TO VENDOR ---
+        if (session.vendor_id) {
+            await supabaseAdmin.from('customer_vendors').insert({
+                customer_id: newCustomer.id,
+                vendor_id: session.vendor_id
+            });
         }
 
         // Clean up session
