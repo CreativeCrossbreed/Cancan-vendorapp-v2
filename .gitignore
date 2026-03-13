@@ -276,3 +276,5 @@ Thumbs.db
 android/key.properties
 
 #hahahahahahah
+.vercel
+.env*.local

@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
-import crypto from 'node:crypto';
+import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   sendWhatsAppMessage,
+  sendInteractiveList,
   sendReplyButtons,
   sendLocationRequestMessage,
 } from '@/lib/whatsapp';
@@ -209,9 +210,8 @@ async function handleIdleCustomer(message: any, phone: string, customer: any) {
       return;
     }
     if (id === 'help_contact_vendor') {
-      const { data: vendorLink } = await getCustomerVendor(customer.id);
-      const v = (vendorLink as any)?.vendors;
-      const vendorContact = v?.phone ? `\n📞 ${v.phone}` : '';
+      const { data: vendor } = await getCustomerVendor(customer.id);
+      const vendorContact = vendor?.phone ? `\n📞 ${vendor.phone}` : '';
       await sendWhatsAppMessage(phone, `Here are your vendor's contact details:${vendorContact || '\nContact details unavailable. Please try again later.'}`);
       return;
     }
@@ -226,9 +226,8 @@ async function handleIdleCustomer(message: any, phone: string, customer: any) {
       return;
     }
     if (id === 'failed_contact_vendor') {
-      const { data: vendorLink } = await getCustomerVendor(customer.id);
-      const v = (vendorLink as any)?.vendors;
-      const vendorContact = v?.phone ? `\n📞 ${v.phone}` : '';
+      const { data: vendor } = await getCustomerVendor(customer.id);
+      const vendorContact = vendor?.phone ? `\n📞 ${vendor.phone}` : '';
       await sendWhatsAppMessage(phone, `Vendor contact:${vendorContact || '\nUnavailable right now.'}`);
       return;
     }
@@ -272,8 +271,8 @@ async function handleActiveSession(
         return;
       }
 
-      const qty = Number.parseInt(id.replace('qty_', ''), 10);
-      if (!Number.isNaN(qty)) {
+      const qty = parseInt(id.replace('qty_', ''), 10);
+      if (!isNaN(qty)) {
         await setSessionQtyAndAskDate(phone, session, qty);
         return;
       }
@@ -284,8 +283,8 @@ async function handleActiveSession(
 
   if (state === 'awaiting_custom_qty') {
     if (message.type === 'text') {
-      const qty = Number.parseInt(message.text.body.trim(), 10);
-      if (!Number.isNaN(qty) && qty > 0 && qty <= 50) {
+      const qty = parseInt(message.text.body.trim(), 10);
+      if (!isNaN(qty) && qty > 0 && qty <= 50) {
         await setSessionQtyAndAskDate(phone, session, qty);
         return;
       }
@@ -366,65 +365,6 @@ async function handleActiveSession(
       .eq('id', session.id)
       .single();
     await sendOrderConfirmation(phone, customer, fresh);
-    return;
-  }
-
-  // ── REPEAT LAST ORDER FLOW ─────────────────────────────────
-
-  if (state === 'repeat_awaiting_choice') {
-    if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
-      const id = message.interactive.button_reply.id;
-
-      if (id === 'repeat_confirm') {
-        // Place repeat order with today's date and stored time_slot
-        const today = new Date().toISOString().split('T')[0];
-        await supabaseAdmin
-          .from('whatsapp_sessions')
-          .update({ delivery_date: today })
-          .eq('id', session.id);
-        session.delivery_date = today;
-        await placeOrder(phone, customer, session);
-        return;
-      }
-
-      if (id === 'repeat_change_slot') {
-        await supabaseAdmin
-          .from('whatsapp_sessions')
-          .update({ state: 'repeat_awaiting_time_slot' })
-          .eq('id', session.id);
-        await sendTimeSlotButtons(phone);
-        return;
-      }
-    }
-    // Fallback: re-show the repeat options
-    await sendReplyButtons(
-      phone,
-      `Please choose an option:`,
-      [
-        { id: 'repeat_confirm', title: '✅ Confirm' },
-        { id: 'repeat_change_slot', title: '🕐 Change Time Slot' },
-      ]
-    );
-    return;
-  }
-
-  if (state === 'repeat_awaiting_time_slot') {
-    if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
-      const id = message.interactive.button_reply.id;
-      if (id.startsWith('slot_')) {
-        const slot = id.replace('slot_', '');
-        const today = new Date().toISOString().split('T')[0];
-        await supabaseAdmin
-          .from('whatsapp_sessions')
-          .update({ time_slot: slot, delivery_date: today })
-          .eq('id', session.id);
-        session.time_slot = slot;
-        session.delivery_date = today;
-        await placeOrder(phone, customer, session);
-        return;
-      }
-    }
-    await sendTimeSlotButtons(phone);
     return;
   }
 
@@ -857,6 +797,14 @@ async function repeatLastOrder(phone: string, customer: any) {
     { onConflict: 'phone_number' }
   );
 }
+
+// We need to handle repeat order choices in handleIdleCustomer too
+// (since session would exist, it routes through handleActiveSession)
+// Add these states to handleActiveSession:
+
+// NOTE: Add the following to handleActiveSession switch cases:
+// 'repeat_awaiting_choice' → confirm sends to date picker → place order
+// 'repeat_awaiting_time_slot' → picks slot → date picker → confirm → place
 
 // ─────────────────────────────────────────────────────────────
 // MY DELIVERIES
