@@ -4,38 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import {
-    Box,
-    Drawer,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Typography,
-    Avatar,
-    Menu,
-    MenuItem,
-    Divider,
-    useMediaQuery,
-    useTheme,
-    CircularProgress,
-} from '@mui/material';
-import {
-    Dashboard,
-    Store,
-    People,
-    ShoppingCart,
-    WhatsApp,
-    AttachMoney,
-    Settings,
-    Menu as MenuIcon,
     ChevronLeft,
-    Logout,
-    Person,
-} from '@mui/icons-material';
+    IndianRupee,
+    LayoutDashboard,
+    LogOut,
+    MessageCircle,
+    Menu,
+    Package,
+    Settings,
+    Store,
+    User,
+    Users,
+} from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, getProfile } from '@/store/authSlice';
 import type { AppDispatch, RootState } from '@/store';
@@ -44,27 +24,38 @@ import { StoreProvider } from '@/store/StoreProvider';
 const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED = 72;
 
-const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/portal/dashboard' },
-    { text: 'Vendors', icon: <Store />, path: '/portal/vendors' },
-    { text: 'Customers', icon: <People />, path: '/portal/customers' },
-    { text: 'Orders', icon: <ShoppingCart />, path: '/portal/orders' },
-    { text: 'WhatsApp', icon: <WhatsApp />, path: '/portal/whatsapp' },
-    { text: 'Commissions', icon: <AttachMoney />, path: '/portal/commissions' },
-    { text: 'Settings', icon: <Settings />, path: '/portal/settings' },
+const menuItems: Array<{ text: string; path: string; Icon: React.ComponentType<{ className?: string }> }> = [
+    { text: 'Dashboard', path: '/portal/dashboard', Icon: LayoutDashboard },
+    { text: 'Vendors', path: '/portal/vendors', Icon: Store },
+    { text: 'Customers', path: '/portal/customers', Icon: Users },
+    { text: 'Orders', path: '/portal/orders', Icon: Package },
+    { text: 'WhatsApp', path: '/portal/whatsapp', Icon: MessageCircle },
+    { text: 'Commissions', path: '/portal/commissions', Icon: IndianRupee },
+    { text: 'Settings', path: '/portal/settings', Icon: Settings },
 ];
+
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 768px)');
+        const update = () => setIsMobile(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
+    return isMobile;
+}
 
 function PortalShell({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const dispatch = useDispatch<AppDispatch>();
     const { user, token } = useSelector((state: RootState) => state.auth);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isMobile = useIsMobile();
 
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [checking, setChecking] = useState(true);
 
     useEffect(() => {
@@ -75,39 +66,32 @@ function PortalShell({ children }: { children: React.ReactNode }) {
         if (!user) {
             dispatch(getProfile()).finally(() => setChecking(false));
         } else {
-            setChecking(false);
+            const t = setTimeout(() => setChecking(false), 0);
+            return () => clearTimeout(t);
         }
     }, [token, user, dispatch, router]);
 
     const handleLogout = () => {
         dispatch(logout());
-        setAnchorEl(null);
+        setUserMenuOpen(false);
         router.push('/portal/login');
     };
 
     if (checking) {
         return (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-                <CircularProgress sx={{ color: '#6DD3DC' }} />
-            </Box>
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="w-10 h-10 border-2 border-cancan-primary border-t-transparent rounded-full animate-spin" />
+            </div>
         );
     }
 
     const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED : DRAWER_WIDTH;
-
-    const pageTitle =
-        menuItems.find((item) => pathname.startsWith(item.path))?.text || 'Portal';
+    const pageTitle = menuItems.find((item) => pathname.startsWith(item.path))?.text || 'Portal';
 
     const drawerContent = (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: collapsed ? 'center' : 'space-between',
-                    p: 2,
-                    minHeight: 64,
-                }}
+        <div className="flex flex-col h-full">
+            <div
+                className={`flex items-center min-h-16 px-4 ${collapsed ? 'justify-center' : 'justify-between'}`}
             >
                 {!collapsed && (
                     <Image
@@ -115,140 +99,138 @@ function PortalShell({ children }: { children: React.ReactNode }) {
                         alt="Can Can"
                         width={40}
                         height={40}
-                        style={{ objectFit: 'contain' }}
+                        className="object-contain"
                         priority
                     />
                 )}
                 {!isMobile && (
-                    <IconButton onClick={() => setCollapsed(!collapsed)} size="small">
-                        <ChevronLeft sx={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
-                    </IconButton>
+                    <button
+                        type="button"
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="p-1.5 rounded-lg hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-colors"
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    >
+                        <ChevronLeft className={`w-5 h-5 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} />
+                    </button>
                 )}
-            </Box>
-            <Divider />
-            <List sx={{ flex: 1, px: 1, py: 1 }}>
+            </div>
+            <div className="border-t border-slate-200" />
+            <nav className="flex-1 px-2 py-2 overflow-y-auto">
                 {menuItems.map((item) => {
                     const active = pathname.startsWith(item.path);
                     return (
-                        <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                            <ListItemButton
-                                onClick={() => {
-                                    router.push(item.path);
-                                    if (isMobile) setMobileOpen(false);
-                                }}
-                                sx={{
-                                    borderRadius: 2,
-                                    minHeight: 44,
-                                    justifyContent: collapsed ? 'center' : 'flex-start',
-                                    px: collapsed ? 1.5 : 2,
-                                    bgcolor: active ? 'rgba(109,211,220,0.12)' : 'transparent',
-                                    color: active ? '#4BBFC9' : 'text.secondary',
-                                    '&:hover': {
-                                        bgcolor: active ? 'rgba(109,211,220,0.16)' : 'rgba(0,0,0,0.04)',
-                                    },
-                                }}
-                            >
-                                <ListItemIcon
-                                    sx={{
-                                        minWidth: collapsed ? 0 : 40,
-                                        color: 'inherit',
-                                        justifyContent: 'center',
-                                    }}
-                                >
-                                    {item.icon}
-                                </ListItemIcon>
-                                {!collapsed && <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: '0.9rem' }} />}
-                            </ListItemButton>
-                        </ListItem>
+                        <button
+                            key={item.text}
+                            type="button"
+                            onClick={() => {
+                                router.push(item.path);
+                                if (isMobile) setMobileOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 rounded-xl min-h-[44px] px-3 py-2.5 text-left transition-colors ${
+                                active
+                                    ? 'bg-cancan-primary/10 text-cancan-primary-dark font-semibold hover:bg-cancan-primary/15'
+                                    : 'text-slate-600 hover:bg-black/5 font-medium'
+                            } ${collapsed ? 'justify-center px-2' : ''}`}
+                        >
+                            <item.Icon className="w-5 h-5 flex-shrink-0" />
+                            {!collapsed && <span className="text-sm truncate">{item.text}</span>}
+                        </button>
                     );
                 })}
-            </List>
-        </Box>
+            </nav>
+        </div>
     );
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
-            {/* Desktop drawer */}
-            {!isMobile && (
-                <Drawer
-                    variant="permanent"
-                    sx={{
-                        width: drawerWidth,
-                        flexShrink: 0,
-                        transition: 'width 0.2s',
-                        '& .MuiDrawer-paper': {
-                            width: drawerWidth,
-                            transition: 'width 0.2s',
-                            borderRight: '1px solid rgba(0,0,0,0.06)',
-                            overflow: 'hidden',
-                        },
-                    }}
-                >
-                    {drawerContent}
-                </Drawer>
+        <div className="flex min-h-screen bg-slate-50">
+            {/* Mobile overlay */}
+            {isMobile && mobileOpen && (
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    className="fixed inset-0 z-20 bg-black/40 md:hidden"
+                    onClick={() => setMobileOpen(false)}
+                />
             )}
 
-            {/* Mobile drawer */}
-            {isMobile && (
-                <Drawer
-                    variant="temporary"
-                    open={mobileOpen}
-                    onClose={() => setMobileOpen(false)}
-                    sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH } }}
+            {/* Sidebar - desktop */}
+            {!isMobile && (
+                <aside
+                    className="flex-shrink-0 border-r border-slate-200 bg-white overflow-hidden transition-[width] duration-200 ease-out"
+                    style={{ width: drawerWidth }}
                 >
                     {drawerContent}
-                </Drawer>
+                </aside>
+            )}
+
+            {/* Sidebar - mobile drawer */}
+            {isMobile && (
+                <aside
+                    className={`fixed top-0 left-0 z-30 h-full bg-white border-r border-slate-200 shadow-xl transition-transform duration-200 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                    style={{ width: DRAWER_WIDTH }}
+                >
+                    {drawerContent}
+                </aside>
             )}
 
             {/* Main content */}
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <AppBar
-                    position="sticky"
-                    elevation={0}
-                    sx={{
-                        bgcolor: '#fff',
-                        color: 'text.primary',
-                        borderBottom: '1px solid rgba(0,0,0,0.06)',
-                    }}
-                >
-                    <Toolbar>
-                        {isMobile && (
-                            <IconButton onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}>
-                                <MenuIcon />
-                            </IconButton>
-                        )}
-                        <Typography variant="h6" sx={{ fontWeight: 700, flex: 1, fontSize: '1.1rem' }}>
-                            {pageTitle}
-                        </Typography>
-                        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-                            <Avatar sx={{ width: 34, height: 34, bgcolor: '#6DD3DC', fontSize: '0.9rem' }}>
-                                {user?.email?.charAt(0).toUpperCase() || 'A'}
-                            </Avatar>
-                        </IconButton>
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={!!anchorEl}
-                            onClose={() => setAnchorEl(null)}
-                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            <div className="flex-1 flex flex-col min-w-0">
+                <header className="sticky top-0 z-10 flex items-center gap-2 px-4 py-3 bg-white border-b border-slate-200">
+                    {isMobile && (
+                        <button
+                            type="button"
+                            onClick={() => setMobileOpen(true)}
+                            className="p-2 -ml-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                            aria-label="Open menu"
                         >
-                            <MenuItem disabled>
-                                <Person sx={{ mr: 1, fontSize: 18 }} />
-                                {user?.email || 'Admin'}
-                            </MenuItem>
-                            <Divider />
-                            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                                <Logout sx={{ mr: 1, fontSize: 18 }} />
-                                Logout
-                            </MenuItem>
-                        </Menu>
-                    </Toolbar>
-                </AppBar>
-                <Box component="main" sx={{ flex: 1, p: { xs: 2, sm: 3 }, overflow: 'auto' }}>
+                            <Menu className="w-5 h-5" />
+                        </button>
+                    )}
+                    <h1 className="flex-1 text-lg font-bold text-slate-900 truncate">
+                        {pageTitle}
+                    </h1>
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setUserMenuOpen((o) => !o)}
+                            className="flex items-center justify-center w-9 h-9 rounded-full bg-cancan-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                            aria-expanded={userMenuOpen}
+                            aria-haspopup="true"
+                        >
+                            {user?.email?.charAt(0).toUpperCase() || 'A'}
+                        </button>
+                        {userMenuOpen && (
+                            <>
+                                <button
+                                    type="button"
+                                    aria-label="Close menu"
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setUserMenuOpen(false)}
+                                />
+                                <div className="absolute right-0 top-full mt-2 z-20 w-56 py-2 bg-white rounded-xl border border-slate-200 shadow-lg">
+                                    <div className="flex items-center gap-2 px-4 py-2 text-slate-500 text-sm">
+                                        <User className="w-4 h-4 shrink-0" />
+                                        <span className="truncate">{user?.email || 'Admin'}</span>
+                                    </div>
+                                    <div className="border-t border-slate-100 my-1" />
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                        <LogOut className="w-4 h-4 shrink-0" />
+                                        Logout
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </header>
+                <main className="flex-1 p-4 sm:p-6 overflow-auto">
                     {children}
-                </Box>
-            </Box>
-        </Box>
+                </main>
+            </div>
+        </div>
     );
 }
 
@@ -259,4 +241,3 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         </StoreProvider>
     );
 }
-

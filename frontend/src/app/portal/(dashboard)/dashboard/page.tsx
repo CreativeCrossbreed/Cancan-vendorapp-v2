@@ -1,27 +1,20 @@
-// @ts-nocheck
 'use client';
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import {
-    Grid,
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    Paper,
-    CircularProgress,
-} from '@mui/material';
-import {
-    People,
-    ShoppingCart,
-    AttachMoney,
-    WhatsApp,
-    Payment,
+    Activity,
+    ArrowDown,
+    ArrowUp,
+    ArrowUpRight,
+    Hourglass,
+    IndianRupee,
+    MessageCircle,
+    Percent,
+    ReceiptText,
     Store,
-    TrendingUp,
-    ArrowUpward,
-    ArrowDownward,
-} from '@mui/icons-material';
+    Users,
+    UserCheck,
+} from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchDashboardStats } from '@/store/dashboardSlice';
 
@@ -33,291 +26,136 @@ const Dashboard: React.FC = () => {
         dispatch(fetchDashboardStats());
     }, [dispatch]);
 
-    const statCards = [
-        {
-            title: 'Total Vendors',
-            value: stats?.totalVendors || 0,
-            icon: <Store />,
-            color: '#1A73E8',
-            bgColor: 'rgba(26, 115, 232, 0.1)',
-            trend: null,
-        },
-        {
-            title: 'Active Vendors',
-            value: stats?.activeVendors || 0,
-            icon: <People />,
-            color: '#34A853',
-            bgColor: 'rgba(52, 168, 83, 0.1)',
-            trend: '+12%',
-        },
-        {
-            title: 'Total Customers',
-            value: stats?.totalCustomers || 0,
-            icon: <People />,
-            color: '#FBBC05',
-            bgColor: 'rgba(251, 188, 5, 0.1)',
-            trend: '+8%',
-        },
-        {
-            title: "Today's Orders",
-            value: stats?.todayOrders || 0,
-            icon: <ShoppingCart />,
-            color: '#9334EA',
-            bgColor: 'rgba(147, 52, 234, 0.1)',
-            trend: '+5%',
-        },
-        {
-            title: "Today's Revenue",
-            value: `₹${stats?.todayRevenue || 0}`,
-            icon: <AttachMoney />,
-            color: '#EA4335',
-            bgColor: 'rgba(234, 67, 53, 0.1)',
-            trend: '+15%',
-        },
-        {
-            title: 'Commission Earned',
-            value: `₹${stats?.commissionEarned || 0}`,
-            icon: <Payment />,
-            color: '#0288D1',
-            bgColor: 'rgba(2, 136, 209, 0.1)',
-            trend: null,
-        },
-        {
-            title: 'WhatsApp Orders',
-            value: stats?.whatsappOrdersProcessed || 0,
-            icon: <WhatsApp />,
-            color: '#34A853',
-            bgColor: 'rgba(52, 168, 83, 0.1)',
-            trend: '+22%',
-        },
-        {
-            title: 'Pending Payments',
-            value: `₹${stats?.pendingPayments || 0}`,
-            icon: <Payment />,
-            color: '#F97316',
-            bgColor: 'rgba(249, 115, 22, 0.1)',
-            trend: '-3%',
-        },
-    ];
+    const statCards: Array<{
+        title: string;
+        value: React.ReactNode;
+        Icon: React.ComponentType<{ className?: string }>;
+        iconBg: string;
+        iconColor: string;
+        trend: string | null;
+    }> = [
+            { title: 'Total Vendors', value: stats?.totalVendors ?? 0, Icon: Store, iconBg: 'bg-blue-100', iconColor: 'text-blue-700', trend: null },
+            { title: 'Active Vendors', value: stats?.activeVendors ?? 0, Icon: UserCheck, iconBg: 'bg-green-100', iconColor: 'text-green-700', trend: '+12%' },
+            { title: 'Total Customers', value: stats?.totalCustomers ?? 0, Icon: Users, iconBg: 'bg-amber-100', iconColor: 'text-amber-800', trend: '+8%' },
+            { title: "Today's Orders", value: stats?.todayOrders ?? 0, Icon: ReceiptText, iconBg: 'bg-violet-100', iconColor: 'text-violet-700', trend: '+5%' },
+            { title: "Today's Revenue", value: `₹${stats?.todayRevenue ?? 0}`, Icon: IndianRupee, iconBg: 'bg-red-100', iconColor: 'text-red-700', trend: '+15%' },
+            { title: 'Commission Earned', value: `₹${stats?.commissionEarned ?? 0}`, Icon: Percent, iconBg: 'bg-sky-100', iconColor: 'text-sky-700', trend: null },
+            { title: 'WhatsApp Orders', value: stats?.whatsappOrdersProcessed ?? 0, Icon: MessageCircle, iconBg: 'bg-green-100', iconColor: 'text-green-700', trend: '+22%' },
+            { title: 'Pending Payments', value: `₹${stats?.pendingPayments ?? 0}`, Icon: Hourglass, iconBg: 'bg-orange-100', iconColor: 'text-orange-700', trend: '-3%' },
+        ];
 
     if (isLoading && !stats) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <CircularProgress />
-            </Box>
+            <div className="flex justify-center items-center min-h-[60vh]">
+                <div className="w-10 h-10 border-2 border-cancan-primary border-t-transparent rounded-full animate-spin" />
+            </div>
         );
     }
 
     if (error) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <Typography color="error">{error}</Typography>
-            </Box>
+            <div className="flex justify-center items-center min-h-[60vh]">
+                <p className="text-red-600 font-medium">{error}</p>
+            </div>
         );
     }
 
     return (
-        <Box>
+        <div>
             {/* Header */}
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600, color: '#202124', mb: 0.5 }}>
+            <div className="mb-8">
+                <h1 className="text-2xl font-semibold text-slate-900 mb-1">
                     Dashboard
-                </Typography>
-                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                </h1>
+                <p className="text-slate-600">
                     Welcome to the Can Can Water Can Delivery Admin Dashboard
-                </Typography>
-            </Box>
+                </p>
+            </div>
 
             {/* Stat Cards */}
-            <Grid container spacing={3}>
-                {statCards.map((card, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card
-                            sx={{
-                                height: '100%',
-                                borderRadius: 3,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                '&:hover': {
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                },
-                            }}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {statCards.map((card, index) => {
+                    const TrendIcon = card.trend?.startsWith('+') ? ArrowUp : ArrowDown;
+                    const trendColor = card.trend?.startsWith('+') ? 'text-green-600' : 'text-red-600';
+                    return (
+                        <div
+                            key={index}
+                            className="h-full rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5"
                         >
-                            <CardContent>
-                                <Box display="flex" alignItems="center" justifyContent="space-between">
-                                    <Box>
-                                        <Typography
-                                            variant="body2"
-                                            sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}
-                                        >
-                                            {card.title}
-                                        </Typography>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                                            {card.value}
-                                        </Typography>
-                                        {card.trend && (
-                                            <Box display="flex" alignItems="center" gap={0.5} sx={{ mt: 1 }}>
-                                                {card.trend.startsWith('+') ? (
-                                                    <ArrowUpward sx={{ fontSize: 16, color: '#34A853' }} />
-                                                ) : (
-                                                    <ArrowDownward sx={{ fontSize: 16, color: '#34A853' }} />
-                                                )}
-                                                <Typography
-                                                    variant="caption"
-                                                    sx={{ color: '#34A853', fontWeight: 600 }}
-                                                >
-                                                    {card.trend}
-                                                </Typography>
-                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                    vs last month
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                    <Box
-                                        sx={{
-                                            backgroundColor: card.bgColor,
-                                            borderRadius: 3,
-                                            p: 1.5,
-                                            color: card.color,
-                                        }}
-                                    >
-                                        {card.icon}
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-500 mb-1">{card.title}</p>
+                                    <p className="text-xl font-bold text-slate-900">{card.value}</p>
+                                    {card.trend && (
+                                        <div className="flex items-center gap-1 mt-2">
+                                            <TrendIcon className={`w-3.5 h-3.5 ${trendColor}`} />
+                                            <span className={`text-xs font-semibold ${trendColor}`}>{card.trend}</span>
+                                            <span className="text-xs text-slate-500">vs last month</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={`rounded-xl p-2.5 ${card.iconBg} ${card.iconColor}`}>
+                                    <card.Icon className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
 
             {/* Info Cards */}
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-                <Grid item xs={12} md={6}>
-                    <Paper
-                        sx={{
-                            p: 3,
-                            borderRadius: 3,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                            height: '100%',
-                        }}
-                    >
-                        <Box display="flex" alignItems="center" gap={2} mb={2}>
-                            <Box
-                                sx={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 2,
-                                    bgcolor: 'rgba(26, 115, 232, 0.1)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <TrendingUp sx={{ color: '#1A73E8', fontSize: 24 }} />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    Quick Actions
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                    Common tasks
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {[
-                                { label: 'View and manage all vendors', color: '#1A73E8' },
-                                { label: 'Monitor customer orders', color: '#34A853' },
-                                { label: 'Track WhatsApp integrations', color: '#FBBC05' },
-                                { label: 'Manage commission payments', color: '#EA4335' },
-                            ].map((item, idx) => (
-                                <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                        {item.label}
-                                    </Typography>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Paper>
-                </Grid>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="p-6 rounded-xl bg-white border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <ArrowUpRight className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900">Quick Actions</h2>
+                            <p className="text-sm text-slate-500">Common tasks</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        {[
+                            { label: 'View and manage all vendors', dot: 'bg-blue-600' },
+                            { label: 'Monitor customer orders', dot: 'bg-green-600' },
+                            { label: 'Track WhatsApp integrations', dot: 'bg-amber-500' },
+                            { label: 'Manage commission payments', dot: 'bg-red-600' },
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${item.dot}`} />
+                                <span className="text-sm text-slate-600">{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
-                <Grid item xs={12} md={6}>
-                    <Paper
-                        sx={{
-                            p: 3,
-                            borderRadius: 3,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                            height: '100%',
-                        }}
-                    >
-                        <Box display="flex" alignItems="center" gap={2} mb={2}>
-                            <Box
-                                sx={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 2,
-                                    bgcolor: 'rgba(52, 168, 83, 0.1)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <WhatsApp sx={{ color: '#34A853', fontSize: 24 }} />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    System Status
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                    All systems operational
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                            {[
-                                { label: 'All systems operational', status: 'success' },
-                                { label: 'WhatsApp API connected', status: 'success' },
-                                { label: 'Database sync active', status: 'success' },
-                                { label: 'Real-time updates enabled', status: 'success' },
-                            ].map((item, idx) => (
-                                <Box
-                                    key={idx}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1.5,
-                                        p: 1,
-                                        borderRadius: 1.5,
-                                        bgcolor: '#F8F9FA',
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            width: 8,
-                                            height: 8,
-                                            borderRadius: '50%',
-                                            bgcolor: '#34A853',
-                                            animation: 'pulse 2s infinite',
-                                            '@keyframes pulse': {
-                                                '0%': { opacity: 1 },
-                                                '50%': { opacity: 0.5 },
-                                                '100%': { opacity: 1 },
-                                            },
-                                        }}
-                                    />
-                                    <Typography variant="body2" sx={{ color: '#202124', fontWeight: 500 }}>
-                                        {item.label}
-                                    </Typography>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
-        </Box>
+                <div className="p-6 rounded-xl bg-white border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                            <Activity className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900">System Status</h2>
+                            <p className="text-sm text-slate-500">All systems operational</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        {[
+                            'All systems operational',
+                            'WhatsApp API connected',
+                            'Database sync active',
+                            'Real-time updates enabled',
+                        ].map((label, idx) => (
+                            <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                <span className="text-sm font-medium text-slate-800">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

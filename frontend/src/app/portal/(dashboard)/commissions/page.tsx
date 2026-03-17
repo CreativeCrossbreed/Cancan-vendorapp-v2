@@ -1,46 +1,14 @@
-// @ts-nocheck
 'use client';
+
 import React, { useEffect, useState } from 'react';
-import {
-  Typography,
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Button,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-  LinearProgress,
-} from '@mui/material';
-import {
-  TrendingUp as TrendingUpIcon,
-  AccountBalance as AccountBalanceIcon,
-  Pending as PendingIcon,
-  CheckCircle as CheckCircleIcon,
-  Visibility as VisibilityIcon,
-} from '@mui/icons-material';
+import { TrendingUp, CheckCircle, Clock, Wallet, Eye } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchCommissions, fetchCommissionStats } from '@/store/commissionSlice';
-import { CommissionRecord } from '@/types';
+import type { CommissionRecord } from '@/types';
+import PortalPageHeader from '@/components/portal/PortalPageHeader';
+import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
+import { Button, Card, Modal, Pagination, Select } from '@/components/portal/ui';
 
 const Commissions: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -55,54 +23,22 @@ const Commissions: React.FC = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchCommissions({
-      page: page + 1,
-      limit: rowsPerPage,
-      status: statusFilter !== 'all' ? statusFilter : undefined,
-      vendor_id: vendorFilter !== 'all' ? vendorFilter : undefined,
-    }));
+    dispatch(
+      fetchCommissions({
+        page: page + 1,
+        limit: rowsPerPage,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        vendor_id: vendorFilter !== 'all' ? vendorFilter : undefined,
+      }),
+    );
     dispatch(fetchCommissionStats(30));
   }, [dispatch, page, rowsPerPage, statusFilter, vendorFilter]);
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleViewCommission = (commission: CommissionRecord) => {
-    setSelectedCommission(commission);
-    setViewDialogOpen(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'pending': return { bg: '#FEF7E0', text: '#B45309' };
-      case 'processing': return { bg: '#E1F5FE', text: '#0277BD' };
-      case 'cancelled': return { bg: '#FFEBEE', text: '#C62828' };
-      default: return { bg: '#F5F5F5', text: '#616161' };
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 
   const totalPending = stats?.totalPending || 0;
   const totalPaid = stats?.totalPaid || 0;
@@ -112,460 +48,266 @@ const Commissions: React.FC = () => {
 
   if (error) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>
-          Commission Tracking
-        </Typography>
-        <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
-      </Box>
+      <div>
+        <PortalPageHeader title="Commission Tracking" />
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      </div>
     );
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600, color: '#202124', mb: 0.5 }}>
-          Commission Tracking
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Track and manage vendor commissions
-        </Typography>
-      </Box>
+    <div>
+      <PortalPageHeader title="Commission Tracking" subtitle="Track and manage vendor commissions" />
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Earnings
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(totalEarnings)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(26, 115, 232, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <TrendingUpIcon sx={{ color: '#1A73E8', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Paid Commissions
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(totalPaid)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(52, 168, 83, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ color: '#34A853', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Pending Payment
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(totalPending)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(251, 188, 5, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PendingIcon sx={{ color: '#FBBC05', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Unpaid Commissions
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(totalUnpaid)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(234, 67, 53, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AccountBalanceIcon sx={{ color: '#EA4335', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Total Earnings</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(totalEarnings)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Paid Commissions</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(totalPaid)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+            <CheckCircle className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Pending Payment</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(totalPending)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+            <Clock className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Unpaid Commissions</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(totalUnpaid)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+            <Wallet className="w-6 h-6" />
+          </div>
+        </Card>
+      </div>
 
       {/* Payment Progress Bar */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Commission Payment Status</Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Box flex={1}>
-            <LinearProgress
-              variant="determinate"
-              value={payoutPercentage}
-              sx={{
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: '#E8EAED',
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: '#34A853',
-                  borderRadius: 5,
-                },
-              }}
-            />
-          </Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, color: '#34A853', minWidth: 60 }}>
-            {payoutPercentage}% Paid
-          </Typography>
-        </Box>
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={4}>
-            <Typography variant="body2" sx={{ color: '#34A853', fontWeight: 500 }}>
-              Paid: {formatCurrency(totalPaid)}
-            </Typography>
-          </Grid>
-          <Grid item xs={4}>
-            <Typography variant="body2" sx={{ color: '#B45309', fontWeight: 500 }}>
-              Pending: {formatCurrency(totalPending)}
-            </Typography>
-          </Grid>
-          <Grid item xs={4}>
-            <Typography variant="body2" sx={{ color: '#EA4335', fontWeight: 500 }}>
-              Unpaid: {formatCurrency(totalUnpaid)}
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
+      <Card className="p-4 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <h2 className="text-sm font-semibold text-slate-900">Commission Payment Status</h2>
+          <span className="text-sm font-semibold text-green-700">{payoutPercentage}% Paid</span>
+        </div>
+        <div className="h-2.5 rounded-full bg-slate-200 overflow-hidden">
+          <div className="h-full bg-green-600 transition-[width]" style={{ width: `${payoutPercentage}%` }} />
+        </div>
+        <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
+          <span className="text-green-700 font-medium">Paid: {formatCurrency(totalPaid)}</span>
+          <span className="text-amber-700 font-medium">Pending: {formatCurrency(totalPending)}</span>
+          <span className="text-red-700 font-medium">Unpaid: {formatCurrency(totalUnpaid)}</span>
+        </div>
+      </Card>
 
       {/* Filters */}
-      <Paper
-        sx={{
-          p: 2.5,
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Status"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="processing">Processing</MenuItem>
-                <MenuItem value="paid">Paid</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Vendor</InputLabel>
-              <Select
-                value={vendorFilter}
-                onChange={(e) => setVendorFilter(e.target.value)}
-                label="Vendor"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Vendors</MenuItem>
-                <MenuItem value="vendor1">Vendor 1</MenuItem>
-                <MenuItem value="vendor2">Vendor 2</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Date Range</InputLabel>
-              <Select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                label="Date Range"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Time</MenuItem>
-                <MenuItem value="today">Today</MenuItem>
-                <MenuItem value="week">This Week</MenuItem>
-                <MenuItem value="month">This Month</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box display="flex" justifyContent="flex-end" gap={1}>
-              <Button variant="outlined" sx={{ borderRadius: 2, fontWeight: 500 }}>Export CSV</Button>
-              <Button variant="contained" sx={{ borderRadius: 2, fontWeight: 600 }}>Process Payments</Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+      <Card className="p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <Select
+            label="Status"
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(0);
+            }}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'processing', label: 'Processing' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]}
+          />
+          <Select
+            label="Vendor"
+            value={vendorFilter}
+            onChange={(v) => {
+              setVendorFilter(v);
+              setPage(0);
+            }}
+            options={[
+              { value: 'all', label: 'All Vendors' },
+              { value: 'vendor1', label: 'Vendor 1' },
+              { value: 'vendor2', label: 'Vendor 2' },
+            ]}
+          />
+          <Select
+            label="Date Range"
+            value={dateFilter}
+            onChange={setDateFilter}
+            options={[
+              { value: 'all', label: 'All Time' },
+              { value: 'today', label: 'Today' },
+              { value: 'week', label: 'This Week' },
+              { value: 'month', label: 'This Month' },
+            ]}
+          />
+          <div className="flex items-end gap-2">
+            <Button variant="ghost" size="md">Export CSV</Button>
+            <Button size="md">Process Payments</Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Table */}
-      <Paper
-        sx={{
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Commission ID</TableCell>
-                <TableCell>Vendor</TableCell>
-                <TableCell>Order ID</TableCell>
-                <TableCell>Commission Amount</TableCell>
-                <TableCell>Commission Rate</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Order Date</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="text-left font-semibold px-4 py-3">Commission ID</th>
+                <th className="text-left font-semibold px-4 py-3">Vendor</th>
+                <th className="text-left font-semibold px-4 py-3">Order ID</th>
+                <th className="text-left font-semibold px-4 py-3">Amount</th>
+                <th className="text-left font-semibold px-4 py-3">Rate</th>
+                <th className="text-left font-semibold px-4 py-3">Status</th>
+                <th className="text-left font-semibold px-4 py-3">Order Date</th>
+                <th className="text-left font-semibold px-4 py-3">Created</th>
+                <th className="text-right font-semibold px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={9}>
+                    Loading…
+                  </td>
+                </tr>
               ) : commissions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No commission records found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={9}>
+                    No commission records found
+                  </td>
+                </tr>
               ) : (
-                commissions.map((commission) => (
-                  <TableRow key={commission.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
-                        #{commission.id?.slice(0, 8) || 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {commission.vendor?.name || 'Unknown Vendor'}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {commission.vendor?.phone || ''}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        #{commission.order_id?.slice(0, 8) || 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1A73E8' }}>
-                        {formatCurrency(commission.commission_amount || 0)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {commission.commission_rate || 0}%
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={commission.status}
-                        sx={{
-                          bgcolor: getStatusColor(commission.status).bg,
-                          color: getStatusColor(commission.status).text,
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                        }}
-                        size="small"
+                commissions.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3 font-mono text-slate-700">#{c.id?.slice(0, 8) || 'N/A'}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{c.vendor?.name || 'Unknown Vendor'}</p>
+                      {c.vendor?.phone ? (
+                        <p className="text-xs text-slate-500">{c.vendor.phone}</p>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-slate-700">#{c.order_id?.slice(0, 8) || 'N/A'}</td>
+                    <td className="px-4 py-3 font-semibold text-blue-700">{formatCurrency(c.commission_amount || 0)}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{c.commission_rate || 0}%</td>
+                    <td className="px-4 py-3">
+                      <StatusChip
+                        label={c.status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                        variant={statusToVariant(c.status)}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {commission.order_date ? formatDate(commission.order_date) : 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {commission.created_at ? formatDate(commission.created_at) : 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewCommission(commission)}
-                        sx={{ borderRadius: 2 }}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{c.order_date ? formatDate(c.order_date) : 'N/A'}</td>
+                    <td className="px-4 py-3 text-slate-600">{c.created_at ? formatDate(c.created_at) : 'N/A'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCommission(c);
+                          setViewDialogOpen(true);
+                        }}
+                        className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="View details"
                       >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
+            </tbody>
+          </table>
+        </div>
+        <Pagination
           count={pagination.total}
-          rowsPerPage={rowsPerPage}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{ borderTop: '1px solid #E8EAED' }}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => {
+            setRowsPerPage(n);
+            setPage(0);
+          }}
         />
-      </Paper>
+      </Card>
 
-      {/* Commission Details Dialog */}
-      <Dialog
+      <Modal
         open={viewDialogOpen}
+        title="Commission Details"
         onClose={() => setViewDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>Commission Details</DialogTitle>
-        <DialogContent>
-          {selectedCommission && (
-            <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2, mt: 1 }}>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Commission ID:</strong> #{selectedCommission.id}</Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Order ID:</strong> #{selectedCommission.order_id}</Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Vendor:</strong> {selectedCommission.vendor?.name}</Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Commission Amount:</strong> {formatCurrency(selectedCommission.commission_amount || 0)}</Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Commission Rate:</strong> {selectedCommission.commission_rate}%</Typography>
-              <Typography variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <strong>Status:</strong>
-                <Chip
-                  label={selectedCommission.status}
-                  sx={{
-                    bgcolor: getStatusColor(selectedCommission.status).bg,
-                    color: getStatusColor(selectedCommission.status).text,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  }}
-                  size="small"
-                />
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Order Total:</strong> {formatCurrency(selectedCommission.order_total || 0)}</Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}><strong>Order Date:</strong> {selectedCommission.order_date ? formatDate(selectedCommission.order_date) : 'N/A'}</Typography>
-              <Typography variant="body2"><strong>Created:</strong> {selectedCommission.created_at ? formatDate(selectedCommission.created_at) : 'N/A'}</Typography>
-              {selectedCommission.paid_at && (
-                <Typography variant="body2" sx={{ mt: 1 }}><strong>Paid On:</strong> {formatDate(selectedCommission.paid_at)}</Typography>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setViewDialogOpen(false)} sx={{ borderRadius: 2 }}>Close</Button>
-          {selectedCommission?.status === 'pending' && (
-            <Button variant="contained" sx={{ borderRadius: 2, fontWeight: 600 }}>
-              Mark as Paid
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setViewDialogOpen(false)}>
+              Close
             </Button>
-          )}
-        </DialogActions>
-      </Dialog>
-    </Box>
+            {selectedCommission?.status === 'pending' ? (
+              <Button onClick={() => setViewDialogOpen(false)}>Mark as Paid</Button>
+            ) : null}
+          </>
+        }
+      >
+        {selectedCommission ? (
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-800 space-y-2">
+            <div>
+              <span className="font-semibold">Commission ID:</span> #{selectedCommission.id}
+            </div>
+            <div>
+              <span className="font-semibold">Order ID:</span> #{selectedCommission.order_id}
+            </div>
+            <div>
+              <span className="font-semibold">Vendor:</span> {selectedCommission.vendor?.name || '-'}
+            </div>
+            <div>
+              <span className="font-semibold">Commission Amount:</span>{' '}
+              {formatCurrency(selectedCommission.commission_amount || 0)}
+            </div>
+            <div>
+              <span className="font-semibold">Commission Rate:</span> {selectedCommission.commission_rate}%
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Status:</span>
+              <StatusChip
+                label={selectedCommission.status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                variant={statusToVariant(selectedCommission.status)}
+              />
+            </div>
+            <div>
+              <span className="font-semibold">Order Total:</span> {formatCurrency(selectedCommission.order_total || 0)}
+            </div>
+            <div>
+              <span className="font-semibold">Order Date:</span>{' '}
+              {selectedCommission.order_date ? formatDate(selectedCommission.order_date) : 'N/A'}
+            </div>
+            <div>
+              <span className="font-semibold">Created:</span>{' '}
+              {selectedCommission.created_at ? formatDate(selectedCommission.created_at) : 'N/A'}
+            </div>
+            {selectedCommission.paid_at ? (
+              <div>
+                <span className="font-semibold">Paid On:</span> {formatDate(selectedCommission.paid_at)}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
+    </div>
   );
 };
 
 export default Commissions;
-

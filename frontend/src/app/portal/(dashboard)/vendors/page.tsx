@@ -1,48 +1,23 @@
-// @ts-nocheck
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import {
-  Typography,
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Button,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Store as StoreIcon,
-  Person as PersonIcon,
-  TrendingUp,
-} from '@mui/icons-material';
+  Ban,
+  Eye,
+  Pencil,
+  Plus,
+  Store,
+  Trash2,
+  TrendingDown,
+  UserCheck,
+} from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchVendors } from '@/store/vendorSlice';
 import { Vendor } from '@/types';
+import PortalPageHeader from '@/components/portal/PortalPageHeader';
+import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
+import { Button, Card, Input, Modal, Pagination, Select } from '@/components/portal/ui';
 
 const Vendors: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -54,6 +29,8 @@ const Vendors: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState({
     phone: '',
     name: '',
@@ -64,32 +41,15 @@ const Vendors: React.FC = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchVendors({
-      page: page + 1,
-      limit: rowsPerPage,
-      search: searchTerm || undefined,
-      status: statusFilter !== 'all' ? statusFilter : undefined,
-    }));
+    dispatch(
+      fetchVendors({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      }),
+    );
   }, [dispatch, page, rowsPerPage, searchTerm, statusFilter]);
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0);
-  };
-
-  const handleStatusFilter = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setStatusFilter(event.target.value as string);
-    setPage(0);
-  };
 
   const handleAddVendor = () => {
     setAddDialogOpen(true);
@@ -115,566 +75,373 @@ const Vendors: React.FC = () => {
     setEditDialogOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'inactive': return { bg: '#FEF7E0', text: '#B45309' };
-      case 'suspended': return { bg: '#FFEBEE', text: '#C62828' };
-      default: return { bg: '#F5F5F5', text: '#616161' };
-    }
+  const handleViewVendor = (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+    setViewDialogOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
+
+  const activeCount = vendors.filter((v) => v.status === 'active').length;
+  const inactiveCount = vendors.filter((v) => v.status === 'inactive').length;
+  const suspendedCount = vendors.filter((v) => v.status === 'suspended').length;
 
   if (error) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>
-          Vendors Management
-        </Typography>
-        <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
-      </Box>
+      <div>
+        <PortalPageHeader title="Vendors Management" />
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      </div>
     );
   }
 
+  const formFields = (
+    <>
+      <Input
+        label="Phone Number"
+        value={formData.phone}
+        onChange={(v) => setFormData({ ...formData, phone: v })}
+      />
+      <Input label="Name" value={formData.name} onChange={(v) => setFormData({ ...formData, name: v })} />
+      <Input
+        label="Business Name"
+        value={formData.business_name}
+        onChange={(v) => setFormData({ ...formData, business_name: v })}
+      />
+      <label className="block">
+        <span className="block text-sm font-medium text-slate-700 mb-1">Address</span>
+        <textarea
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          rows={2}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cancan-primary/30"
+        />
+      </label>
+      <Input
+        label="Commission Rate (%)"
+        type="number"
+        value={String(formData.commission_rate)}
+        onChange={(v) => setFormData({ ...formData, commission_rate: parseFloat(v) || 0 })}
+      />
+      <Select
+        label="Status"
+        value={formData.status}
+        onChange={(v) => setFormData({ ...formData, status: v as 'active' | 'inactive' | 'suspended' })}
+        options={[
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+          { value: 'suspended', label: 'Suspended' },
+        ]}
+      />
+    </>
+  );
+
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600, color: '#202124', mb: 0.5 }}>
-          Vendors Management
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Manage your water can delivery vendors
-        </Typography>
-      </Box>
+    <div>
+      <PortalPageHeader title="Vendors Management" subtitle="Manage your water can delivery vendors" />
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Vendors
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {pagination.total}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(26, 115, 232, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <StoreIcon sx={{ color: '#1A73E8', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Active Vendors
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {vendors.filter(v => v.status === 'active').length}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(52, 168, 83, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PersonIcon sx={{ color: '#34A853', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Revenue
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(vendors.reduce((sum, v) => sum + (v.stats?.totalRevenue || 0), 0))}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(251, 188, 5, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <TrendingUp sx={{ color: '#FBBC05', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Orders
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {vendors.reduce((sum, v) => sum + (v.stats?.totalOrders || 0), 0)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(147, 52, 234, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <StoreIcon sx={{ color: '#9334EA', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Total Vendors</p>
+            <p className="text-xl font-bold text-slate-900">{pagination.total}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+            <Store className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Active Vendors</p>
+            <p className="text-xl font-bold text-slate-900">{activeCount}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+            <UserCheck className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Inactive</p>
+            <p className="text-xl font-bold text-slate-900">{inactiveCount}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+            <TrendingDown className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Suspended</p>
+            <p className="text-xl font-bold text-slate-900">{suspendedCount}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+            <Ban className="w-6 h-6" />
+          </div>
+        </Card>
+      </div>
 
       {/* Filters */}
-      <Paper
-        sx={{
-          p: 2.5,
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Search vendors..."
+      <Card className="p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div className="md:col-span-4">
+            <Input
+              label="Search"
               value={searchTerm}
-              onChange={handleSearch}
-              size="small"
+              onChange={(v) => {
+                setSearchTerm(v);
+                setPage(0);
+              }}
               placeholder="Name, phone, business..."
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={handleStatusFilter}
-                label="Status"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="suspended">Suspended</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <Box display="flex" justifyContent="flex-end">
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddVendor}
-                sx={{ borderRadius: 2, fontWeight: 600 }}
-              >
-                Add Vendor
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+          </div>
+          <div className="md:col-span-3">
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(0);
+              }}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'suspended', label: 'Suspended' },
+              ]}
+            />
+          </div>
+          <div className="md:col-span-5 flex justify-end">
+            <Button onClick={handleAddVendor} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Vendor
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Table */}
-      <Paper
-        sx={{
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Vendor Info</TableCell>
-                <TableCell>Business</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Commission</TableCell>
-                <TableCell>Orders</TableCell>
-                <TableCell>Revenue</TableCell>
-                <TableCell>Joined</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="text-left font-semibold px-4 py-3">Vendor</th>
+                <th className="text-left font-semibold px-4 py-3">Business</th>
+                <th className="text-left font-semibold px-4 py-3">Status</th>
+                <th className="text-left font-semibold px-4 py-3">Commission</th>
+                <th className="text-left font-semibold px-4 py-3">Orders</th>
+                <th className="text-left font-semibold px-4 py-3">Revenue</th>
+                <th className="text-left font-semibold px-4 py-3">Joined</th>
+                <th className="text-right font-semibold px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={8}>
+                    Loading…
+                  </td>
+                </tr>
               ) : vendors.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No vendors found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={8}>
+                    No vendors found
+                  </td>
+                </tr>
               ) : (
-                vendors.map((vendor) => {
-                  const statusColors = getStatusColor(vendor.status);
-                  return (
-                    <TableRow key={vendor.id} hover>
-                      <TableCell>
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {vendor.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          {vendor.phone}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {vendor.business_name || '-'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={vendor.status.replace(/\b\w/g, l => l.toUpperCase())}
-                        sx={{
-                          bgcolor: statusColors.bg,
-                          color: statusColors.text,
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                        }}
-                        size="small"
+                vendors.map((vendor) => (
+                  <tr key={vendor.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-slate-900">{vendor.name}</p>
+                      <p className="text-slate-500">{vendor.phone}</p>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-700">{vendor.business_name || '-'}</td>
+                    <td className="px-4 py-3">
+                      <StatusChip
+                        label={vendor.status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                        variant={statusToVariant(vendor.status)}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {vendor.commission_rate}%
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {vendor.stats?.totalOrders || 0}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {formatCurrency(vendor.stats?.totalRevenue || 0)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatDate(vendor.created_at)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{vendor.commission_rate}%</td>
+                    <td className="px-4 py-3 text-slate-700">{vendor.stats?.totalOrders || 0}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      {formatCurrency(vendor.stats?.totalRevenue || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{formatDate(vendor.created_at)}</td>
+                    <td className="px-4 py-3 text-right flex items-center justify-end gap-0">
+                      <button
+                        type="button"
                         onClick={() => handleEditVendor(vendor)}
-                        sx={{ borderRadius: 2 }}
+                        className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="Edit"
                         title="Edit"
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleViewVendor(vendor)}
+                        className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="View details"
                         title="View Details"
-                        sx={{ borderRadius: 2 }}
                       >
-                        <ViewIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600"
+                        aria-label="Delete"
                         title="Delete"
-                        sx={{ borderRadius: 2 }}
                       >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                  );
-                })
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
+            </tbody>
+          </table>
+        </div>
+        <Pagination
           count={pagination.total}
-          rowsPerPage={rowsPerPage}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{ borderTop: '1px solid #E8EAED' }}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => {
+            setRowsPerPage(n);
+            setPage(0);
+          }}
         />
-      </Paper>
+      </Card>
 
-      {/* Add Vendor Dialog */}
-      <Dialog
+      {/* Add Vendor Modal */}
+      <Modal
         open={addDialogOpen}
+        title="Add New Vendor"
         onClose={() => setAddDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setAddDialogOpen(false)}>Add Vendor</Button>
+          </>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Add New Vendor</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Business Name"
-                value={formData.business_name}
-                onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                multiline
-                rows={2}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Commission Rate (%)"
-                type="number"
-                value={formData.commission_rate}
-                onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) })}
-                inputProps={{ min: 0, max: 100 }}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  label="Status"
-                >
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="suspended">Suspended</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setAddDialogOpen(false)} sx={{ borderRadius: 2 }}>Cancel</Button>
-          <Button variant="contained" sx={{ borderRadius: 2, fontWeight: 600 }}>Add Vendor</Button>
-        </DialogActions>
-      </Dialog>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{formFields}</div>
+      </Modal>
 
-      {/* Edit Vendor Dialog */}
-      <Dialog
+      {/* Edit Vendor Modal */}
+      <Modal
         open={editDialogOpen}
+        title="Edit Vendor"
         onClose={() => setEditDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setEditDialogOpen(false)}>Update Vendor</Button>
+          </>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Edit Vendor</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                disabled
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Business Name"
-                value={formData.business_name}
-                onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                multiline
-                rows={2}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Commission Rate (%)"
-                type="number"
-                value={formData.commission_rate}
-                onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) })}
-                inputProps={{ min: 0, max: 100 }}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  label="Status"
-                >
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="suspended">Suspended</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setEditDialogOpen(false)} sx={{ borderRadius: 2 }}>Cancel</Button>
-          <Button variant="contained" sx={{ borderRadius: 2, fontWeight: 600 }}>Update Vendor</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label className="block md:col-span-2">
+            <span className="block text-sm font-medium text-slate-700 mb-1">Phone Number</span>
+            <input
+              value={formData.phone}
+              readOnly
+              disabled
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-100 px-4 text-slate-500 cursor-not-allowed"
+            />
+          </label>
+          <Input label="Name" value={formData.name} onChange={(v) => setFormData({ ...formData, name: v })} />
+          <Input
+            label="Business Name"
+            value={formData.business_name}
+            onChange={(v) => setFormData({ ...formData, business_name: v })}
+          />
+          <label className="block md:col-span-2">
+            <span className="block text-sm font-medium text-slate-700 mb-1">Address</span>
+            <textarea
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              rows={2}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cancan-primary/30"
+            />
+          </label>
+          <Input
+            label="Commission Rate (%)"
+            type="number"
+            value={String(formData.commission_rate)}
+            onChange={(v) => setFormData({ ...formData, commission_rate: parseFloat(v) || 0 })}
+          />
+          <Select
+            label="Status"
+            value={formData.status}
+            onChange={(v) => setFormData({ ...formData, status: v as 'active' | 'inactive' | 'suspended' })}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+              { value: 'suspended', label: 'Suspended' },
+            ]}
+          />
+        </div>
+      </Modal>
+
+      {/* View Vendor Modal */}
+      <Modal
+        open={viewDialogOpen}
+        title="Vendor Details"
+        onClose={() => setViewDialogOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setViewDialogOpen(false)}>
+              Close
+            </Button>
+            {selectedVendor && (
+              <Button onClick={() => { handleEditVendor(selectedVendor); setViewDialogOpen(false); setEditDialogOpen(true); }}>
+                Edit
+              </Button>
+            )}
+          </>
+        }
+      >
+        {selectedVendor ? (
+          <div className="space-y-4">
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <div className="space-y-2 text-sm text-slate-800">
+                <div><span className="font-semibold">Name:</span> {selectedVendor.name}</div>
+                <div><span className="font-semibold">Phone:</span> {selectedVendor.phone}</div>
+                <div><span className="font-semibold">Business:</span> {selectedVendor.business_name || '-'}</div>
+                <div><span className="font-semibold">Address:</span> {selectedVendor.address || '-'}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Status:</span>
+                  <StatusChip
+                    label={selectedVendor.status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                    variant={statusToVariant(selectedVendor.status)}
+                  />
+                </div>
+                <div><span className="font-semibold">Commission Rate:</span> {selectedVendor.commission_rate}%</div>
+                <div><span className="font-semibold">Joined:</span> {formatDate(selectedVendor.created_at)}</div>
+                <div><span className="font-semibold">Total Orders:</span> {selectedVendor.stats?.totalOrders ?? 0}</div>
+                <div><span className="font-semibold">Total Revenue:</span> {formatCurrency(selectedVendor.stats?.totalRevenue ?? 0)}</div>
+              </div>
+            </Card>
+          </div>
+        ) : null}
+      </Modal>
+    </div>
   );
 };
 
 export default Vendors;
-

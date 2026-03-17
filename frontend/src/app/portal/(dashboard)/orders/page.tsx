@@ -1,54 +1,26 @@
-// @ts-nocheck
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import {
-  Typography,
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Button,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-  Menu,
-  Divider,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  MoreVert as MoreVertIcon,
-  Edit as EditIcon,
-  LocalShipping as LocalShippingIcon,
-  Assignment as AssignmentIcon,
-  Payment as PaymentIcon,
-  Person as PersonIcon,
-  Store as StoreIcon,
-  Cancel as CancelIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
-} from '@mui/icons-material';
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Eye,
+  MoreVertical,
+  Package,
+  Plus,
+  Store,
+  Truck,
+  User,
+  XCircle,
+} from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchOrders } from '@/store/orderSlice';
 import { Order } from '@/types';
+import PortalPageHeader from '@/components/portal/PortalPageHeader';
+import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
+import { Button, Card, Input, Modal, Pagination, Select } from '@/components/portal/ui';
 
 const Orders: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -68,28 +40,16 @@ const Orders: React.FC = () => {
   const [statusNotes, setStatusNotes] = useState('');
 
   useEffect(() => {
-    dispatch(fetchOrders({
-      page: page + 1,
-      limit: rowsPerPage,
-      search: searchTerm || undefined,
-      status: statusFilter !== 'all' ? statusFilter : undefined,
-      payment_status: paymentFilter !== 'all' ? paymentFilter : undefined,
-    }));
+    dispatch(
+      fetchOrders({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        payment_status: paymentFilter !== 'all' ? paymentFilter : undefined,
+      }),
+    );
   }, [dispatch, page, rowsPerPage, searchTerm, statusFilter, paymentFilter]);
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0);
-  };
 
   const handleActionMenuOpen = (event: React.MouseEvent<HTMLElement>, order: Order) => {
     setActionMenuAnchor(event.currentTarget);
@@ -113,597 +73,433 @@ const Orders: React.FC = () => {
     handleActionMenuClose();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return { bg: '#FEF7E0', text: '#B45309' };
-      case 'confirmed': return { bg: '#E1F5FE', text: '#0277BD' };
-      case 'assigned': return { bg: '#E8EAF6', text: '#37474F' };
-      case 'picked_up': return { bg: '#F3E5F5', text: '#7B1FA2' };
-      case 'delivered': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'cancelled': return { bg: '#FFEBEE', text: '#C62828' };
-      default: return { bg: '#F5F5F5', text: '#616161' };
-    }
-  };
-
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'unpaid': return { bg: '#FEF7E0', text: '#B45309' };
-      case 'refunded': return { bg: '#E1F5FE', text: '#0277BD' };
-      default: return { bg: '#F5F5F5', text: '#616161' };
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 
-  const todayOrders = orders.filter(order => {
-    const orderDate = new Date(order.created_at).toDateString();
-    return orderDate === new Date().toDateString();
-  });
-
-  const pendingOrders = orders.filter(order => order.status === 'pending');
-  const deliveredOrders = orders.filter(order => order.status === 'delivered');
+  const todayOrders = orders.filter((order) => new Date(order.created_at).toDateString() === new Date().toDateString());
+  const pendingOrders = orders.filter((order) => order.status === 'pending');
+  const deliveredOrders = orders.filter((order) => order.status === 'completed');
   const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
   if (error) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>
-          Orders Management
-        </Typography>
-        <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
-      </Box>
+      <div>
+        <PortalPageHeader title="Orders Management" />
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      </div>
     );
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600, color: '#202124', mb: 0.5 }}>
-          Orders Management
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Manage and track all water can delivery orders
-        </Typography>
-      </Box>
+    <div>
+      <PortalPageHeader title="Orders Management" subtitle="Manage and track all water can delivery orders" />
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Today's Orders
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {todayOrders.length}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(26, 115, 232, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AssignmentIcon sx={{ color: '#1A73E8', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Pending Orders
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {pendingOrders.length}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(251, 188, 5, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ScheduleIcon sx={{ color: '#FBBC05', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Delivered Today
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {deliveredOrders.length}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(52, 168, 83, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ color: '#34A853', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Today's Revenue
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(todayRevenue)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(2, 136, 209, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PaymentIcon sx={{ color: '#0288D1', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Today&apos;s Orders</p>
+            <p className="text-xl font-bold text-slate-900">{todayOrders.length}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+            <Package className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Pending Orders</p>
+            <p className="text-xl font-bold text-slate-900">{pendingOrders.length}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+            <Clock className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Delivered Today</p>
+            <p className="text-xl font-bold text-slate-900">{deliveredOrders.length}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+            <CheckCircle className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Today&apos;s Revenue</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(todayRevenue)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
+            <CreditCard className="w-6 h-6" />
+          </div>
+        </Card>
+      </div>
 
       {/* Filters */}
-      <Paper
-        sx={{
-          p: 2.5,
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="Search orders..."
+      <Card className="p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div className="md:col-span-3">
+            <Input
+              label="Search"
               value={searchTerm}
-              onChange={handleSearch}
-              size="small"
+              onChange={(v) => {
+                setSearchTerm(v);
+                setPage(0);
+              }}
               placeholder="Order #, Customer, Vendor"
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Status"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="confirmed">Confirmed</MenuItem>
-                <MenuItem value="assigned">Assigned</MenuItem>
-                <MenuItem value="picked_up">Picked Up</MenuItem>
-                <MenuItem value="delivered">Delivered</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Payment</InputLabel>
-              <Select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-                label="Payment"
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="all">All Payment</MenuItem>
-                <MenuItem value="paid">Paid</MenuItem>
-                <MenuItem value="unpaid">Unpaid</MenuItem>
-                <MenuItem value="refunded">Refunded</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <Box display="flex" justifyContent="flex-end">
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{ borderRadius: 2, fontWeight: 600 }}
-              >
-                Create Order
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+          </div>
+          <div className="md:col-span-2">
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(0);
+              }}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'confirmed', label: 'Confirmed' },
+                { value: 'assigned', label: 'Assigned' },
+                { value: 'picked_up', label: 'Picked Up' },
+                { value: 'delivered', label: 'Delivered' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Select
+              label="Payment"
+              value={paymentFilter}
+              onChange={(v) => {
+                setPaymentFilter(v);
+                setPage(0);
+              }}
+              options={[
+                { value: 'all', label: 'All Payment' },
+                { value: 'paid', label: 'Paid' },
+                { value: 'unpaid', label: 'Unpaid' },
+                { value: 'refunded', label: 'Refunded' },
+              ]}
+            />
+          </div>
+          <div className="md:col-span-5 flex justify-end">
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create Order
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Table */}
-      <Paper
-        sx={{
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Order #</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Vendor</TableCell>
-                <TableCell>Delivery Date</TableCell>
-                <TableCell>Time Slot</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Payment</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="text-left font-semibold px-4 py-3">Order #</th>
+                <th className="text-left font-semibold px-4 py-3">Customer</th>
+                <th className="text-left font-semibold px-4 py-3">Vendor</th>
+                <th className="text-left font-semibold px-4 py-3">Delivery Date</th>
+                <th className="text-left font-semibold px-4 py-3">Time Slot</th>
+                <th className="text-left font-semibold px-4 py-3">Amount</th>
+                <th className="text-left font-semibold px-4 py-3">Status</th>
+                <th className="text-left font-semibold px-4 py-3">Payment</th>
+                <th className="text-left font-semibold px-4 py-3">Created</th>
+                <th className="text-right font-semibold px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={10}>
+                    Loading…
+                  </td>
+                </tr>
               ) : orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No orders found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={10}>
+                    No orders found
+                  </td>
+                </tr>
               ) : (
-                orders.map((order) => {
-                  const statusColors = getStatusColor(order.status);
-                  const paymentColors = getPaymentStatusColor(order.payment_status);
-                  return (
-                    <TableRow key={order.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1A73E8' }}>
-                          #{order.order_number}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {order.customer?.name || 'Customer'}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              {order.customer?.phone || 'N/A'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <StoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {order.vendor?.name || 'Unassigned'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(order.delivery_date).toLocaleDateString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{order.time_slot}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {formatCurrency(order.total_amount)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          sx={{
-                            bgcolor: statusColors.bg,
-                            color: statusColors.text,
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                          }}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.payment_status.replace(/\b\w/g, l => l.toUpperCase())}
-                          sx={{
-                            bgcolor: paymentColors.bg,
-                            color: paymentColors.text,
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                          }}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {formatDate(order.created_at)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleActionMenuOpen(e, order)}
-                          sx={{ borderRadius: 2 }}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3 font-semibold text-blue-700">#{order.order_number}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="font-medium text-slate-900">{order.customer?.name || 'Customer'}</p>
+                          <p className="text-xs text-slate-500">{order.customer?.phone || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Store className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium text-slate-900">{order.vendor?.name || 'Unassigned'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {new Date(order.delivery_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{order.time_slot}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(order.total_amount)}</td>
+                    <td className="px-4 py-3">
+                      <StatusChip
+                        label={order.status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                        variant={statusToVariant(order.status)}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusChip
+                        label={order.payment_status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                        variant={statusToVariant(order.payment_status)}
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{formatDate(order.created_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => handleActionMenuOpen(e, order)}
+                        className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="Actions"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
+            </tbody>
+          </table>
+        </div>
+        <Pagination
           count={pagination.total}
-          rowsPerPage={rowsPerPage}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{ borderTop: '1px solid #E8EAED' }}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => {
+            setRowsPerPage(n);
+            setPage(0);
+          }}
         />
-      </Paper>
+      </Card>
 
       {/* Action Menu */}
-      <Menu
-        anchorEl={actionMenuAnchor}
-        open={Boolean(actionMenuAnchor)}
-        onClose={handleActionMenuClose}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            minWidth: 180,
-          },
-        }}
-      >
-        <MenuItem onClick={() => handleViewOrder(selectedOrderForAction!)} sx={{ fontWeight: 500 }}>
-          <EditIcon sx={{ mr: 1.5, fontSize: 18 }} />
-          View Details
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={() => handleStatusChange('confirmed')} sx={{ fontWeight: 500 }}>
-          <CheckCircleIcon sx={{ mr: 1.5, fontSize: 18, color: '#0288D1' }} />
-          Confirm Order
-        </MenuItem>
-        <MenuItem onClick={() => handleStatusChange('assigned')} sx={{ fontWeight: 500 }}>
-          <LocalShippingIcon sx={{ mr: 1.5, fontSize: 18, color: '#9334EA' }} />
-          Assign to Vendor
-        </MenuItem>
-        <MenuItem onClick={() => handleStatusChange('delivered')} sx={{ fontWeight: 500 }}>
-          <CheckCircleIcon sx={{ mr: 1.5, fontSize: 18, color: '#34A853' }} />
-          Mark Delivered
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={() => handleStatusChange('cancelled')} sx={{ fontWeight: 500, color: '#EA4335' }}>
-          <CancelIcon sx={{ mr: 1.5, fontSize: 18, color: '#EA4335' }} />
-          Cancel Order
-        </MenuItem>
-      </Menu>
+      {actionMenuAnchor && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40"
+            onClick={handleActionMenuClose}
+            aria-label="Close menu"
+          />
+          <div
+            className="fixed z-50 min-w-[180px] rounded-xl border border-slate-200 bg-white shadow-lg py-1"
+            style={{
+              top: actionMenuAnchor.getBoundingClientRect().bottom + 4,
+              left: actionMenuAnchor.getBoundingClientRect().left,
+            }}
+          >
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 text-left"
+              onClick={() => selectedOrderForAction && handleViewOrder(selectedOrderForAction)}
+            >
+              <Eye className="w-4 h-4" />
+              View Details
+            </button>
+            <div className="border-t border-slate-100 my-1" />
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 text-left"
+              onClick={() => handleStatusChange('confirmed')}
+            >
+              <CheckCircle className="w-4 h-4 text-blue-600" />
+              Confirm Order
+            </button>
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 text-left"
+              onClick={() => handleStatusChange('assigned')}
+            >
+              <Truck className="w-4 h-4 text-violet-600" />
+              Assign to Vendor
+            </button>
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 text-left"
+              onClick={() => handleStatusChange('delivered')}
+            >
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              Mark Delivered
+            </button>
+            <div className="border-t border-slate-100 my-1" />
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 text-left"
+              onClick={() => handleStatusChange('cancelled')}
+            >
+              <XCircle className="w-4 h-4" />
+              Cancel Order
+            </button>
+          </div>
+        </>
+      )}
 
-      {/* Order Details Dialog */}
-      <Dialog
+      {/* Order Details Modal */}
+      <Modal
         open={viewDialogOpen}
+        title="Order Details"
         onClose={() => setViewDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        maxWidthClassName="max-w-3xl"
+        footer={
+          <Button variant="ghost" onClick={() => setViewDialogOpen(false)}>
+            Close
+          </Button>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.25rem' }}>Order Details</DialogTitle>
-        <DialogContent>
-          {selectedOrder && (
-            <Grid container spacing={3} sx={{ mt: 0.5 }}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Order Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Order #:</strong> #{selectedOrder.order_number}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <strong>Status:</strong>
-                    <Chip
-                      label={selectedOrder.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      sx={{
-                        bgcolor: getStatusColor(selectedOrder.status).bg,
-                        color: getStatusColor(selectedOrder.status).text,
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                      }}
-                      size="small"
-                    />
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <strong>Payment Status:</strong>
-                    <Chip
-                      label={selectedOrder.payment_status.replace(/\b\w/g, l => l.toUpperCase())}
-                      sx={{
-                        bgcolor: getPaymentStatusColor(selectedOrder.payment_status).bg,
-                        color: getPaymentStatusColor(selectedOrder.payment_status).text,
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                      }}
-                      size="small"
-                    />
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Total Amount:</strong> {formatCurrency(selectedOrder.total_amount)}</Typography>
-                  <Typography variant="body2"><strong>Created:</strong> {formatDate(selectedOrder.created_at)}</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Delivery Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Delivery Date:</strong> {new Date(selectedOrder.delivery_date).toLocaleDateString()}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Time Slot:</strong> {selectedOrder.time_slot}</Typography>
-                  <Typography variant="body2"><strong>Is Delivered:</strong> {selectedOrder.is_delivered ? 'Yes' : 'No'}</Typography>
-                  {selectedOrder.delivered_at && (
-                    <Typography variant="body2" sx={{ mt: 1 }}><strong>Delivered At:</strong> {formatDate(selectedOrder.delivered_at)}</Typography>
-                  )}
-                  {selectedOrder.payment_marked_at && (
-                    <Typography variant="body2" sx={{ mt: 1 }}><strong>Payment Marked:</strong> {formatDate(selectedOrder.payment_marked_at)}</Typography>
-                  )}
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Customer Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Name:</strong> {selectedOrder.customer?.name || 'N/A'}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Phone:</strong> {selectedOrder.customer?.phone || 'N/A'}</Typography>
-                  <Typography variant="body2"><strong>Address:</strong> {selectedOrder.customer?.address || 'N/A'}</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Vendor Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Name:</strong> {selectedOrder.vendor?.name || 'Unassigned'}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Phone:</strong> {selectedOrder.vendor?.phone || 'N/A'}</Typography>
-                  <Typography variant="body2"><strong>Business:</strong> {selectedOrder.vendor?.business_name || 'N/A'}</Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setViewDialogOpen(false)} sx={{ borderRadius: 2 }}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        {selectedOrder ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Order Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Order #:</span> #{selectedOrder.order_number}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Status:</span>
+                  <StatusChip
+                    label={selectedOrder.status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                    variant={statusToVariant(selectedOrder.status)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Payment Status:</span>
+                  <StatusChip
+                    label={selectedOrder.payment_status.replace(/\b\w/g, (l) => l.toUpperCase())}
+                    variant={statusToVariant(selectedOrder.payment_status)}
+                  />
+                </div>
+                <div>
+                  <span className="font-semibold">Total Amount:</span> {formatCurrency(selectedOrder.total_amount)}
+                </div>
+                <div>
+                  <span className="font-semibold">Created:</span> {formatDate(selectedOrder.created_at)}
+                </div>
+              </div>
+            </Card>
 
-      {/* Status Change Dialog */}
-      <Dialog
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Delivery Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Delivery Date:</span>{' '}
+                  {new Date(selectedOrder.delivery_date).toLocaleDateString()}
+                </div>
+                <div>
+                  <span className="font-semibold">Time Slot:</span> {selectedOrder.time_slot}
+                </div>
+                <div>
+                  <span className="font-semibold">Is Delivered:</span> {selectedOrder.is_delivered ? 'Yes' : 'No'}
+                </div>
+                {selectedOrder.delivered_at && (
+                  <div>
+                    <span className="font-semibold">Delivered At:</span> {formatDate(selectedOrder.delivered_at)}
+                  </div>
+                )}
+                {selectedOrder.payment_marked_at && (
+                  <div>
+                    <span className="font-semibold">Payment Marked:</span>{' '}
+                    {formatDate(selectedOrder.payment_marked_at)}
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Customer Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Name:</span> {selectedOrder.customer?.name || 'N/A'}
+                </div>
+                <div>
+                  <span className="font-semibold">Phone:</span> {selectedOrder.customer?.phone || 'N/A'}
+                </div>
+                <div>
+                  <span className="font-semibold">Address:</span> {selectedOrder.customer?.address || 'N/A'}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Vendor Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Name:</span> {selectedOrder.vendor?.name || 'Unassigned'}
+                </div>
+                <div>
+                  <span className="font-semibold">Phone:</span> N/A
+                </div>
+                <div>
+                  <span className="font-semibold">Business:</span> {selectedOrder.vendor?.business_name || 'N/A'}
+                </div>
+              </div>
+            </Card>
+          </div>
+        ) : null}
+      </Modal>
+
+      {/* Status Change Modal */}
+      <Modal
         open={statusDialogOpen}
+        title="Change Order Status"
         onClose={() => setStatusDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setStatusDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setStatusDialogOpen(false);
+                setStatusNotes('');
+              }}
+            >
+              Update Status
+            </Button>
+          </>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Change Order Status</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mt: 1 }}>
-            Change order #{selectedOrderForAction?.order_number} status to <strong>{selectedStatus}</strong>
-          </Typography>
-          <TextField
-            fullWidth
-            label="Notes (optional)"
-            multiline
-            rows={3}
+        <p className="text-sm text-slate-700 mb-3">
+          Change order #{selectedOrderForAction?.order_number} status to{' '}
+          <strong>{selectedStatus.replace(/\b\w/g, (l) => l.toUpperCase())}</strong>
+        </p>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Notes (optional)</span>
+          <textarea
             value={statusNotes}
             onChange={(e) => setStatusNotes(e.target.value)}
-            sx={{ mt: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            rows={3}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cancan-primary/30"
           />
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setStatusDialogOpen(false)} sx={{ borderRadius: 2 }}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setStatusDialogOpen(false);
-              setStatusNotes('');
-            }}
-            sx={{ borderRadius: 2, fontWeight: 600 }}
-          >
-            Update Status
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </label>
+      </Modal>
+    </div>
   );
 };
 
 export default Orders;
-

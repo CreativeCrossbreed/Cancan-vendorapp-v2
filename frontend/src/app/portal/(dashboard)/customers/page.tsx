@@ -1,46 +1,13 @@
-// @ts-nocheck
 'use client';
 import React, { useEffect, useState } from 'react';
-import {
-  Typography,
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Button,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
-  CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-  Tooltip,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  Person as PersonIcon,
-  Phone as PhoneIcon,
-  ShoppingBasket as ShoppingBasketIcon,
-  AttachMoney as AttachMoneyIcon,
-  TrendingUp,
-} from '@mui/icons-material';
+import { IndianRupee, Pencil, Phone, Plus, ShoppingCart, TrendingUp, Users, Eye } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchCustomers } from '@/store/customerSlice';
 import { Customer } from '@/types';
+import PortalPageHeader from '@/components/portal/PortalPageHeader';
+import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
+import { Button, Card, Input, Modal, Pagination } from '@/components/portal/ui';
 
 const Customers: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -68,20 +35,6 @@ const Customers: React.FC = () => {
       search: searchTerm || undefined,
     }));
   }, [dispatch, page, rowsPerPage, searchTerm]);
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0);
-  };
 
   const handleAddCustomer = () => {
     setAddDialogOpen(true);
@@ -127,12 +80,10 @@ const Customers: React.FC = () => {
 
   if (error) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>
-          Customers Management
-        </Typography>
-        <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
-      </Box>
+      <div>
+        <PortalPageHeader title="Customers Management" />
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      </div>
     );
   }
 
@@ -141,503 +92,309 @@ const Customers: React.FC = () => {
   const avgOrderValue = totalOrders > 0 ? totalSpent / customers.reduce((sum, customer) => sum + (customer.stats?.completedOrders || 0), 1) : 0;
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600, color: '#202124', mb: 0.5 }}>
-          Customers Management
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Manage your water can delivery customers
-        </Typography>
-      </Box>
+    <div>
+      <PortalPageHeader title="Customers Management" subtitle="Manage your water can delivery customers" />
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Customers
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {pagination.total}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(26, 115, 232, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PersonIcon sx={{ color: '#1A73E8', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Active Orders
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {customers.reduce((sum, customer) => sum + (customer.stats?.totalOrders || 0), 0)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(52, 168, 83, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ShoppingBasketIcon sx={{ color: '#34A853', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Total Spent
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(totalSpent)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(251, 188, 5, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AttachMoneyIcon sx={{ color: '#FBBC05', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-              transition: 'box-shadow 0.2s',
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
-                    Avg Order Value
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#202124' }}>
-                    {formatCurrency(avgOrderValue)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(2, 136, 209, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <TrendingUp sx={{ color: '#0288D1', fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Total Customers</p>
+            <p className="text-xl font-bold text-slate-900">{pagination.total}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+            <Users className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Active Orders</p>
+            <p className="text-xl font-bold text-slate-900">{customers.reduce((sum, customer) => sum + (customer.stats?.totalOrders || 0), 0)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+            <ShoppingCart className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Total Spent</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(totalSpent)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+            <IndianRupee className="w-6 h-6" />
+          </div>
+        </Card>
+        <Card className="p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1">Avg Order Value</p>
+            <p className="text-xl font-bold text-slate-900">{formatCurrency(avgOrderValue)}</p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </Card>
+      </div>
 
       {/* Filters */}
-      <Paper
-        sx={{
-          p: 2.5,
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
-            <TextField
-              fullWidth
-              label="Search customers by name, phone, or address..."
+      <Card className="p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div className="md:col-span-8">
+            <Input
+              label="Search"
               value={searchTerm}
-              onChange={handleSearch}
-              size="small"
-              placeholder="Search..."
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              onChange={(v) => {
+                setSearchTerm(v);
+                setPage(0);
+              }}
+              placeholder="Search customers by name, phone, or address..."
             />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box display="flex" justifyContent="flex-end">
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddCustomer}
-                sx={{ borderRadius: 2, fontWeight: 600 }}
-              >
-                Add Customer
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+          </div>
+          <div className="md:col-span-4 flex justify-end">
+            <Button onClick={handleAddCustomer} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Customer
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Table */}
-      <Paper
-        sx={{
-          borderRadius: 3,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Customer Info</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Total Orders</TableCell>
-                <TableCell>Total Spent</TableCell>
-                <TableCell>Last Order</TableCell>
-                <TableCell>Joined</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="text-left font-semibold px-4 py-3">Customer</th>
+                <th className="text-left font-semibold px-4 py-3">Contact</th>
+                <th className="text-left font-semibold px-4 py-3">Address</th>
+                <th className="text-left font-semibold px-4 py-3">Orders</th>
+                <th className="text-left font-semibold px-4 py-3">Total Spent</th>
+                <th className="text-left font-semibold px-4 py-3">Last Order</th>
+                <th className="text-left font-semibold px-4 py-3">Joined</th>
+                <th className="text-right font-semibold px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={8}>
+                    Loading…
+                  </td>
+                </tr>
               ) : customers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No customers found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td className="px-4 py-8 text-slate-500 text-center" colSpan={8}>
+                    No customers found
+                  </td>
+                </tr>
               ) : (
                 customers.map((customer) => (
-                  <TableRow key={customer.id} hover>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1.5}>
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 2,
-                            bgcolor: 'rgba(26, 115, 232, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <PersonIcon sx={{ color: '#1A73E8', fontSize: 20 }} />
-                        </Box>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            {customer.name}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            ID: {customer.id.slice(0, 8)}...
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <PhoneIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {customer.phone}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title={formatAddress(customer)} arrow>
-                        <Typography
-                          variant="body2"
-                          noWrap
-                          sx={{
-                            maxWidth: 200,
-                            display: 'block',
-                            color: 'text.secondary',
-                          }}
-                        >
-                          {formatAddress(customer)}
-                        </Typography>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {customer.stats?.totalOrders || 0}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {customer.stats?.completedOrders || 0} completed
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {formatCurrency(customer.stats?.totalSpent || 0)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {customer.stats?.lastOrderDate
-                          ? formatDate(customer.stats.lastOrderDate)
-                          : 'No orders'
-                        }
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatDate(customer.created_at)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
+                  <tr key={customer.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{customer.name}</p>
+                          <p className="text-xs text-slate-500 font-mono">ID: {customer.id.slice(0, 8)}…</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <Phone className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium">{customer.phone}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-slate-600 line-clamp-2" title={formatAddress(customer)}>
+                        {formatAddress(customer)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-slate-900">{customer.stats?.totalOrders || 0}</div>
+                      <div className="text-xs text-slate-500">{customer.stats?.completedOrders || 0} completed</div>
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      {formatCurrency(customer.stats?.totalSpent || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {customer.stats?.lastOrderDate ? formatDate(customer.stats.lastOrderDate) : 'No orders'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{formatDate(customer.created_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
                         onClick={() => handleViewCustomer(customer)}
-                        sx={{ borderRadius: 2 }}
+                        className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="View details"
                         title="View Details"
                       >
-                        <ViewIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-label="Edit customer"
                         title="Edit"
-                        sx={{ borderRadius: 2 }}
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
+            </tbody>
+          </table>
+        </div>
+        <Pagination
           count={pagination.total}
-          rowsPerPage={rowsPerPage}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{ borderTop: '1px solid #E8EAED' }}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => {
+            setRowsPerPage(n);
+            setPage(0);
+          }}
         />
-      </Paper>
+      </Card>
 
       {/* Add Customer Dialog */}
-      <Dialog
+      <Modal
         open={addDialogOpen}
+        title="Add New Customer"
         onClose={() => setAddDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setAddDialogOpen(false)}>Add Customer</Button>
+          </>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Add New Customer</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Full Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Street Address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                multiline
-                rows={2}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Flat/Door Number"
-                value={formData.flat_number}
-                onChange={(e) => setFormData({ ...formData, flat_number: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Floor"
-                value={formData.floor}
-                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Building Name"
-                value={formData.building_name}
-                onChange={(e) => setFormData({ ...formData, building_name: e.target.value })}
-                size="small"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setAddDialogOpen(false)} sx={{ borderRadius: 2 }}>Cancel</Button>
-          <Button variant="contained" sx={{ borderRadius: 2, fontWeight: 600 }}>Add Customer</Button>
-        </DialogActions>
-      </Dialog>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Input
+            label="Full Name"
+            value={formData.name}
+            onChange={(v) => setFormData({ ...formData, name: v })}
+          />
+          <Input
+            label="Phone Number"
+            value={formData.phone}
+            onChange={(v) => setFormData({ ...formData, phone: v })}
+          />
+          <label className="block md:col-span-2">
+            <span className="block text-sm font-medium text-slate-700 mb-1">Street Address</span>
+            <textarea
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              rows={2}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cancan-primary/30"
+            />
+          </label>
+          <Input
+            label="Flat/Door Number"
+            value={formData.flat_number}
+            onChange={(v) => setFormData({ ...formData, flat_number: v })}
+          />
+          <Input label="Floor" value={formData.floor} onChange={(v) => setFormData({ ...formData, floor: v })} />
+          <div className="md:col-span-2">
+            <Input
+              label="Building Name"
+              value={formData.building_name}
+              onChange={(v) => setFormData({ ...formData, building_name: v })}
+            />
+          </div>
+        </div>
+      </Modal>
 
       {/* View Customer Dialog */}
-      <Dialog
+      <Modal
         open={viewDialogOpen}
+        title="Customer Details"
         onClose={() => setViewDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        maxWidthClassName="max-w-3xl"
+        footer={
+          <Button variant="ghost" onClick={() => setViewDialogOpen(false)}>
+            Close
+          </Button>
+        }
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Customer Details</DialogTitle>
-        <DialogContent>
-          {selectedCustomer && (
-            <Grid container spacing={3} sx={{ mt: 0.5 }}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Personal Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Name:</strong> {selectedCustomer.name}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Phone:</strong> {selectedCustomer.phone}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <strong>Status:</strong>
-                    <Chip
-                      label={selectedCustomer.status || 'Active'}
-                      size="small"
-                      sx={{
-                        bgcolor: '#E8F5E9',
-                        color: '#2E7D32',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                      }}
-                    />
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Customer ID:</strong> {selectedCustomer.id}</Typography>
-                  <Typography variant="body2"><strong>Joined:</strong> {formatDate(selectedCustomer.created_at)}</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Address Information</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Building:</strong> {selectedCustomer.building_name || '-'}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Flat/Door:</strong> {selectedCustomer.flat_number || '-'}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}><strong>Floor:</strong> {selectedCustomer.floor || '-'}</Typography>
-                  <Typography variant="body2"><strong>Street:</strong> {selectedCustomer.address}</Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>Order Statistics</Typography>
-                <Box sx={{ bgcolor: '#F8F9FA', p: 2.5, borderRadius: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6} md={3}>
-                      <Typography variant="body2"><strong>Total Orders:</strong> {selectedCustomer.stats?.totalOrders || 0}</Typography>
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                      <Typography variant="body2"><strong>Completed:</strong> {selectedCustomer.stats?.completedOrders || 0}</Typography>
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                      <Typography variant="body2"><strong>Total Spent:</strong> {formatCurrency(selectedCustomer.stats?.totalSpent || 0)}</Typography>
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                      <Typography variant="body2"><strong>Last Order:</strong> {selectedCustomer.stats?.lastOrderDate ? formatDate(selectedCustomer.stats.lastOrderDate) : 'Never'}</Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setViewDialogOpen(false)} sx={{ borderRadius: 2 }}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {selectedCustomer ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Personal Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Name:</span> {selectedCustomer.name}
+                </div>
+                <div>
+                  <span className="font-semibold">Phone:</span> {selectedCustomer.phone}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Status:</span>
+                  <StatusChip
+                    label={(selectedCustomer.status || 'Active').replace(/\b\w/g, (l) => l.toUpperCase())}
+                    variant={statusToVariant(selectedCustomer.status || 'active')}
+                  />
+                </div>
+                <div>
+                  <span className="font-semibold">Customer ID:</span> {selectedCustomer.id}
+                </div>
+                <div>
+                  <span className="font-semibold">Joined:</span> {formatDate(selectedCustomer.created_at)}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Address Information</h3>
+              <div className="space-y-2 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">Building:</span> {selectedCustomer.building_name || '-'}
+                </div>
+                <div>
+                  <span className="font-semibold">Flat/Door:</span> {selectedCustomer.flat_number || '-'}
+                </div>
+                <div>
+                  <span className="font-semibold">Floor:</span> {selectedCustomer.floor || '-'}
+                </div>
+                <div>
+                  <span className="font-semibold">Street:</span> {selectedCustomer.address}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-slate-50 border-slate-200 md:col-span-2">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Order Statistics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-800">
+                <div>
+                  <div className="text-slate-500">Total Orders</div>
+                  <div className="font-semibold">{selectedCustomer.stats?.totalOrders || 0}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Completed</div>
+                  <div className="font-semibold">{selectedCustomer.stats?.completedOrders || 0}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Total Spent</div>
+                  <div className="font-semibold">{formatCurrency(selectedCustomer.stats?.totalSpent || 0)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Last Order</div>
+                  <div className="font-semibold">
+                    {selectedCustomer.stats?.lastOrderDate ? formatDate(selectedCustomer.stats.lastOrderDate) : 'Never'}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        ) : null}
+      </Modal>
+    </div>
   );
 };
 
