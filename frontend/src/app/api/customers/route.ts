@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         .range((page - 1) * limit, page * limit - 1);
 
     if (error) {
+        console.error('[GET /api/customers] Supabase error:', error.message, error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 

@@ -6,7 +6,8 @@ const DEV_MODE = process.env.DEV_MODE === 'true';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
+        const { email: rawEmail, password } = await req.json();
+        const email = typeof rawEmail === 'string' ? rawEmail.trim() : '';
 
         if (!email || !password) {
             return Response.json({ error: 'Email and password required' }, { status: 400 });
@@ -26,11 +27,16 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // Production-safe ENV-based Super Admin
-        const envAdminEmail = process.env.ADMIN_EMAIL;
+        // Production-safe ENV-based Super Admin (trim env to avoid accidental spaces in .env)
+        const envAdminEmail = process.env.ADMIN_EMAIL?.trim();
         const envAdminPassword = process.env.ADMIN_PASSWORD;
 
-        if (envAdminEmail && envAdminPassword && email === envAdminEmail && password === envAdminPassword) {
+        if (
+            envAdminEmail &&
+            envAdminPassword &&
+            email.toLowerCase() === envAdminEmail.toLowerCase() &&
+            password === envAdminPassword
+        ) {
             const token = signToken({ email: envAdminEmail, role: 'super_admin', type: 'admin' });
             return Response.json({
                 token,

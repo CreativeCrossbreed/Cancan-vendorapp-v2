@@ -66,8 +66,12 @@ export async function authenticateAdmin(req: NextRequest): Promise<AdminUser | n
     }
 
     // ENV-based super admin bypass (for production without DB admin_users)
-    const envAdminEmail = process.env.ADMIN_EMAIL;
-    if (envAdminEmail && decoded.email === envAdminEmail) {
+    const envAdminEmail = process.env.ADMIN_EMAIL?.trim();
+    if (
+        envAdminEmail &&
+        typeof decoded.email === 'string' &&
+        decoded.email.toLowerCase() === envAdminEmail.toLowerCase()
+    ) {
         return {
             id: 'env-admin',
             email: envAdminEmail,
