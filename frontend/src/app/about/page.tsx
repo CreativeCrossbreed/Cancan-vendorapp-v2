@@ -23,7 +23,7 @@ export default function AboutPage() {
                         <Link href="/" className="no-underline text-slate-500 font-medium text-sm tracking-wide transition-colors hover:text-cancan-primary">
                             Home
                         </Link>
-                        <a href="/#order" className="no-underline text-slate-500 font-medium text-sm tracking-wide transition-colors hover:text-cancan-primary">Demo</a>
+                        <Link href="/#order" className="no-underline text-slate-500 font-medium text-sm tracking-wide transition-colors hover:text-cancan-primary">Demo</Link>
                         <Link href="/portal/login" className="no-underline bg-slate-900 text-white px-6 py-2.5 rounded-full text-[13px] font-bold tracking-tight transition-all hover:bg-cancan-primary hover:shadow-lg">
                             Vendor Login
                         </Link>
@@ -43,7 +43,7 @@ export default function AboutPage() {
                         <span className="bg-gradient-to-br from-cancan-primary to-cancan-primary-dark bg-clip-text text-transparent">Zero friction.</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed max-w-3xl">
-                        We're on a mission to bring digital elegance to one of India's most essential services.
+                        We&apos;re on a mission to bring digital elegance to one of India&apos;s most essential services.
                     </p>
                 </div>
 
@@ -53,7 +53,7 @@ export default function AboutPage() {
                         <p>
                             For decades, ordering water cans in Chennai has been a game of chance. Manual phone calls,
                             uncertain delivery windows, and a total lack of transparency for both the customer and the vendor.
-                            It's a high-frequency, essential task that remained stuck in the past.
+                            It&apos;s a high-frequency, essential task that remained stuck in the past.
                         </p>
                     </section>
 
@@ -101,8 +101,8 @@ export default function AboutPage() {
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cancan-primary to-transparent" />
                         <h2 className="text-3xl font-black mb-6">Born in Chennai</h2>
                         <p className="max-w-2xl mx-auto px-6 italic text-slate-500">
-                            "We built Can Can to solve our own problem. We wanted a way to get reliable drinking water without
-                            making five phone calls a day. Today, we're proud to serve thousands of families across our city."
+                            &quot;We built Can Can to solve our own problem. We wanted a way to get reliable drinking water without
+                            making five phone calls a day. Today, we&apos;re proud to serve thousands of families across our city.&quot;
                         </p>
                     </section>
 

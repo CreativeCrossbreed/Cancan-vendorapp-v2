@@ -12,76 +12,40 @@ export default function PortalError({
     const isSupabaseError = error.message?.toLowerCase().includes('supabase') || error.message?.toLowerCase().includes('postgrest') || error.message?.toLowerCase().includes('api key');
 
     return (
-        <div
-            style={{
-                minHeight: '100vh',
-                backgroundColor: '#0f172a',
-                color: '#f8fafc',
-                fontFamily: '"SF Mono", "Fira Code", Consolas, monospace',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 24,
-            }}
-        >
-            <div
-                style={{
-                    maxWidth: 800,
-                    width: '100%',
-                    border: '1px solid #334155',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
-                }}
-            >
+        <div className="min-h-screen bg-slate-900 text-slate-50 font-mono flex items-center justify-center p-6">
+            <div className="max-w-[800px] w-full border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
                 {/* Header */}
-                <div
-                    style={{
-                        background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
-                        padding: '20px 24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                    }}
-                >
-                    <span style={{ fontSize: 28 }}>🛑</span>
+                <div className="bg-gradient-to-br from-red-600 to-red-800 px-6 py-5 flex items-center gap-3">
+                    <span className="text-[28px]">🛑</span>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: 0.5 }}>
+                        <h2 className="m-0 text-lg font-extrabold tracking-wide">
                             ADMIN PORTAL ERROR
                         </h2>
-                        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#fca5a5' }}>
+                        <p className="mt-1 text-xs text-red-300">
                             A component in the admin portal crashed. Diagnostic details below.
                         </p>
                     </div>
                 </div>
 
-                <div style={{ padding: 24, background: '#1e293b' }}>
+                <div className="p-6 bg-slate-800">
                     {/* Error */}
-                    <div
-                        style={{
-                            borderLeft: '4px solid #ef4444',
-                            padding: 16,
-                            background: '#0f172a',
-                            borderRadius: 8,
-                            marginBottom: 20,
-                        }}
-                    >
-                        <p style={{ margin: 0, fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>
+                    <div className="border-l-4 border-red-500 p-4 bg-slate-900 rounded-lg mb-5">
+                        <p className="m-0 text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">
                             Fatal Exception
                         </p>
-                        <p style={{ margin: 0, fontSize: 15, color: '#f87171', fontWeight: 700, wordBreak: 'break-word' }}>
+                        <p className="m-0 text-[15px] text-red-400 font-bold break-words">
                             {error.name}: {error.message}
                         </p>
                         {error.digest && (
-                            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#475569' }}>digest: {error.digest}</p>
+                            <p className="mt-1.5 text-[11px] text-slate-500">digest: {error.digest}</p>
                         )}
                     </div>
 
                     {/* Smart Diagnostics */}
                     {isFetchError && (
-                        <div style={{ background: '#422006', border: '1px solid #a16207', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                            <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#fef08a', marginBottom: 6 }}>💡 Fetch Failure Detected</p>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#fde68a', lineHeight: 1.8 }}>
+                        <div className="bg-amber-950 border border-amber-600 rounded-lg p-4 mb-4">
+                            <p className="m-0 font-extrabold text-[13px] text-amber-200 mb-1.5">💡 Fetch Failure Detected</p>
+                            <ul className="m-0 pl-[18px] text-xs text-amber-100 leading-relaxed">
                                 <li>Check if <code>NEXT_PUBLIC_SUPABASE_URL</code> is set correctly in <code>.env.local</code></li>
                                 <li>Verify the Supabase project is online at your dashboard URL</li>
                                 <li>Check your network connection and any VPN/proxy settings</li>
@@ -91,20 +55,20 @@ export default function PortalError({
                     )}
 
                     {isAuthError && (
-                        <div style={{ background: '#1e1b4b', border: '1px solid #6366f1', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                            <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#a5b4fc', marginBottom: 6 }}>🔐 Authentication Error</p>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#c7d2fe', lineHeight: 1.8 }}>
+                        <div className="bg-indigo-950 border border-indigo-500 rounded-lg p-4 mb-4">
+                            <p className="m-0 font-extrabold text-[13px] text-indigo-300 mb-1.5">🔐 Authentication Error</p>
+                            <ul className="m-0 pl-[18px] text-xs text-indigo-200 leading-relaxed">
                                 <li>Your session token may have expired — try logging out and back in</li>
                                 <li>Check <code>JWT_SECRET</code> in <code>.env.local</code></li>
-                                <li>Click "Hard Reset" below to clear all session data</li>
+                                <li>Click &quot;Hard Reset&quot; below to clear all session data</li>
                             </ul>
                         </div>
                     )}
 
                     {isSupabaseError && (
-                        <div style={{ background: '#042f2e', border: '1px solid #14b8a6', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                            <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#5eead4', marginBottom: 6 }}>🗄️ Supabase / API Key Error</p>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#99f6e4', lineHeight: 1.8 }}>
+                        <div className="bg-teal-950 border border-teal-500 rounded-lg p-4 mb-4">
+                            <p className="m-0 font-extrabold text-[13px] text-teal-300 mb-1.5">🗄️ Supabase / API Key Error</p>
+                            <ul className="m-0 pl-[18px] text-xs text-teal-200 leading-relaxed">
                                 <li>Verify <code>SUPABASE_SERVICE_ROLE_KEY</code> is set (not a placeholder!)</li>
                                 <li>Ensure <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> matches your Supabase project</li>
                                 <li>Check Row Level Security (RLS) policies if getting permission denied</li>
@@ -113,18 +77,18 @@ export default function PortalError({
                     )}
 
                     {/* Environment Check */}
-                    <div style={{ marginBottom: 20 }}>
-                        <p style={{ margin: '0 0 8px', fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    <div className="mb-5">
+                        <p className="m-0 mb-2 text-[10px] text-slate-400 uppercase tracking-widest">
                             Environment Status
                         </p>
-                        <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, padding: 12, fontSize: 12 }}>
+                        <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs">
                             {[
                                 { key: 'NEXT_PUBLIC_SUPABASE_URL', val: process.env.NEXT_PUBLIC_SUPABASE_URL },
                                 { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', val: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
                             ].map((e) => (
-                                <div key={e.key} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1e293b' }}>
-                                    <span style={{ color: '#cbd5e1' }}>{e.key}</span>
-                                    <span style={{ color: e.val ? '#4ade80' : '#f87171', fontWeight: 700 }}>
+                                <div key={e.key} className="flex justify-between py-1.5 border-b border-slate-800 last:border-b-0">
+                                    <span className="text-slate-300">{e.key}</span>
+                                    <span className={e.val ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
                                         {e.val ? '✅ Set' : '❌ MISSING'}
                                     </span>
                                 </div>
@@ -133,42 +97,39 @@ export default function PortalError({
                     </div>
 
                     {/* Stack Trace */}
-                    <div style={{ marginBottom: 20 }}>
-                        <p style={{ margin: '0 0 8px', fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    <div className="mb-5">
+                        <p className="m-0 mb-2 text-[10px] text-slate-400 uppercase tracking-widest">
                             Stack Trace
                         </p>
-                        <pre
-                            style={{
-                                background: '#0f172a',
-                                border: '1px solid #334155',
-                                borderRadius: 8,
-                                padding: 12,
-                                margin: 0,
-                                fontSize: 10,
-                                color: '#64748b',
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-all',
-                                maxHeight: 180,
-                                overflow: 'auto',
-                                lineHeight: 1.6,
-                            }}
-                        >
+                        <pre className="bg-slate-900 border border-slate-700 rounded-lg p-3 m-0 text-[10px] text-slate-500 whitespace-pre-wrap break-all max-h-[180px] overflow-auto leading-relaxed">
                             {error.stack || 'No stack trace available.'}
                         </pre>
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        <button onClick={reset} style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    <div className="flex gap-2.5 flex-wrap">
+                        <button
+                            onClick={reset}
+                            className="px-5 py-2.5 bg-blue-500 text-white border-0 rounded-lg font-bold text-[13px] cursor-pointer hover:bg-blue-600 transition-colors"
+                        >
                             🔄 Retry
                         </button>
-                        <button onClick={() => { window.location.href = '/portal/login'; }} style={{ padding: '10px 20px', background: 'transparent', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        <button
+                            onClick={() => { window.location.href = '/portal/login'; }}
+                            className="px-5 py-2.5 bg-transparent text-slate-400 border border-slate-600 rounded-lg font-bold text-[13px] cursor-pointer hover:bg-slate-700 hover:text-slate-300 transition-colors"
+                        >
                             🔑 Back to Login
                         </button>
-                        <button onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.href = '/'; }} style={{ padding: '10px 20px', background: 'transparent', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        <button
+                            onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.href = '/'; }}
+                            className="px-5 py-2.5 bg-transparent text-slate-400 border border-slate-600 rounded-lg font-bold text-[13px] cursor-pointer hover:bg-slate-700 hover:text-slate-300 transition-colors"
+                        >
                             🗑️ Hard Reset
                         </button>
-                        <button onClick={() => { navigator.clipboard.writeText(`${error.name}: ${error.message}\n\n${error.stack}`); alert('Copied!'); }} style={{ padding: '10px 20px', background: 'transparent', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        <button
+                            onClick={() => { navigator.clipboard.writeText(`${error.name}: ${error.message}\n\n${error.stack}`); alert('Copied!'); }}
+                            className="px-5 py-2.5 bg-transparent text-slate-400 border border-slate-600 rounded-lg font-bold text-[13px] cursor-pointer hover:bg-slate-700 hover:text-slate-300 transition-colors"
+                        >
                             📋 Copy
                         </button>
                     </div>

@@ -4,9 +4,13 @@ export interface Vendor {
     name: string;
     business_name?: string;
     address?: string;
-    is_on_vacation: boolean;
+    is_on_vacation?: boolean;
     commission_rate?: number;
-    status: 'active' | 'inactive' | 'suspended';
+    /** Simple schema; unified schema may omit this and use verification_status / is_active */
+    status?: 'active' | 'inactive' | 'suspended' | string;
+    verification_status?: string;
+    is_active?: boolean;
+    owner_name?: string;
     created_at: string;
     updated_at: string;
     stats?: {
