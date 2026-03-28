@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy-prod": "npx vercel --prod"
+    "vercel-login": "npm run vercel-login --prefix ..",
+    "deploy-prod": "npm run deploy-prod --prefix .."
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -13,8 +13,10 @@
 #
 # Prerequisites:
 #   - npm / Node (for npx)
-#   - Logged into Vercel CLI:  cd frontend && npx vercel login
-#   - Project linked:           cd frontend && npx vercel link
+#   - Logged in:  npm run vercel-login   (from repo root)
+#   - Linked:     npx vercel link       (from repo root, same Vercel project)
+#   - .vercel/ must live at the REPO ROOT (not inside frontend/), or Vercel will
+#     look for frontend/frontend when the dashboard Root Directory is "frontend".
 #
 
 set -euo pipefail
@@ -113,10 +115,10 @@ git -C "$REPO_ROOT" commit --allow-empty -m "chore: deploy (Vercel CLI)" \
   --author="$AUTHOR_NAME <$AUTHOR_EMAIL>"
 
 echo ""
-echo "🚀 Deploying to Vercel (production) from frontend/ ..."
+echo "🚀 Deploying to Vercel (production) from repo root (matches dashboard Root Directory → frontend) ..."
 echo ""
 
-(cd "$FRONTEND_DIR" && npm run deploy-prod)
+(cd "$REPO_ROOT" && npm run deploy-prod)
 
 DEPLOY_EXIT_CODE=$?
 

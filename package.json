@@ -1,0 +1,9 @@
+{
+  "name": "vendor_app",
+  "private": true,
+  "description": "Monorepo root — run Vercel deploy from here so Root Directory (frontend) matches the dashboard.",
+  "scripts": {
+    "vercel-login": "npx vercel login",
+    "deploy-prod": "npx vercel --prod"
+  }
+}
