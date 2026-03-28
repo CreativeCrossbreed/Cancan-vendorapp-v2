@@ -2,6 +2,5 @@
     "framework": "nextjs",
     "buildCommand": "npm run build",
     "devCommand": "npm run dev",
-    "installCommand": "npm ci",
-    "ignoreCommand": "if [ -z \"$VERCEL_GIT_COMMIT_REF\" ]; then exit 1; fi; if [ \"$VERCEL_GIT_COMMIT_REF\" != \"develop\" ]; then echo \"Skipping non-develop branch\" && exit 0; fi; exit 1"
+    "installCommand": "npm ci"
 }
