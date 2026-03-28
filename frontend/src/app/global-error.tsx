@@ -105,7 +105,7 @@ export default function GlobalError({
                                 <p style={{ margin: 0, fontSize: 13, color: '#99f6e4' }}>
                                     This error originates from the Supabase client. Verify these environment variables:
                                     <br />• <code>NEXT_PUBLIC_SUPABASE_URL</code> — Must be a valid URL like <code>https://xyz.supabase.co</code>
-                                    <br />• <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> — The public anon key from Supabase dashboard
+                                    <br />• <code>SUPABASE_ANON_KEY</code> — Anon key from Supabase dashboard (server env only; do not use <code>NEXT_PUBLIC_</code>)
                                     <br />• <code>SUPABASE_SERVICE_ROLE_KEY</code> — Required for admin API routes
                                 </p>
                             </div>

@@ -3,20 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Supabase env — use ONLY these names in `.env` / `.env.local`:
  *
- *   NEXT_PUBLIC_SUPABASE_URL       — Project URL (same for browser + server)
- *   NEXT_PUBLIC_SUPABASE_ANON_KEY  — anon / publishable key (safe in browser)
- *   SUPABASE_SERVICE_ROLE_KEY      — service_role key (server-only, never NEXT_PUBLIC)
- *
- * Legacy aliases (optional): SUPABASE_URL, SUPABASE_ANON_KEY — same values if you prefer not to duplicate.
+ *   NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL — project URL
+ *   SUPABASE_ANON_KEY — anon key (server-only; do not use NEXT_PUBLIC_ — it would ship to the browser)
+ *   SUPABASE_SERVICE_ROLE_KEY — service_role (server-only)
  */
 const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     'https://your-project.supabase.co';
-const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    'your_anon_key';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'your_anon_key';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'your_service_key';
 
 if (process.env.NODE_ENV === 'development' && supabaseServiceKey === 'your_service_key') {
@@ -26,7 +21,7 @@ if (process.env.NODE_ENV === 'development' && supabaseServiceKey === 'your_servi
     );
 }
 
-// Browser-safe client (uses NEXT_PUBLIC_* so it works in Client Components)
+// Anon client — only use from server code; SUPABASE_ANON_KEY is not available in the browser bundle
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,

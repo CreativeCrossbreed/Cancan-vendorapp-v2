@@ -70,7 +70,7 @@ export default function PortalError({
                             <p className="m-0 font-extrabold text-[13px] text-teal-300 mb-1.5">🗄️ Supabase / API Key Error</p>
                             <ul className="m-0 pl-[18px] text-xs text-teal-200 leading-relaxed">
                                 <li>Verify <code>SUPABASE_SERVICE_ROLE_KEY</code> is set (not a placeholder!)</li>
-                                <li>Ensure <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> matches your Supabase project</li>
+                                <li>Ensure <code>SUPABASE_ANON_KEY</code> is set in <code>.env</code> (server-only; not exposed to the browser)</li>
                                 <li>Check Row Level Security (RLS) policies if getting permission denied</li>
                             </ul>
                         </div>
@@ -82,17 +82,20 @@ export default function PortalError({
                             Environment Status
                         </p>
                         <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs">
-                            {[
-                                { key: 'NEXT_PUBLIC_SUPABASE_URL', val: process.env.NEXT_PUBLIC_SUPABASE_URL },
-                                { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', val: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
-                            ].map((e) => (
-                                <div key={e.key} className="flex justify-between py-1.5 border-b border-slate-800 last:border-b-0">
-                                    <span className="text-slate-300">{e.key}</span>
-                                    <span className={e.val ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                                        {e.val ? '✅ Set' : '❌ MISSING'}
-                                    </span>
-                                </div>
-                            ))}
+                            <div className="flex justify-between py-1.5 border-b border-slate-800">
+                                <span className="text-slate-300">NEXT_PUBLIC_SUPABASE_URL</span>
+                                <span
+                                    className={
+                                        process.env.NEXT_PUBLIC_SUPABASE_URL ? 'text-green-400 font-bold' : 'text-red-400 font-bold'
+                                    }
+                                >
+                                    {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ MISSING'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-1.5">
+                                <span className="text-slate-300">SUPABASE_ANON_KEY</span>
+                                <span className="text-slate-500 font-bold">Server-only (not shown in browser)</span>
+                            </div>
                         </div>
                     </div>
 
