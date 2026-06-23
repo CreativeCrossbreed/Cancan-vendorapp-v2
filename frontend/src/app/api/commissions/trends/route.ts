@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     dateLimit.setDate(dateLimit.getDate() - period);
 
     const { data: commissions, error } = await supabaseAdmin
-        .from('commissions')
-        .select('amount, created_at')
+        .from('commission_ledger')
+        .select('commission_amount, status, created_at')
         .gte('created_at', dateLimit.toISOString())
         .order('created_at', { ascending: true });
 
@@ -23,12 +23,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Group by date (YYYY-MM-DD)
-    const trends = commissions.reduce((acc: any, curr: any) => {
-        const date = curr.created_at.split('T')[0];
+    const trends = (commissions || []).reduce((acc: Record<string, { date: string; amount: number; paid: number; pending: number }>, curr: Record<string, unknown>) => {
+        const date = String(curr.created_at || '').split('T')[0];
         if (!acc[date]) {
-            acc[date] = { date, amount: 0 };
+            acc[date] = { date, amount: 0, paid: 0, pending: 0 };
         }
-        acc[date].amount += Number(curr.amount);
+        const amount = Number(curr.commission_amount || 0);
+        acc[date].amount += amount;
+        if (curr.status === 'settled') acc[date].paid += amount;
+        else acc[date].pending += amount;
         return acc;
     }, {});
 

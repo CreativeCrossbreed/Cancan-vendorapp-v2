@@ -47,7 +47,7 @@ export interface Order {
     delivery_date: string;
     time_slot: string;
     total_amount: number;
-    status: 'pending' | 'completed' | 'cancelled';
+    status: 'pending' | 'assigned' | 'confirmed' | 'delivered' | 'completed' | 'cancelled';
     is_delivered: boolean;
     delivered_at?: string;
     payment_status: 'unpaid' | 'paid';
@@ -123,6 +123,9 @@ export interface DashboardStats {
     commissionEarned: number;
     whatsappOrdersProcessed: number;
     pendingPayments: number;
+    unassignedOrders: number;
+    unpaidDeliveredOrders: number;
+    failedOutboundWhatsApp: number;
 }
 
 export interface AdminUser {

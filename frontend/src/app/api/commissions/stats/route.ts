@@ -6,22 +6,30 @@ export async function GET(req: NextRequest) {
     const admin = await authenticateAdmin(req);
     if (!admin) return unauthorized();
 
+    const searchParams = req.nextUrl.searchParams;
+    const period = parseInt(searchParams.get('period') || '30', 10);
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - period);
+
     const { data: stats, error } = await supabaseAdmin
-        .from('commissions')
-        .select('amount, status');
+        .from('commission_ledger')
+        .select('commission_amount, status, created_at')
+        .gte('created_at', dateLimit.toISOString());
 
     if (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
 
-    const aggregated = stats.reduce(
+    const aggregated = (stats || []).reduce(
         (acc, curr) => {
-            acc.total += Number(curr.amount);
-            if (curr.status === 'paid') acc.paid += Number(curr.amount);
-            if (curr.status === 'pending') acc.pending += Number(curr.amount);
+            const amount = Number(curr.commission_amount || 0);
+            acc.totalEarnings += amount;
+            if (curr.status === 'settled') acc.totalPaid += amount;
+            else if (curr.status === 'reversed') acc.totalUnpaid += amount;
+            else acc.totalPending += amount;
             return acc;
         },
-        { total: 0, paid: 0, pending: 0 }
+        { totalEarnings: 0, totalPaid: 0, totalPending: 0, totalUnpaid: 0 }
     );
 
     return Response.json(aggregated);

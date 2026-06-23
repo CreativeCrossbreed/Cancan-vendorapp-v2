@@ -16,9 +16,18 @@ export async function PUT(req: NextRequest) {
         return Response.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
+    const ledgerStatus =
+        status === 'paid'
+            ? 'settled'
+            : status === 'processing'
+              ? 'accrued'
+              : status === 'cancelled'
+                ? 'reversed'
+                : 'pending';
+
     const { error } = await supabaseAdmin
-        .from('commissions')
-        .update({ status })
+        .from('commission_ledger')
+        .update({ status: ledgerStatus, updated_at: new Date().toISOString() })
         .in('id', commission_ids);
 
     if (error) {

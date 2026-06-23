@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
 import '../../config/theme.dart';
+import '../../config/constants.dart';
 import '../../config/supabase_config.dart';
 import '../../services/vendor_data_service.dart';
 import '../../widgets/screen_with_nav.dart';
@@ -17,6 +18,7 @@ class QRCodeScreen extends StatefulWidget {
 
 class _QRCodeScreenState extends State<QRCodeScreen> {
   bool _isLoading = true;
+  String? _vendorId;
   String? _vendorPhone;
   String? _vendorName;
   String? _businessName;
@@ -37,6 +39,7 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       if (vendorId == null) {
         throw Exception('No vendor ID found. Please login again.');
       }
+      _vendorId = vendorId;
 
       // Use VendorDataService for consistent data loading
       final data = await VendorDataService.getVendorProfile(forceRefresh: true);
@@ -49,14 +52,8 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
       final name = data['name'] as String;
       final business = data['business_name'] as String;
 
-      // Remove '+' from phone number for WhatsApp link
-      final cleanPhone = phone.replaceAll('+', '');
-
-      // Create WhatsApp link with pre-filled message
-      final message = Uri.encodeComponent(
-          'Hi $name! I would like to order water cans from $business. '
-          'Please share your product catalog and prices.');
-      final whatsappLink = 'https://wa.me/$cleanPhone?text=$message';
+      // Route customers to CanCan business number with vendor context.
+      final whatsappLink = AppConstants.getCustomerOrderLink(vendorId);
 
       setState(() {
         _vendorPhone = phone;
@@ -120,12 +117,12 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
               _buildInstructionStep(
                 2,
                 'Customers Scan',
-                'When customers scan the QR code with their phone camera, it will open WhatsApp.',
+                          'When customers scan the QR code with their phone camera, it opens CanCan WhatsApp.',
               ),
               _buildInstructionStep(
                 3,
-                'Direct Messaging',
-                'Customers can directly message you to place orders, making it super easy!',
+                          'CanCan Handles Flow',
+                          'CanCan bot handles onboarding and order flow first, then shares your contact when needed.',
               ),
               const SizedBox(height: 16),
               Container(
@@ -355,6 +352,15 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        if (_vendorId != null)
+                          Text(
+                            'Vendor Ref: ref-$_vendorId',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         const SizedBox(height: 24),
 
                         // QR Code

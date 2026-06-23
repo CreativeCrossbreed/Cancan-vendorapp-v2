@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
+import '../../services/vendor_service.dart';
 import '../../models/order.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../utils/localization_extension.dart';
@@ -79,11 +80,14 @@ class HomeTabScreen extends StatefulWidget {
 
 class _HomeTabScreenState extends State<HomeTabScreen> {
   final _orderService = OrderService();
+  final _vendorService = VendorService();
   bool _isLoading = true;
 
   List<Order> _pendingOrders = [];
   int _totalCans = 0;
   double _totalEarnings = 0.0;
+  bool _isVendorReady = true;
+  String _vendorReadinessMessage = '';
 
   @override
   void initState() {
@@ -98,13 +102,17 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       final results = await Future.wait([
         _orderService.getTodayOrders(status: 'pending'),
         _orderService.getDailySummary(),
+        _vendorService.getVendorReadinessStatus(),
       ]);
 
       setState(() {
         _pendingOrders = results[0] as List<Order>;
         final summary = results[1] as Map<String, dynamic>;
+        final readiness = results[2] as Map<String, dynamic>;
         _totalCans = summary['totalCans'] ?? 0;
         _totalEarnings = summary['totalEarnings'] ?? 0.0;
+        _isVendorReady = readiness['isReady'] ?? false;
+        _vendorReadinessMessage = readiness['message'] ?? '';
         _isLoading = false;
       });
 
@@ -211,6 +219,42 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: AppTheme.spacingXXL),
+                    if (!_isLoading && !_isVendorReady) ...[
+                      Padding(
+                        padding: AppTheme.screenPaddingHorizontal,
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+                          padding: const EdgeInsets.all(AppTheme.spacingM),
+                          decoration: BoxDecoration(
+                            color: AppTheme.warningOrange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.warningOrange.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: AppTheme.warningOrange,
+                              ),
+                              const SizedBox(width: AppTheme.spacingS),
+                              Expanded(
+                                child: Text(
+                                  _vendorReadinessMessage,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: AppTheme.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     Expanded(
                       child: _isLoading
                           ? const Center(child: CircularProgressIndicator())

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../services/order_service.dart';
 import '../../services/payment_service.dart';
+import '../../services/settlement_service.dart';
 import '../../models/order.dart';
 import '../../utils/localization_extension.dart';
 import '../home/widgets/app_drawer.dart';
@@ -19,10 +20,14 @@ class PaymentsScreen extends StatefulWidget {
 class _PaymentsScreenState extends State<PaymentsScreen> {
   final _orderService = OrderService();
   final _paymentService = PaymentService();
+  final _settlementService = SettlementService();
   bool _isLoading = true;
 
   List<Order> _unpaidOrders = [];
   double _totalPending = 0.0;
+  double _availableSettlementBalance = 0.0;
+  double _totalPaidOut = 0.0;
+  int _pendingPayoutCount = 0;
 
   @override
   void initState() {
@@ -35,7 +40,12 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
     try {
       // Get ALL completed orders (across all dates) that are unpaid
-      final allCompleted = await _orderService.getOrders(status: 'completed');
+      final results = await Future.wait([
+        _orderService.getOrders(status: 'delivered'),
+        _settlementService.getVendorSettlementSummary(),
+      ]);
+      final allCompleted = results[0] as List<Order>;
+      final settlementSummary = results[1] as Map<String, dynamic>;
 
       // Filter unpaid orders (where remaining_amount > 0)
       final unpaid = allCompleted
@@ -51,6 +61,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       setState(() {
         _unpaidOrders = unpaid;
         _totalPending = pendingAmount;
+        _availableSettlementBalance =
+            (settlementSummary['availableBalance'] as num?)?.toDouble() ?? 0.0;
+        _totalPaidOut =
+            (settlementSummary['totalPaidOut'] as num?)?.toDouble() ?? 0.0;
+        _pendingPayoutCount = settlementSummary['pendingPayouts'] ?? 0;
         _isLoading = false;
       });
 
@@ -216,6 +231,43 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppTheme.spacingL),
+
+                            // Platform settlement summary
+                            Container(
+                              padding: AppTheme.cardPadding,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.primaryBlue.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Platform Settlements',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingS),
+                                  Text(
+                                    'Available from CanCan: Rs. ${_availableSettlementBalance.toStringAsFixed(0)}',
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  Text(
+                                    'Total Paid Out: Rs. ${_totalPaidOut.toStringAsFixed(0)}',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  Text(
+                                    'Pending payout batches: $_pendingPayoutCount',
+                                    style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
@@ -476,7 +528,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               if (!mounted) return;
 
               if (result['success']) {
-                final remaining = result['remaining_amount'] as double;
+                final remainingRaw = result['remaining_amount'] ?? result['remainingAmount'] ?? 0.0;
+                final remaining = (remainingRaw as num).toDouble();
                 
                 if (remaining <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(

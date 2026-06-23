@@ -17,9 +17,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         return Response.json({ error: 'Status is required' }, { status: 400 });
     }
 
+    const ledgerStatus =
+        status === 'paid'
+            ? 'settled'
+            : status === 'processing'
+              ? 'accrued'
+              : status === 'cancelled'
+                ? 'reversed'
+                : 'pending';
+
     const { data: commission, error } = await supabaseAdmin
-        .from('commissions')
-        .update({ status })
+        .from('commission_ledger')
+        .update({ status: ledgerStatus, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();

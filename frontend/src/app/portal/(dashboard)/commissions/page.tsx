@@ -9,6 +9,7 @@ import type { CommissionRecord } from '@/types';
 import PortalPageHeader from '@/components/portal/PortalPageHeader';
 import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
 import { Button, Card, Modal, Pagination, Select } from '@/components/portal/ui';
+import apiService from '@/services/api';
 
 const Commissions: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -21,6 +22,7 @@ const Commissions: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedCommission, setSelectedCommission] = useState<CommissionRecord | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [isProcessingPayouts, setIsProcessingPayouts] = useState(false);
 
   useEffect(() => {
     dispatch(
@@ -39,6 +41,51 @@ const Commissions: React.FC = () => {
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
+
+  const vendorOptions = [
+    { value: 'all', label: 'All Vendors' },
+    ...Array.from(
+      new Map(
+        commissions
+          .filter((c) => c.vendor?.id)
+          .map((c) => [c.vendor!.id, c.vendor!.name || c.vendor!.id]),
+      ).entries(),
+    ).map(([value, label]) => ({ value, label })),
+  ];
+
+  const refreshData = () => {
+    dispatch(
+      fetchCommissions({
+        page: page + 1,
+        limit: rowsPerPage,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        vendor_id: vendorFilter !== 'all' ? vendorFilter : undefined,
+      }),
+    );
+    dispatch(fetchCommissionStats(30));
+  };
+
+  const handleProcessPayouts = async () => {
+    setIsProcessingPayouts(true);
+    try {
+      await apiService.runPayoutBatch();
+      refreshData();
+    } catch (e) {
+      console.error('Failed to process payouts', e);
+    } finally {
+      setIsProcessingPayouts(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (commissionId: string) => {
+    try {
+      await apiService.updateCommissionStatus(commissionId, 'paid');
+      setViewDialogOpen(false);
+      refreshData();
+    } catch (e) {
+      console.error('Failed to mark commission as paid', e);
+    }
+  };
 
   const totalPending = stats?.totalPending || 0;
   const totalPaid = stats?.totalPaid || 0;
@@ -140,11 +187,7 @@ const Commissions: React.FC = () => {
               setVendorFilter(v);
               setPage(0);
             }}
-            options={[
-              { value: 'all', label: 'All Vendors' },
-              { value: 'vendor1', label: 'Vendor 1' },
-              { value: 'vendor2', label: 'Vendor 2' },
-            ]}
+            options={vendorOptions}
           />
           <Select
             label="Date Range"
@@ -159,7 +202,9 @@ const Commissions: React.FC = () => {
           />
           <div className="flex items-end gap-2">
             <Button variant="ghost" size="md">Export CSV</Button>
-            <Button size="md">Process Payments</Button>
+            <Button size="md" onClick={handleProcessPayouts} disabled={isProcessingPayouts}>
+              {isProcessingPayouts ? 'Processing...' : 'Process Payments'}
+            </Button>
           </div>
         </div>
       </Card>
@@ -257,7 +302,7 @@ const Commissions: React.FC = () => {
               Close
             </Button>
             {selectedCommission?.status === 'pending' ? (
-              <Button onClick={() => setViewDialogOpen(false)}>Mark as Paid</Button>
+              <Button onClick={() => handleMarkAsPaid(selectedCommission.id)}>Mark as Paid</Button>
             ) : null}
           </>
         }

@@ -24,6 +24,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _addressController = TextEditingController();
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -32,6 +34,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _nameController.dispose();
     _businessNameController.dispose();
     _addressController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
   }
 
@@ -45,11 +49,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     try {
       print('💼 Saving vendor profile...');
 
+      final latitude = double.tryParse(_latitudeController.text.trim());
+      final longitude = double.tryParse(_longitudeController.text.trim());
+      if (latitude == null || longitude == null) {
+        _showError('Please enter valid latitude and longitude values.');
+        return;
+      }
+
       final result = await _vendorService.createVendorProfile(
         phone: widget.phoneNumber,
         name: _nameController.text.trim(),
         businessName: _businessNameController.text.trim(),
         address: _addressController.text.trim(),
+        latitude: latitude,
+        longitude: longitude,
       );
 
       if (!mounted) return;
@@ -223,6 +236,67 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           ),
                           const SizedBox(height: 24),
 
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _latitudeController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Latitude',
+                                    hintText: 'e.g., 12.9716',
+                                    prefixIcon: Icon(Icons.my_location_outlined),
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Required';
+                                    }
+                                    final parsed = double.tryParse(value.trim());
+                                    if (parsed == null) {
+                                      return 'Invalid';
+                                    }
+                                    if (parsed < -90 || parsed > 90) {
+                                      return '-90 to 90';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _longitudeController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Longitude',
+                                    hintText: 'e.g., 77.5946',
+                                    prefixIcon: Icon(Icons.place_outlined),
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Required';
+                                    }
+                                    final parsed = double.tryParse(value.trim());
+                                    if (parsed == null) {
+                                      return 'Invalid';
+                                    }
+                                    if (parsed < -180 || parsed > 180) {
+                                      return '-180 to 180';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
                           // Info Box
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -240,7 +314,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'You can add more details like products, working hours, and profile photo later from settings.',
+                                    'Location is required for customer-vendor matching. Add inventory after signup to start receiving orders.',
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
                                   ),

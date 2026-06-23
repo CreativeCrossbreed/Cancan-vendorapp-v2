@@ -30,6 +30,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int _totalCansDelivered = 0;
   double _totalEarnings = 0.0;
 
+  bool _isDeliveredStatus(String status) => status == 'completed' || status == 'delivered';
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +54,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             current.isAtSameMomentAs(_endDate!)) {
           final dayCompleted = await _orderService.getOrdersByDate(
             date: current,
-            status: 'completed',
+            status: 'delivered',
           );
           final dayCancelled = await _orderService.getOrdersByDate(
             date: current,
@@ -66,7 +68,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         // Load orders for specific date
         final results = await Future.wait([
           _orderService.getOrdersByDate(
-              date: _selectedDate, status: 'completed'),
+              date: _selectedDate, status: 'delivered'),
           _orderService.getOrdersByDate(
               date: _selectedDate, status: 'cancelled'),
         ]);
@@ -636,7 +638,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (customer == null) return const SizedBox();
 
     final statusColor =
-        order.status == 'completed' ? AppTheme.successGreen : AppTheme.errorRed;
+        _isDeliveredStatus(order.status) ? AppTheme.successGreen : AppTheme.errorRed;
 
     return Container(
       padding: AppTheme.cardPadding,
@@ -667,7 +669,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
               // Payment Status Badge (only for completed orders)
-              if (order.status == 'completed')
+              if (_isDeliveredStatus(order.status))
                 if (order.paymentStatus == 'paid')
                   Container(
                     padding: const EdgeInsets.symmetric(

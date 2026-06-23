@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
             acc[stat.vendor_id] = { totalOrders: 0, completedOrders: 0, totalRevenue: 0 };
         }
         acc[stat.vendor_id].totalOrders++;
-        if (stat.status === 'completed') {
+        if (stat.status === 'completed' || stat.status === 'delivered') {
             acc[stat.vendor_id].completedOrders++;
             acc[stat.vendor_id].totalRevenue += Number(stat.total_amount) || 0;
         }

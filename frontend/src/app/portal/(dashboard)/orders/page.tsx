@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchOrders } from '@/store/orderSlice';
 import { Order } from '@/types';
+import apiService from '@/services/api';
 import PortalPageHeader from '@/components/portal/PortalPageHeader';
 import StatusChip, { statusToVariant } from '@/components/portal/StatusChip';
 import { Button, Card, Input, Modal, Pagination, Select } from '@/components/portal/ui';
@@ -38,6 +39,7 @@ const Orders: React.FC = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     dispatch(
@@ -67,6 +69,34 @@ const Orders: React.FC = () => {
     handleActionMenuClose();
   };
 
+  const submitStatusChange = async () => {
+    if (!selectedOrderForAction) return;
+    try {
+      setIsUpdatingStatus(true);
+      await apiService.updateOrderStatus(
+        selectedOrderForAction.id,
+        selectedStatus,
+        statusNotes || undefined,
+        selectedStatus === 'cancelled' ? statusNotes || 'Cancelled by admin' : undefined,
+      );
+      await dispatch(
+        fetchOrders({
+          page: page + 1,
+          limit: rowsPerPage,
+          search: searchTerm || undefined,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          payment_status: paymentFilter !== 'all' ? paymentFilter : undefined,
+        }),
+      );
+      setStatusDialogOpen(false);
+      setStatusNotes('');
+    } catch (error) {
+      console.error('Failed to update order status', error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setViewDialogOpen(true);
@@ -87,7 +117,7 @@ const Orders: React.FC = () => {
 
   const todayOrders = orders.filter((order) => new Date(order.created_at).toDateString() === new Date().toDateString());
   const pendingOrders = orders.filter((order) => order.status === 'pending');
-  const deliveredOrders = orders.filter((order) => order.status === 'completed');
+  const deliveredOrders = orders.filter((order) => order.status === 'completed' || order.status === 'delivered');
   const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
   if (error) {
@@ -474,12 +504,12 @@ const Orders: React.FC = () => {
               Cancel
             </Button>
             <Button
+              disabled={isUpdatingStatus}
               onClick={() => {
-                setStatusDialogOpen(false);
-                setStatusNotes('');
+                void submitStatusChange();
               }}
             >
-              Update Status
+              {isUpdatingStatus ? 'Updating...' : 'Update Status'}
             </Button>
           </>
         }

@@ -64,9 +64,10 @@ class AppConstants {
   }
 
   // Customer Order Link (for QR code)
-  static String getCustomerOrderLink(String vendorId, String vendorPhone) {
-    const message = 'Hi! I want to order water cans.';
-    return getWhatsAppLink(vendorPhone, message);
+  // Route all customers to CanCan business WhatsApp with vendor context.
+  static String getCustomerOrderLink(String vendorId) {
+    final message = 'ref-$vendorId';
+    return getWhatsAppLink(whatsappBusinessNumber, message);
   }
 
   // Support Contact

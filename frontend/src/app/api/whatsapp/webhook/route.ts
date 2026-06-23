@@ -3,12 +3,21 @@ import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   sendWhatsAppMessage,
+  sendInteractiveList,
   sendReplyButtons,
   sendLocationRequestMessage,
 } from '@/lib/whatsapp';
+import { createProviderOrder } from '@/lib/payment-gateway';
+import { createPaymentIntentRecord } from '@/lib/finance-ledger';
 
 const WHATSAPP_WEBHOOK_SECRET = process.env.WHATSAPP_WEBHOOK_SECRET;
 const META_APP_SECRET = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
+const DEFAULT_PER_BOTTLE_COMMISSION = Number.parseFloat(
+  process.env.DEFAULT_PER_BOTTLE_COMMISSION || '1',
+);
+const DEFAULT_BOTTLE_PRICE = Number.parseFloat(process.env.DEFAULT_BOTTLE_PRICE || '30');
+const ALLOW_STOCK_BASED_VENDOR_FALLBACK = process.env.ALLOW_STOCK_BASED_VENDOR_FALLBACK !== 'false';
+const ORDER_META_PREFIX = '__ORDER_META__:';
 
 // ─────────────────────────────────────────────────────────────
 // SESSION STATES
@@ -43,10 +52,24 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get('x-hub-signature-256');
 
-    if (META_APP_SECRET && signature) {
+    if (process.env.NODE_ENV === 'production' && !META_APP_SECRET) {
+      console.error('META_APP_SECRET is missing in production.');
+      return new Response('Service Misconfigured', { status: 500 });
+    }
+
+    if (META_APP_SECRET) {
+      if (!signature) {
+        console.warn('Webhook signature missing');
+        return new Response('Unauthorized', { status: 401 });
+      }
       const hmac = crypto.createHmac('sha256', META_APP_SECRET);
       const expectedSignature = `sha256=${hmac.update(rawBody).digest('hex')}`;
-      if (signature !== expectedSignature) {
+      const signatureBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSignature);
+      const isValidSignature =
+        signatureBuffer.length === expectedBuffer.length &&
+        crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+      if (!isValidSignature) {
         console.warn('Webhook signature mismatch');
         return new Response('Unauthorized', { status: 401 });
       }
@@ -236,7 +259,7 @@ async function handleIdleCustomer(message: any, phone: string, customer: any) {
     // My Deliveries: customer taps a delivery to see details
     if (id.startsWith('delivery_')) {
       const orderId = id.replace('delivery_', '');
-      await showDeliveryDetail(phone, orderId);
+    await showDeliveryDetail(phone, orderId, customer.id);
       return;
     }
   }
@@ -259,6 +282,52 @@ async function handleActiveSession(
 
   // ── ORDER FLOW ────────────────────────────────────────────
 
+  if (state === 'awaiting_brand') {
+    if (message.type === 'interactive' && message.interactive.type === 'list_reply') {
+      const id = message.interactive.list_reply.id as string;
+      if (id.startsWith('brand_')) {
+        const productId = id.replace('brand_', '');
+        const vendorId = session.vendor_id as string | null;
+        if (!vendorId) {
+          await sendWhatsAppMessage(
+            phone,
+            'Sorry, we could not resolve your vendor right now. Please type "hi" and try again.',
+          );
+          return;
+        }
+
+        const { data: selectedBrand } = await supabaseAdmin
+          .from('vendor_products')
+          .select('product_id, selling_price, current_stock, products(name)')
+          .eq('vendor_id', vendorId)
+          .eq('product_id', productId)
+          .maybeSingle();
+
+        const brandName = ((selectedBrand as any)?.products?.name as string | undefined) || 'Water Can';
+        const brandPrice = Number(selectedBrand?.selling_price || DEFAULT_BOTTLE_PRICE);
+
+        await supabaseAdmin
+          .from('whatsapp_sessions')
+          .update({
+            state: 'awaiting_can_count',
+            pending_address: `${ORDER_META_PREFIX}${JSON.stringify({
+              order_meta: {
+                product_id: productId,
+                product_name: brandName,
+                unit_price: brandPrice,
+              },
+            })}`,
+          })
+          .eq('id', session.id);
+
+        await sendCanCountButtons(phone, brandName);
+        return;
+      }
+    }
+    await showBrandCatalog(phone, customer, session.vendor_id as string | null);
+    return;
+  }
+
   if (state === 'awaiting_can_count') {
     if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
       const id = message.interactive.button_reply.id;
@@ -278,7 +347,21 @@ async function handleActiveSession(
         return;
       }
     }
-    await sendCanCountButtons(phone);
+
+    // Support custom quantities via plain text reply (e.g. "5")
+    if (message.type === 'text') {
+      const qtyText = String(message.text?.body || '').trim();
+      const qty = Number.parseInt(qtyText, 10);
+      if (!Number.isNaN(qty) && qty > 0 && qty <= 1000) {
+        await setSessionQtyAndAskDate(phone, session, qty);
+        return;
+      }
+      await sendWhatsAppMessage(phone, `Please enter a valid can quantity (e.g. 5).`);
+      return;
+    }
+
+    const sessionMeta = getOrderMeta(session);
+    await sendCanCountButtons(phone, sessionMeta?.product_name || null);
     return;
   }
 
@@ -688,22 +771,32 @@ async function finaliseOnboarding(phone: string, session: any, address: string) 
 // ─────────────────────────────────────────────────────────────
 
 async function startOrderFlow(phone: string, customer: any) {
-  // Create a fresh ordering session
+  const resolvedVendorId = await resolveVendorForCustomerFlow(customer);
+  if (!resolvedVendorId) {
+    await sendWhatsAppMessage(
+      phone,
+      `Sorry, we could not find an active vendor within 2km of your location right now. Please try again later.`,
+    );
+    return;
+  }
+
   await supabaseAdmin.from('whatsapp_sessions').upsert(
     {
       phone_number: phone,
-      state: 'awaiting_can_count',
+      state: 'awaiting_brand',
       customer_id: customer.id,
+      vendor_id: resolvedVendorId,
+      pending_address: null,
     },
     { onConflict: 'phone_number' }
   );
-  await sendCanCountButtons(phone);
+  await showBrandCatalog(phone, customer, resolvedVendorId);
 }
 
-async function sendCanCountButtons(phone: string) {
+async function sendCanCountButtons(phone: string, brandName: string | null = null) {
   await sendReplyButtons(
     phone,
-    `💧 How many cans would you like?`,
+    brandName ? `💧 How many *${brandName}* cans would you like?` : `💧 How many cans would you like?`,
     [
       { id: 'qty_1', title: '1 Can' },
       { id: 'qty_2', title: '2 Cans' },
@@ -712,6 +805,75 @@ async function sendCanCountButtons(phone: string) {
   );
   // Note: WhatsApp only allows 3 buttons. We send a follow-up for custom.
   await sendWhatsAppMessage(phone, `_For a different quantity, reply with the number (e.g. "5")_`);
+}
+
+async function resolveVendorForCustomerFlow(customer: any): Promise<string | null> {
+  const { data: vendorLink } = await supabaseAdmin
+    .from('customer_vendors')
+    .select('vendor_id')
+    .eq('customer_id', customer.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (vendorLink?.vendor_id) return String(vendorLink.vendor_id);
+
+  const nearestVendorId = await resolveNearestVendor(customer);
+  if (!nearestVendorId) return null;
+
+  await linkCustomerVendor(customer.id, nearestVendorId);
+  return nearestVendorId;
+}
+
+async function showBrandCatalog(phone: string, customer: any, existingVendorId?: string | null) {
+  const vendorId = existingVendorId || (await resolveVendorForCustomerFlow(customer));
+  if (!vendorId) {
+    await sendWhatsAppMessage(
+      phone,
+      `Sorry, we could not find an active vendor within 2km of your location right now.`,
+    );
+    return;
+  }
+
+  const { data: vendorProducts, error } = await supabaseAdmin
+    .from('vendor_products')
+    .select('product_id, selling_price, current_stock, products(name), is_active')
+    .eq('vendor_id', vendorId)
+    .eq('is_active', true)
+    .gt('current_stock', 0)
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error('Failed to load brand catalog:', error);
+    await sendWhatsAppMessage(phone, `Sorry, we could not load the catalog right now. Please try again.`);
+    return;
+  }
+
+  if (!vendorProducts || vendorProducts.length === 0) {
+    await sendWhatsAppMessage(
+      phone,
+      `No brands are currently in stock for your linked vendor. Please try again later.`,
+    );
+    return;
+  }
+
+  const rows = vendorProducts
+    .map((vp: any) => {
+      const productName = (vp.products?.name as string | undefined) || 'Water Can';
+      const price = Number(vp.selling_price || DEFAULT_BOTTLE_PRICE);
+      const stock = Number(vp.current_stock || 0);
+      return {
+        id: `brand_${vp.product_id}`,
+        title: productName.substring(0, 24),
+        description: `₹${price.toFixed(0)} • ${stock} in stock`.substring(0, 72),
+      };
+    })
+    .slice(0, 10);
+
+  await sendInteractiveList(phone, 'Select Brand', 'Choose a brand to continue your order:', 'View Brands', [
+    { title: 'Available Brands', rows },
+  ]);
 }
 
 async function setSessionQtyAndAskDate(phone: string, session: any, qty: number) {
@@ -769,13 +931,406 @@ async function sendOrderConfirmation(phone: string, customer: any, session: any)
   );
 }
 
+type ResolvedOrderFinancials = {
+  vendorId: string | null;
+  vendorResolutionSource: 'linked' | 'nearest_2km' | 'none';
+  productId: string | null;
+  productName: string | null;
+  unitPrice: number;
+  bottleSubtotal: number;
+  commissionPerBottle: number;
+  commissionAmount: number;
+  grossAmount: number;
+  vendorNetAmount: number;
+  pricingVersion: string;
+  policyId: string | null;
+};
+
+function toFiniteNumber(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
+async function resolveNearestVendorFallback(customer: any, radiusKm: number): Promise<string | null> {
+  const customerLat = toFiniteNumber(customer?.latitude);
+  const customerLon = toFiniteNumber(customer?.longitude);
+  if (customerLat === null || customerLon === null) return null;
+
+  const { data: vendors, error: vendorError } = await supabaseAdmin
+    .from('vendors')
+    .select('id, latitude, longitude, is_active')
+    .eq('is_active', true)
+    .limit(500);
+
+  if (vendorError || !vendors || vendors.length === 0) {
+    console.warn('Nearest-vendor fallback failed while loading vendors:', vendorError?.message || 'No vendors');
+    return null;
+  }
+
+  const vendorIds = vendors.map((vendor: any) => vendor.id).filter(Boolean);
+  if (vendorIds.length === 0) return null;
+
+  const { data: vendorProducts, error: stockError } = await supabaseAdmin
+    .from('vendor_products')
+    .select('vendor_id, current_stock, is_active')
+    .in('vendor_id', vendorIds)
+    .eq('is_active', true)
+    .gt('current_stock', 0);
+
+  if (stockError) {
+    console.warn('Nearest-vendor fallback failed while loading stock:', stockError.message);
+    return null;
+  }
+
+  const stockedVendorIds = new Set(
+    (vendorProducts || []).map((row: any) => String(row.vendor_id)).filter(Boolean),
+  );
+  if (stockedVendorIds.size === 0) return null;
+
+  let bestVendorId: string | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  const stockByVendor = new Map<string, number>();
+
+  for (const row of vendorProducts || []) {
+    const vendorId = row?.vendor_id ? String(row.vendor_id) : null;
+    if (!vendorId) continue;
+    const current = stockByVendor.get(vendorId) || 0;
+    stockByVendor.set(vendorId, current + Number(row.current_stock || 0));
+  }
+
+  for (const vendor of vendors) {
+    const vendorId = vendor?.id ? String(vendor.id) : null;
+    if (!vendorId || !stockedVendorIds.has(vendorId)) continue;
+
+    const vendorLat = toFiniteNumber(vendor?.latitude);
+    const vendorLon = toFiniteNumber(vendor?.longitude);
+    if (vendorLat === null || vendorLon === null) continue;
+
+    const distanceKm = haversineDistanceKm(customerLat, customerLon, vendorLat, vendorLon);
+    if (distanceKm <= radiusKm && distanceKm < bestDistance) {
+      bestDistance = distanceKm;
+      bestVendorId = vendorId;
+    }
+  }
+
+  if (!bestVendorId && ALLOW_STOCK_BASED_VENDOR_FALLBACK) {
+    const fallbackVendorId = Array.from(stockedVendorIds).sort((a, b) => {
+      const stockDiff = (stockByVendor.get(b) || 0) - (stockByVendor.get(a) || 0);
+      if (stockDiff !== 0) return stockDiff;
+      return a.localeCompare(b);
+    })[0] || null;
+
+    if (fallbackVendorId) {
+      console.warn(
+        'Nearest-vendor fallback used stock-based assignment because no geo-qualified vendor was found.',
+      );
+      return fallbackVendorId;
+    }
+  }
+
+  return bestVendorId;
+}
+
+async function resolveNearestVendor(customer: any): Promise<string | null> {
+  const radiusKm = 2;
+  if (!customer?.latitude || !customer?.longitude) return null;
+
+  const { data, error } = await supabaseAdmin.rpc('find_nearest_vendors', {
+    p_latitude: Number(customer.latitude),
+    p_longitude: Number(customer.longitude),
+    p_radius_km: radiusKm,
+    p_limit: 1,
+  });
+
+  if (error) {
+    console.warn('Nearest-vendor RPC lookup failed, trying fallback resolver:', error.message);
+    return resolveNearestVendorFallback(customer, radiusKm);
+  }
+
+  const nearest = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const nearestVendorId = nearest?.vendor_id ? String(nearest.vendor_id) : null;
+  return nearestVendorId;
+}
+
+function getOrderMeta(session: any): { product_id?: string; product_name?: string; unit_price?: number } | null {
+  const raw = session?.pending_address;
+  if (!raw || typeof raw !== 'string') return null;
+  if (!raw.startsWith(ORDER_META_PREFIX)) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(ORDER_META_PREFIX.length));
+    return parsed?.order_meta || null;
+  } catch {
+    return null;
+  }
+}
+
+async function linkCustomerVendor(customerId: string, vendorId: string) {
+  await supabaseAdmin.from('customer_vendors').upsert(
+    {
+      customer_id: customerId,
+      vendor_id: vendorId,
+    },
+    { onConflict: 'customer_id,vendor_id' },
+  );
+}
+
+async function resolveOrderFinancials(
+  customer: any,
+  canCount: number,
+  selectedProductId?: string | null,
+): Promise<ResolvedOrderFinancials> {
+  const { data: vendorLink } = await supabaseAdmin
+    .from('customer_vendors')
+    .select('vendor_id')
+    .eq('customer_id', customer.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let vendorId = vendorLink?.vendor_id ?? null;
+  let vendorResolutionSource: ResolvedOrderFinancials['vendorResolutionSource'] = vendorId ? 'linked' : 'none';
+
+  if (!vendorId) {
+    const nearestVendorId = await resolveNearestVendor(customer);
+    if (nearestVendorId) {
+      vendorId = nearestVendorId;
+      vendorResolutionSource = 'nearest_2km';
+      await linkCustomerVendor(customer.id, nearestVendorId);
+    }
+  }
+
+  let policyId: string | null = null;
+  let commissionPerBottle = DEFAULT_PER_BOTTLE_COMMISSION;
+  if (vendorId) {
+    const { data: policy } = await supabaseAdmin
+      .from('settlement_policy')
+      .select('id, per_bottle_commission, commission_type, is_active, is_default')
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true)
+      .order('is_default', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (policy?.id) {
+      policyId = policy.id;
+      if (policy.commission_type === 'per_bottle' && Number(policy.per_bottle_commission) > 0) {
+        commissionPerBottle = Number(policy.per_bottle_commission);
+      }
+    }
+  }
+
+  let unitPrice = DEFAULT_BOTTLE_PRICE;
+  let productId: string | null = null;
+  let productName: string | null = null;
+  if (vendorId) {
+    let vendorProductQuery = supabaseAdmin
+      .from('vendor_products')
+      .select('product_id, selling_price, is_active')
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true);
+
+    if (selectedProductId) {
+      vendorProductQuery = vendorProductQuery.eq('product_id', selectedProductId);
+    } else {
+      vendorProductQuery = vendorProductQuery.order('updated_at', { ascending: false }).limit(1);
+    }
+
+    const { data: vendorProduct } = await vendorProductQuery.maybeSingle();
+
+    if (vendorProduct?.selling_price && Number(vendorProduct.selling_price) > 0) {
+      unitPrice = Number(vendorProduct.selling_price);
+    }
+    if (vendorProduct?.product_id) {
+      productId = String(vendorProduct.product_id);
+      const { data: product } = await supabaseAdmin
+        .from('products')
+        .select('name')
+        .eq('id', productId)
+        .maybeSingle();
+      productName = (product?.name as string | undefined) || null;
+    }
+  }
+
+  const bottleSubtotal = Number((unitPrice * canCount).toFixed(2));
+  const commissionAmount = Number((commissionPerBottle * canCount).toFixed(2));
+  const grossAmount = Number((bottleSubtotal + commissionAmount).toFixed(2));
+  const vendorNetAmount = Number((grossAmount - commissionAmount).toFixed(2));
+
+  return {
+    vendorId,
+    vendorResolutionSource,
+    productId,
+    productName,
+    unitPrice,
+    bottleSubtotal,
+    commissionPerBottle,
+    commissionAmount,
+    grossAmount,
+    vendorNetAmount,
+    pricingVersion: 'marketplace_v1',
+    policyId,
+  };
+}
+
+async function insertOrderWithFallback(payload: Record<string, any>) {
+  const orderPayload = { ...payload };
+  const requiredFinancialColumns = new Set([
+    'total_amount',
+  ]);
+
+  for (let i = 0; i < 12; i += 1) {
+    const { data, error } = await supabaseAdmin
+      .from('orders')
+      .insert(orderPayload)
+      .select('id, delivery_date, time_slot, total_amount')
+      .single();
+
+    if (!error) {
+      return { data, usedPayload: orderPayload };
+    }
+
+    const errorMessage = String(error.message || '');
+    const missingColumnMatch = errorMessage.match(/Could not find the '([^']+)' column/);
+    if (missingColumnMatch) {
+      const missingColumn = missingColumnMatch[1];
+      if (requiredFinancialColumns.has(missingColumn)) {
+        throw error;
+      }
+      delete orderPayload[missingColumn];
+      continue;
+    }
+
+    throw error;
+  }
+
+  throw new Error('Unable to insert order after schema fallback attempts');
+}
+
+async function insertCommissionLedgerWithFallback(payload: Record<string, any>) {
+  const ledgerPayload = { ...payload };
+
+  for (let i = 0; i < 10; i += 1) {
+    const { error } = await supabaseAdmin.from('commission_ledger').insert(ledgerPayload);
+    if (!error) return;
+
+    const errorMessage = String(error.message || '');
+    const missingColumnMatch = errorMessage.match(/Could not find the '([^']+)' column/);
+    if (missingColumnMatch) {
+      delete ledgerPayload[missingColumnMatch[1]];
+      continue;
+    }
+    // If table is absent in older DBs, do not break order flow.
+    if (
+      errorMessage.includes('relation "commission_ledger" does not exist') ||
+      errorMessage.includes('Could not find the table')
+    ) {
+      return;
+    }
+    throw error;
+  }
+}
+
+async function insertOrderItemWithFallback(payload: Record<string, any>) {
+  const itemPayload = { ...payload };
+
+  for (let i = 0; i < 10; i += 1) {
+    const { error } = await supabaseAdmin.from('order_items').insert(itemPayload);
+    if (!error) return;
+
+    const errorMessage = String(error.message || '');
+    const missingColumnMatch = errorMessage.match(/Could not find the '([^']+)' column/);
+    if (missingColumnMatch) {
+      delete itemPayload[missingColumnMatch[1]];
+      continue;
+    }
+    if (
+      errorMessage.includes('relation "order_items" does not exist') ||
+      errorMessage.includes('Could not find the table')
+    ) {
+      return;
+    }
+    throw error;
+  }
+}
+
 async function placeOrder(phone: string, customer: any, session: any) {
-  // Insert into orders table
-  const { data: order, error } = await supabaseAdmin
+  const { data: lockRows } = await supabaseAdmin
+    .from('whatsapp_sessions')
+    .update({ state: 'placing_order' })
+    .eq('id', session.id)
+    .eq('state', 'awaiting_confirmation')
+    .select('id')
+    .limit(1);
+
+  const idempotencyKey = `wa:${session.id}:${session.delivery_date}:${session.time_slot}:${session.can_count}`;
+  if (!lockRows || lockRows.length === 0) {
+    const { data: inflightOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id')
+      .eq('idempotency_key', idempotencyKey)
+      .maybeSingle();
+
+    if (inflightOrder?.id) {
+      await sendWhatsAppMessage(
+        phone,
+        `Your order is already being processed. We'll confirm shortly.`
+      );
+    }
+    return;
+  }
+
+  const { data: existingOrder } = await supabaseAdmin
     .from('orders')
-    .insert({
+    .select('id, delivery_date, time_slot, total_amount')
+    .eq('idempotency_key', idempotencyKey)
+    .maybeSingle();
+
+  let order = existingOrder;
+  let error: any = null;
+  let resolvedFinancials: ResolvedOrderFinancials | null = null;
+
+  if (!order) {
+    const canCount = Number(session.can_count || 1);
+    const sessionMeta = getOrderMeta(session);
+    const financials = await resolveOrderFinancials(customer, canCount, sessionMeta?.product_id || null);
+    resolvedFinancials = financials;
+
+    if (!financials.vendorId) {
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+      await sendWhatsAppMessage(
+        phone,
+        `Sorry, we could not find an active vendor within 2km of your location right now. Our team has been notified and will help you shortly.`,
+      );
+      console.error('Order blocked: no linked/nearby vendor found', {
+        customer_id: customer.id,
+        phone,
+        latitude: customer.latitude || null,
+        longitude: customer.longitude || null,
+      });
+      return;
+    }
+
+    const orderPayload = {
+      order_number: `WA-${Date.now().toString(36).toUpperCase()}-${crypto
+        .randomUUID()
+        .replace(/-/g, '')
+        .slice(0, 6)
+        .toUpperCase()}`,
       customer_id: customer.id,
-      can_count: session.can_count,
+      vendor_id: financials.vendorId,
+      can_count: canCount,
       delivery_date: session.delivery_date,
       time_slot: session.time_slot,
       delivery_address: customer.address,
@@ -783,21 +1338,81 @@ async function placeOrder(phone: string, customer: any, session: any) {
       longitude: customer.longitude,
       status: 'pending',
       source: 'whatsapp',
-    })
-    .select('id, delivery_date, time_slot')
-    .single();
+      total_amount: financials.grossAmount,
+      gross_amount: financials.grossAmount,
+      platform_commission_amount: financials.commissionAmount,
+      vendor_net_amount: financials.vendorNetAmount,
+      payment_status: 'unpaid',
+      payment_state: 'pending',
+      pricing_version: financials.pricingVersion,
+      idempotency_key: idempotencyKey,
+      financial_snapshot: {
+        can_count: canCount,
+        unit_price: financials.unitPrice,
+        bottle_subtotal: financials.bottleSubtotal,
+        commission_per_bottle: financials.commissionPerBottle,
+        commission_amount: financials.commissionAmount,
+        gross_amount: financials.grossAmount,
+        vendor_net_amount: financials.vendorNetAmount,
+        policy_id: financials.policyId,
+      },
+      notes: `[AUTO] WhatsApp order with pricing snapshot`,
+    };
 
-  // Clean up session
-  await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+    try {
+      const inserted = await insertOrderWithFallback(orderPayload);
+      order = inserted.data;
+
+      if (order?.id && financials.productId) {
+        await insertOrderItemWithFallback({
+          order_id: order.id,
+          product_id: financials.productId,
+          product_name: sessionMeta?.product_name || financials.productName || 'Water Can',
+          quantity: canCount,
+          unit_price: Number(sessionMeta?.unit_price || financials.unitPrice),
+          subtotal: financials.bottleSubtotal,
+        });
+      }
+
+      if (order?.id && financials.vendorId) {
+        await insertCommissionLedgerWithFallback({
+          order_id: order.id,
+          vendor_id: financials.vendorId,
+          customer_id: customer.id,
+          commission_type: 'per_bottle',
+          qty: canCount,
+          per_bottle_commission: financials.commissionPerBottle,
+          gross_amount: financials.grossAmount,
+          commission_amount: financials.commissionAmount,
+          net_vendor_amount: financials.vendorNetAmount,
+          status: 'pending',
+          rule_snapshot: {
+            pricing_version: financials.pricingVersion,
+            policy_id: financials.policyId,
+            source: 'whatsapp',
+          },
+        });
+      }
+    } catch (insertError) {
+      error = insertError;
+    }
+  }
 
   if (error || !order) {
     console.error('Failed to place order:', error);
+    await supabaseAdmin
+      .from('whatsapp_sessions')
+      .update({ state: 'awaiting_confirmation' })
+      .eq('id', session.id);
     await sendWhatsAppMessage(
       phone,
       `Sorry, something went wrong placing your order. Please try again.`
     );
     return;
   }
+
+  // Clean up session only after successful order creation.
+  await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
 
   const slotLabels: Record<string, string> = {
     morning: 'Morning (8am–12pm)',
@@ -809,6 +1424,48 @@ async function placeOrder(phone: string, customer: any, session: any) {
     phone,
     `🎉 *Your order has been placed!* 💧\n\n📦 Order ID: *${order.id}*\n📅 Expected Delivery: ${new Date(order.delivery_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}\n⏰ Time Slot: ${slotLabels[order.time_slot] || order.time_slot}\n\n_We'll notify you once the vendor confirms._`
   );
+
+  // Best-effort payment link creation (non-blocking).
+  try {
+    const orderAmount = Number(order.total_amount || 0);
+    if (orderAmount > 0) {
+      const provider = (process.env.PAYMENT_PROVIDER_DEFAULT || 'razorpay') as 'razorpay' | 'cashfree';
+      const receipt = `wa_${String(order.id).slice(0, 8)}_${Date.now()}`;
+      const providerOrder = await createProviderOrder({
+        provider,
+        amountInPaise: Math.round(orderAmount * 100),
+        receipt,
+        notes: {
+          order_id: order.id,
+          source: 'whatsapp',
+        },
+      });
+
+      const paymentIntent = await createPaymentIntentRecord({
+        orderId: order.id,
+        customerId: customer.id,
+        vendorId: resolvedFinancials?.vendorId || session.vendor_id || null,
+        provider,
+        providerOrderId: providerOrder.providerOrderId,
+        amount: orderAmount,
+        checkoutUrl: providerOrder.checkoutUrl || null,
+        idempotencyKey: `wa-intent:${order.id}`,
+        metadata: {
+          source: 'whatsapp',
+        },
+      });
+
+      const checkoutUrl = paymentIntent.checkout_url || providerOrder.checkoutUrl;
+      if (checkoutUrl) {
+        await sendWhatsAppMessage(
+          phone,
+          `💳 You can pay online now: ${checkoutUrl}\n\nYou may also pay cash to CanCan at delivery.`,
+        );
+      }
+    }
+  } catch (paymentLinkError) {
+    console.error('Failed to generate WhatsApp payment link:', paymentLinkError);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -900,11 +1557,12 @@ async function showMyDeliveries(phone: string, customerId: string) {
   );
 }
 
-async function showDeliveryDetail(phone: string, orderId: string) {
+async function showDeliveryDetail(phone: string, orderId: string, customerId: string) {
   const { data: order } = await supabaseAdmin
     .from('orders')
     .select('*')
     .eq('id', orderId)
+    .eq('customer_id', customerId)
     .single();
 
   if (!order) {

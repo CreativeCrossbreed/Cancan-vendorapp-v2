@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
             vendors!inner ( name )
         `)
         .gte('created_at', dateLimit.toISOString())
-        .eq('status', 'completed');
+        .in('status', ['completed', 'delivered']);
 
     if (error) {
         return Response.json({ error: error.message }, { status: 500 });

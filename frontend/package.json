@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "e2e:wa:simulate": "node scripts/e2e/whatsapp-simulator.mjs",
+    "e2e:wa:seed": "node scripts/e2e/direct-seed.mjs",
+    "e2e:wa:cleanup": "node scripts/e2e/cleanup.mjs",
+    "payments:reconcile": "node scripts/jobs/run-reconciliation.mjs",
+    "payments:payout": "node scripts/jobs/run-payout-batch.mjs",
     "vercel-login": "npm run vercel-login --prefix ..",
     "deploy-prod": "npm run deploy-prod --prefix .."
   },

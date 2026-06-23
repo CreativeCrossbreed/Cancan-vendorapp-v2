@@ -91,3 +91,7 @@ Thumbs.db
 .env.*
 api-keys.json
 api-keys.*.json
+
+# E2E generated artifacts
+frontend/scripts/e2e/manifests/*.json
+.vercel

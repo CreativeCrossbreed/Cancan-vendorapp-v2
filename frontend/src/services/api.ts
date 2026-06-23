@@ -155,6 +155,21 @@ class ApiService {
         return res.data;
     }
 
+    async createPaymentIntent(order_id: string, provider: 'razorpay' | 'cashfree' = 'razorpay') {
+        const res = await this.api.post('/payments/create-intent', { order_id, provider });
+        return res.data;
+    }
+
+    async recordCashCollection(order_id: string, amount: number, payment_method = 'cash', notes?: string) {
+        const res = await this.api.post('/payments/cash-collect', {
+            order_id,
+            amount,
+            payment_method,
+            notes,
+        });
+        return res.data;
+    }
+
     async assignOrder(id: string, vendor_id: string) {
         const res = await this.api.put(`/orders/${id}/assign`, { vendor_id });
         return res.data;
@@ -224,6 +239,16 @@ class ApiService {
 
     async getCommissionTrends(period = 30) {
         const res = await this.api.get(`/commissions/trends?period=${period}`);
+        return res.data;
+    }
+
+    async runPayoutBatch(settlement_date?: string) {
+        const res = await this.api.post('/payouts/run', settlement_date ? { settlement_date } : {});
+        return res.data;
+    }
+
+    async getPayoutBatches(params: Record<string, unknown> = {}) {
+        const res = await this.api.get('/payouts', { params });
         return res.data;
     }
 

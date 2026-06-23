@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     if (!admin) return unauthorized();
 
     const limit = 10;
-    const activities: any[] = [];
+    const activities: Array<Record<string, unknown>> = [];
 
     // Get latest orders
     const { data: orders } = await supabaseAdmin
@@ -20,14 +20,37 @@ export async function GET(req: NextRequest) {
         .limit(limit);
 
     if (orders) {
-        orders.forEach((o: any) => {
+        orders.forEach((o: Record<string, unknown>) => {
             activities.push({
                 id: `order_${o.id}`,
                 type: 'order',
                 action: o.status === 'pending' ? 'New order placed' : `Order ${o.status}`,
-                details: `${o.customers.name} - $${o.total_amount}`,
-                metadata: { order_id: o.id, vendor: o.vendors?.name },
+                details: `${(o.customers as Record<string, unknown>)?.name || 'Customer'} - ₹${o.total_amount}`,
+                metadata: { order_id: o.id, vendor: (o.vendors as Record<string, unknown> | undefined)?.name },
                 timestamp: o.created_at,
+            });
+        });
+    }
+
+    // Latest payout activities
+    const { data: payouts } = await supabaseAdmin
+        .from('payout_items')
+        .select(`
+            id, amount, status, created_at, paid_at, vendor_id,
+            vendors ( name )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (payouts) {
+        payouts.forEach((p: Record<string, unknown>) => {
+            activities.push({
+                id: `payout_${p.id}`,
+                type: 'payout',
+                action: p.status === 'paid' ? 'Vendor payout completed' : `Vendor payout ${p.status}`,
+                details: `${(p.vendors as Record<string, unknown> | undefined)?.name || 'Vendor'} - ₹${Number(p.amount || 0).toFixed(0)}`,
+                metadata: { payout_item_id: p.id, vendor_id: p.vendor_id },
+                timestamp: p.paid_at || p.created_at,
             });
         });
     }
@@ -40,7 +63,7 @@ export async function GET(req: NextRequest) {
         .limit(limit);
 
     if (vendors) {
-        vendors.forEach((v: any) => {
+        vendors.forEach((v: Record<string, unknown>) => {
             activities.push({
                 id: `vendor_${v.id}`,
                 type: 'vendor',
@@ -53,7 +76,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Sort combined activities by timestamp and return top `limit`
-    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    activities.sort(
+        (a, b) =>
+            new Date(String(b.timestamp || '')).getTime() - new Date(String(a.timestamp || '')).getTime(),
+    );
 
     return Response.json(activities.slice(0, limit));
 }

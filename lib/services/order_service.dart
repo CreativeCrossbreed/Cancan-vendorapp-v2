@@ -6,6 +6,41 @@ import 'inventory_service.dart';
 class OrderService {
   final _supabase = SupabaseConfig.client;
 
+  bool _isDeliveredAlias(String status) => status == 'completed' || status == 'delivered';
+
+  /// Updates an order while tolerating schema drift.
+  /// If a column is missing in the current DB schema, remove it and retry.
+  Future<void> _updateOrderWithFallback({
+    required String orderId,
+    required Map<String, dynamic> updates,
+  }) async {
+    final adaptiveUpdates = Map<String, dynamic>.from(updates);
+
+    for (int attempt = 0; attempt < 8; attempt++) {
+      try {
+        await _supabase.from('orders').update(adaptiveUpdates).eq('id', orderId);
+        return;
+      } catch (e) {
+        final msg = e.toString();
+        final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(msg);
+        if (match != null) {
+          final missingColumn = match.group(1)!;
+          if (adaptiveUpdates.containsKey(missingColumn)) {
+            adaptiveUpdates.remove(missingColumn);
+            print('⚠️ Retrying order update without missing column: $missingColumn');
+            if (adaptiveUpdates.isEmpty) {
+              throw Exception('No compatible order fields left to update');
+            }
+            continue;
+          }
+        }
+        rethrow;
+      }
+    }
+
+    throw Exception('Failed to update order after schema fallback attempts');
+  }
+
   /// Get orders by date and status
   Future<List<Order>> getOrdersByDate({
     required DateTime date,
@@ -22,11 +57,19 @@ class OrderService {
 
       print('📦 Fetching $status orders for $dateStr...');
 
-      final response = await _supabase
-          .from('orders')
-          .select('''
+      final baseQuery = _supabase.from('orders').select('''
             *,
-            customers(id, name, phone, address, flat_number, floor, building_name),
+            customers(
+              id,
+              name,
+              phone,
+              address,
+              flat_number,
+              floor,
+              building_name,
+              created_at,
+              updated_at
+            ),
             order_items(
               id,
               quantity,
@@ -34,11 +77,13 @@ class OrderService {
               subtotal,
               products(id, name)
             )
-          ''')
-          .eq('vendor_id', vendorId)
-          .eq('delivery_date', dateStr)
-          .eq('status', status)
-          .order('time_slot', ascending: true);
+          ''').eq('vendor_id', vendorId).eq('delivery_date', dateStr);
+
+      final response = _isDeliveredAlias(status)
+          ? await baseQuery
+              .inFilter('status', ['completed', 'delivered'])
+              .order('time_slot', ascending: true)
+          : await baseQuery.eq('status', status).order('time_slot', ascending: true);
 
       print('✅ Found ${response.length} $status orders for $dateStr');
 
@@ -66,11 +111,19 @@ class OrderService {
 
       print('📦 Fetching all $status orders...');
 
-      final response = await _supabase
-          .from('orders')
-          .select('''
+      final baseQuery = _supabase.from('orders').select('''
             *,
-            customers(id, name, phone, address, flat_number, floor, building_name),
+            customers(
+              id,
+              name,
+              phone,
+              address,
+              flat_number,
+              floor,
+              building_name,
+              created_at,
+              updated_at
+            ),
             order_items(
               id,
               quantity,
@@ -78,10 +131,13 @@ class OrderService {
               subtotal,
               products(id, name)
             )
-          ''')
-          .eq('vendor_id', vendorId)
-          .eq('status', status)
-          .order('delivery_date', ascending: false);
+          ''').eq('vendor_id', vendorId);
+
+      final response = _isDeliveredAlias(status)
+          ? await baseQuery
+              .inFilter('status', ['completed', 'delivered'])
+              .order('delivery_date', ascending: false)
+          : await baseQuery.eq('status', status).order('delivery_date', ascending: false);
 
       print('✅ Found ${response.length} $status orders');
 
@@ -114,7 +170,7 @@ class OrderService {
 
       for (final order in allOrders) {
         if (order['status'] == 'pending') pending++;
-        if (order['status'] == 'completed') completed++;
+        if (_isDeliveredAlias((order['status'] as String?) ?? '')) completed++;
       }
 
       return {'pending': pending, 'completed': completed};
@@ -184,7 +240,17 @@ class OrderService {
           .from('orders')
           .select('''
             *,
-            customers(id, name, phone, address, flat_number, floor, building_name),
+            customers(
+              id,
+              name,
+              phone,
+              address,
+              flat_number,
+              floor,
+              building_name,
+              created_at,
+              updated_at
+            ),
             order_items(
               id,
               quantity,
@@ -225,7 +291,7 @@ class OrderService {
       final updates = <String, dynamic>{};
 
       if (isDelivered) {
-        updates['status'] = 'completed';
+        updates['status'] = 'delivered';
         updates['is_delivered'] = true;
         updates['delivered_at'] = DateTime.now().toIso8601String();
 
@@ -241,21 +307,25 @@ class OrderService {
         // Get order total amount
         final order = await _supabase
             .from('orders')
-            .select('total_amount')
+            .select('total_amount, payment_status')
             .eq('id', orderId)
             .single();
 
-        if (order != null) {
-          final totalAmount = (order['total_amount'] as num).toDouble();
-          // Set amount_paid to total_amount for full payment
-          updates['amount_paid'] = totalAmount;
-          updates['payment_marked_at'] = DateTime.now().toIso8601String();
-          // payment_status will be auto-updated by database trigger
+        final totalAmount = (order['total_amount'] as num).toDouble();
+        // Set amount_paid to total_amount for full payment
+        updates['amount_paid'] = totalAmount;
+        updates['remaining_amount'] = 0;
+        updates['payment_status'] = 'paid';
+        final existingPaymentStatus = order['payment_status'] as String? ?? '';
+        if (existingPaymentStatus != 'paid') {
+          updates['payment_state'] = 'collected_cash_vendor';
+          updates['payment_method'] = 'cash';
         }
+        updates['payment_marked_at'] = DateTime.now().toIso8601String();
       }
 
       if (updates.isNotEmpty) {
-        await _supabase.from('orders').update(updates).eq('id', orderId);
+        await _updateOrderWithFallback(orderId: orderId, updates: updates);
         print('✅ Order $orderId updated successfully');
       }
 

@@ -68,8 +68,28 @@ export async function sendWhatsAppMessage(to: string, message: any, type: string
 
         return response.data;
     } catch (error: any) {
-        console.error('WhatsApp API Error:', error.response?.data || error.message);
-        throw error;
+        const failurePayload = error.response?.data || error.message;
+        console.error('WhatsApp API Error:', failurePayload);
+
+        // Do not crash upstream webhook handlers on outbound send failures.
+        // Persist failure for observability and allow inbound flow to proceed.
+        try {
+            await supabaseAdmin.from('whatsapp_messages').insert([{
+                message_id: `failed_${Date.now()}`,
+                customer_phone: to,
+                message_type: type,
+                message_content: type === 'text' ? message : JSON.stringify(message),
+                direction: 'outbound',
+                status: 'failed',
+            }]);
+        } catch (persistError) {
+            console.error('Failed to persist outbound WhatsApp failure log:', persistError);
+        }
+
+        return {
+            ok: false,
+            error: failurePayload,
+        };
     }
 }
 

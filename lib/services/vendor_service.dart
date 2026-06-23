@@ -1,11 +1,9 @@
-import 'package:uuid/uuid.dart';
 import '../config/supabase_config.dart';
 import 'auth_service.dart' as auth;
 
 /// Vendor Service - Handles vendor profile CRUD operations
 class VendorService {
   final _supabase = SupabaseConfig.client;
-  final _uuid = const Uuid();
 
   /// Create vendor profile (first-time setup)
   Future<Map<String, dynamic>> createVendorProfile({
@@ -13,6 +11,8 @@ class VendorService {
     required String name,
     required String businessName,
     required String address,
+    required double latitude,
+    required double longitude,
   }) async {
     try {
       // Add +91 prefix if not present
@@ -43,6 +43,8 @@ class VendorService {
               'name': name,
               'business_name': businessName,
               'address': address,
+              'latitude': latitude,
+              'longitude': longitude,
               'updated_at': DateTime.now().toIso8601String(),
             })
             .eq('id', existing['id'])
@@ -81,6 +83,8 @@ class VendorService {
         'name': name,
         'business_name': businessName,
         'address': address,
+        'latitude': latitude,
+        'longitude': longitude,
         'is_active': true,
         'test_mode': isTestMode, // Mark test mode vendors for RLS policies
       });
@@ -129,6 +133,8 @@ class VendorService {
     String? name,
     String? businessName,
     String? address,
+    double? latitude,
+    double? longitude,
     int? maxDailyDeliveries,
     int? maxDailyCans,
     Map<String, dynamic>? workingHours,
@@ -149,6 +155,8 @@ class VendorService {
       if (name != null) updates['name'] = name;
       if (businessName != null) updates['business_name'] = businessName;
       if (address != null) updates['address'] = address;
+      if (latitude != null) updates['latitude'] = latitude;
+      if (longitude != null) updates['longitude'] = longitude;
       if (maxDailyDeliveries != null) {
         updates['max_daily_deliveries'] = maxDailyDeliveries;
       }
@@ -216,10 +224,10 @@ class VendorService {
 
       final dateStr = date.toIso8601String().split('T')[0];
 
-      // Get total cans and earnings for the day
+      // Get total cans and earnings for the day in one query.
       final orders = await _supabase
           .from('orders')
-          .select('total_amount')
+          .select('total_amount, order_items(quantity)')
           .eq('vendor_id', vendorId)
           .eq('delivery_date', dateStr)
           .eq('status', 'pending');
@@ -228,12 +236,7 @@ class VendorService {
       double totalEarnings = 0.0;
 
       for (final order in orders) {
-        // Get order items count
-        final items = await _supabase
-            .from('order_items')
-            .select('quantity')
-            .eq('order_id', order['id']);
-
+        final items = (order['order_items'] as List<dynamic>? ?? []);
         for (final item in items) {
           totalCans += (item['quantity'] as int);
         }
@@ -248,6 +251,69 @@ class VendorService {
     } catch (e) {
       print('Error fetching daily summary: $e');
       return {'cansToDeliver': 0, 'earnings': 0.0};
+    }
+  }
+
+  /// Vendor is order-ready only when location exists and at least
+  /// one active vendor_product has stock > 0.
+  Future<Map<String, dynamic>> getVendorReadinessStatus() async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        return {
+          'isReady': false,
+          'missingLocation': true,
+          'missingInventory': true,
+          'message': 'Vendor is not authenticated.',
+        };
+      }
+
+      final profile = await _supabase
+          .from('vendors')
+          .select('latitude, longitude')
+          .eq('id', vendorId)
+          .maybeSingle();
+
+      final hasLocation = profile != null &&
+          profile['latitude'] != null &&
+          profile['longitude'] != null;
+
+      final stocked = await _supabase
+          .from('vendor_products')
+          .select('id')
+          .eq('vendor_id', vendorId)
+          .eq('is_active', true)
+          .gt('current_stock', 0)
+          .limit(1);
+
+      final hasInventory = stocked.isNotEmpty;
+      final isReady = hasLocation && hasInventory;
+
+      String message;
+      if (isReady) {
+        message = 'Vendor is ready to receive orders.';
+      } else if (!hasLocation && !hasInventory) {
+        message = 'Add business location and stock to start receiving orders.';
+      } else if (!hasLocation) {
+        message = 'Add business location (latitude/longitude) to receive nearby orders.';
+      } else {
+        message = 'Add at least one active in-stock product to receive orders.';
+      }
+
+      return {
+        'isReady': isReady,
+        'missingLocation': !hasLocation,
+        'missingInventory': !hasInventory,
+        'message': message,
+      };
+    } catch (e) {
+      print('Error checking vendor readiness: $e');
+      return {
+        'isReady': false,
+        'missingLocation': true,
+        'missingInventory': true,
+        'message': 'Unable to verify readiness right now.',
+      };
     }
   }
 }

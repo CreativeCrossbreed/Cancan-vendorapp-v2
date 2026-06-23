@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     let completedOrders = 0;
 
     orders.forEach((o: any) => {
-        if (o.status === 'completed') {
+        if (o.status === 'completed' || o.status === 'delivered') {
             revenue += Number(o.total_amount);
             completedOrders++;
         }
