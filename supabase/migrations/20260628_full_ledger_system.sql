@@ -1,5 +1,12 @@
--- Marketplace payments + payouts unification
--- Safe additive migration intended to preserve existing app behavior.
+-- Full ledger system, built against the REAL production schema (verified via
+-- direct psql connection — vendors/customers/orders/order_items/vendor_products
+-- already exist; payments/payment_intents/commission_ledger/vendor_wallet_ledger/
+-- payout_batches/payout_items/settlement_policy do NOT exist at all, despite
+-- being referenced throughout frontend/src/lib/finance-ledger.ts,
+-- payout-engine.ts, cashfree-payouts.ts, and the WhatsApp webhook's commission
+-- calculation). This replaces 20260618_marketplace_payments_unified.sql,
+-- which assumed `payments` already existed and only ALTERed it — a no-op
+-- against this database since the table was never created.
 
 BEGIN;
 
@@ -8,7 +15,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- ---------------------------------------------------------------------------
 -- Orders financial snapshot fields
 -- ---------------------------------------------------------------------------
-ALTER TABLE IF EXISTS orders
+ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS gross_amount NUMERIC(12,2) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS platform_commission_amount NUMERIC(12,2) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS vendor_net_amount NUMERIC(12,2) DEFAULT 0,
@@ -30,7 +37,17 @@ CREATE INDEX IF NOT EXISTS idx_orders_payment_state ON orders(payment_state);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_method ON orders(payment_method);
 
 -- ---------------------------------------------------------------------------
--- Settlement policy (global and vendor-specific)
+-- Vendor payout details (bank/UPI for Cashfree Payouts beneficiary)
+-- ---------------------------------------------------------------------------
+ALTER TABLE vendors
+  ADD COLUMN IF NOT EXISTS bank_account_number TEXT,
+  ADD COLUMN IF NOT EXISTS bank_ifsc TEXT,
+  ADD COLUMN IF NOT EXISTS bank_account_holder_name TEXT,
+  ADD COLUMN IF NOT EXISTS payout_vpa TEXT,
+  ADD COLUMN IF NOT EXISTS cf_beneficiary_id TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Settlement policy (global and vendor-specific commission rules)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS settlement_policy (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -50,6 +67,11 @@ CREATE TABLE IF NOT EXISTS settlement_policy (
 
 CREATE INDEX IF NOT EXISTS idx_settlement_policy_vendor_id ON settlement_policy(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_settlement_policy_active ON settlement_policy(is_active);
+
+ALTER TABLE settlement_policy ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own settlement policy" ON settlement_policy;
+CREATE POLICY "Vendors can view own settlement policy" ON settlement_policy
+  FOR SELECT TO public USING (vendor_id = auth.uid() OR vendor_id IS NULL);
 
 -- ---------------------------------------------------------------------------
 -- Payment intents (checkout session tracking)
@@ -77,28 +99,41 @@ CREATE INDEX IF NOT EXISTS idx_payment_intents_order_id ON payment_intents(order
 CREATE INDEX IF NOT EXISTS idx_payment_intents_status ON payment_intents(status);
 CREATE INDEX IF NOT EXISTS idx_payment_intents_provider_order_id ON payment_intents(provider_order_id);
 
+ALTER TABLE payment_intents ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own payment intents" ON payment_intents;
+CREATE POLICY "Vendors can view own payment intents" ON payment_intents
+  FOR SELECT TO public USING (vendor_id = auth.uid());
+
 -- ---------------------------------------------------------------------------
--- Upgrade existing payments table with marketplace fields (if table exists)
+-- Payments (did NOT exist — created fresh with full marketplace field set)
 -- ---------------------------------------------------------------------------
-ALTER TABLE IF EXISTS payments
-  ADD COLUMN IF NOT EXISTS payment_intent_id UUID REFERENCES payment_intents(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS provider TEXT,
-  ADD COLUMN IF NOT EXISTS provider_payment_id TEXT,
-  ADD COLUMN IF NOT EXISTS provider_transfer_id TEXT,
-  ADD COLUMN IF NOT EXISTS collection_mode TEXT DEFAULT 'online' CHECK (collection_mode IN ('online', 'cash_platform', 'cash_vendor')),
-  ADD COLUMN IF NOT EXISTS payment_method_detail TEXT,
-  ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending',
-  ADD COLUMN IF NOT EXISTS gateway_fee NUMERIC(12,2) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS gateway_tax NUMERIC(12,2) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS platform_commission NUMERIC(12,2) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS vendor_payable NUMERIC(12,2) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS is_reconciled BOOLEAN DEFAULT false,
-  ADD COLUMN IF NOT EXISTS reconciled_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
-  ADD COLUMN IF NOT EXISTS idempotency_key TEXT,
-  ADD COLUMN IF NOT EXISTS captured_at TIMESTAMPTZ;
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  payment_intent_id UUID REFERENCES payment_intents(id) ON DELETE SET NULL,
+  vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
+  customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+  provider TEXT,
+  provider_payment_id TEXT,
+  provider_transfer_id TEXT,
+  collection_mode TEXT DEFAULT 'online' CHECK (collection_mode IN ('online', 'cash_platform', 'cash_vendor')),
+  payment_method TEXT,
+  payment_method_detail TEXT,
+  amount NUMERIC(12,2) NOT NULL,
+  gateway_fee NUMERIC(12,2) DEFAULT 0,
+  gateway_tax NUMERIC(12,2) DEFAULT 0,
+  platform_commission NUMERIC(12,2) DEFAULT 0,
+  vendor_payable NUMERIC(12,2) DEFAULT 0,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+  is_reconciled BOOLEAN DEFAULT false,
+  reconciled_at TIMESTAMPTZ,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  idempotency_key TEXT,
+  captured_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_vendor_id ON payments(vendor_id);
@@ -107,6 +142,11 @@ CREATE INDEX IF NOT EXISTS idx_payments_provider_payment_id ON payments(provider
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment_unique
   ON payments(provider, provider_payment_id)
   WHERE provider IS NOT NULL AND provider_payment_id IS NOT NULL;
+
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own payments" ON payments;
+CREATE POLICY "Vendors can view own payments" ON payments
+  FOR SELECT TO public USING (vendor_id = auth.uid());
 
 -- ---------------------------------------------------------------------------
 -- Commission ledger
@@ -135,6 +175,11 @@ CREATE INDEX IF NOT EXISTS idx_commission_ledger_vendor_id ON commission_ledger(
 CREATE INDEX IF NOT EXISTS idx_commission_ledger_status ON commission_ledger(status);
 CREATE INDEX IF NOT EXISTS idx_commission_ledger_created_at ON commission_ledger(created_at);
 
+ALTER TABLE commission_ledger ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own commission ledger" ON commission_ledger;
+CREATE POLICY "Vendors can view own commission ledger" ON commission_ledger
+  FOR SELECT TO public USING (vendor_id = auth.uid());
+
 -- ---------------------------------------------------------------------------
 -- Vendor wallet ledger (append-only accounting)
 -- ---------------------------------------------------------------------------
@@ -159,12 +204,17 @@ CREATE INDEX IF NOT EXISTS idx_vendor_wallet_ledger_vendor_id ON vendor_wallet_l
 CREATE INDEX IF NOT EXISTS idx_vendor_wallet_ledger_created_at ON vendor_wallet_ledger(created_at);
 CREATE INDEX IF NOT EXISTS idx_vendor_wallet_ledger_status ON vendor_wallet_ledger(status);
 
+ALTER TABLE vendor_wallet_ledger ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own wallet ledger" ON vendor_wallet_ledger;
+CREATE POLICY "Vendors can view own wallet ledger" ON vendor_wallet_ledger
+  FOR SELECT TO public USING (vendor_id = auth.uid());
+
 -- ---------------------------------------------------------------------------
 -- Payout orchestration tables
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS payout_batches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider TEXT NOT NULL DEFAULT 'razorpay',
+  provider TEXT NOT NULL DEFAULT 'cashfree',
   status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'processing', 'partially_paid', 'paid', 'failed', 'cancelled')),
   settlement_date DATE NOT NULL DEFAULT CURRENT_DATE,
   total_vendors INTEGER NOT NULL DEFAULT 0,
@@ -181,7 +231,7 @@ CREATE TABLE IF NOT EXISTS payout_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   batch_id UUID NOT NULL REFERENCES payout_batches(id) ON DELETE CASCADE,
   vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL DEFAULT 'razorpay',
+  provider TEXT NOT NULL DEFAULT 'cashfree',
   provider_payout_id TEXT,
   amount NUMERIC(12,2) NOT NULL,
   currency TEXT NOT NULL DEFAULT 'INR',
@@ -198,7 +248,6 @@ CREATE INDEX IF NOT EXISTS idx_payout_items_batch_id ON payout_items(batch_id);
 CREATE INDEX IF NOT EXISTS idx_payout_items_vendor_id ON payout_items(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_payout_items_status ON payout_items(status);
 
--- FK to payout_items from vendor_wallet_ledger (created after payout_items table)
 DO $$
 BEGIN
   ALTER TABLE vendor_wallet_ledger
@@ -208,7 +257,17 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
+ALTER TABLE payout_batches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payout_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vendors can view own payout items" ON payout_items;
+CREATE POLICY "Vendors can view own payout items" ON payout_items
+  FOR SELECT TO public USING (vendor_id = auth.uid());
+-- payout_batches has no vendor_id (one batch covers many vendors) — only
+-- service_role (admin backend) touches it directly; no client-facing policy needed.
+
+-- ---------------------------------------------------------------------------
 -- Atomic wallet append helper to avoid race conditions on balance_after.
+-- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION append_vendor_wallet_entry(
   p_vendor_id UUID,
   p_order_id UUID DEFAULT NULL,
@@ -246,30 +305,12 @@ BEGIN
   END IF;
 
   INSERT INTO vendor_wallet_ledger (
-    vendor_id,
-    order_id,
-    payment_id,
-    payout_item_id,
-    entry_type,
-    source_type,
-    amount,
-    balance_after,
-    status,
-    notes,
-    metadata
+    vendor_id, order_id, payment_id, payout_item_id, entry_type, source_type,
+    amount, balance_after, status, notes, metadata
   )
   VALUES (
-    p_vendor_id,
-    p_order_id,
-    p_payment_id,
-    p_payout_item_id,
-    p_entry_type,
-    p_source_type,
-    ABS(p_amount),
-    (prev_balance + signed_amount),
-    p_status,
-    p_notes,
-    COALESCE(p_metadata, '{}'::jsonb)
+    p_vendor_id, p_order_id, p_payment_id, p_payout_item_id, p_entry_type, p_source_type,
+    ABS(p_amount), (prev_balance + signed_amount), p_status, p_notes, COALESCE(p_metadata, '{}'::jsonb)
   )
   RETURNING * INTO inserted_row;
 

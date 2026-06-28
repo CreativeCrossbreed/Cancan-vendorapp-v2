@@ -146,7 +146,7 @@ async function processMessage(message: any, customerPhone: string) {
   // Look up customer
   const { data: customer } = await supabaseAdmin
     .from('customers')
-    .select('id, name, address, latitude, longitude')
+    .select('id, name, address, latitude, longitude, vendor_id')
     .eq('phone', customerPhone)
     .single();
 
@@ -156,12 +156,15 @@ async function processMessage(message: any, customerPhone: string) {
     return;
   }
 
-  // ── EXISTING CUSTOMER: link to new vendor if ref code sent ──
-  if (vendorId) {
+  // ── EXISTING CUSTOMER: scanning a new vendor's ref code reassigns
+  // ownership (Model A — one owning vendor at a time via customers.vendor_id) ──
+  if (vendorId && customer.vendor_id !== vendorId) {
+    await supabaseAdmin.from('customers').update({ vendor_id: vendorId }).eq('id', customer.id);
     await supabaseAdmin.from('customer_vendors').upsert(
       { customer_id: customer.id, vendor_id: vendorId },
       { onConflict: 'customer_id,vendor_id' }
     );
+    customer.vendor_id = vendorId;
     await sendWhatsAppMessage(
       customerPhone,
       `👋 Welcome back, ${customer.name}! You've been linked to a new vendor.`
@@ -736,9 +739,14 @@ async function handleOnboarding(
 }
 
 async function finaliseOnboarding(phone: string, session: any, address: string) {
+  // customers.vendor_id is the real ownership column RLS is scoped on
+  // (UNIQUE(vendor_id, phone) — a phone can exist under multiple vendors as
+  // separate rows). Must be set at insert time, not only in customer_vendors,
+  // or this customer becomes invisible to the vendor's own app/dashboard.
   const { data: newCustomer, error } = await supabaseAdmin
     .from('customers')
     .insert({
+      vendor_id: session.vendor_id || null,
       phone,
       name: session.name,
       address,
@@ -818,21 +826,8 @@ async function sendCanCountButtons(phone: string, brandName: string | null = nul
 }
 
 async function resolveVendorForCustomerFlow(customer: any): Promise<string | null> {
-  const { data: vendorLink } = await supabaseAdmin
-    .from('customer_vendors')
-    .select('vendor_id')
-    .eq('customer_id', customer.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (vendorLink?.vendor_id) return String(vendorLink.vendor_id);
-
-  const nearestVendorId = await resolveNearestVendor(customer);
-  if (!nearestVendorId) return null;
-
-  await linkCustomerVendor(customer.id, nearestVendorId);
-  return nearestVendorId;
+  const { vendorId } = await resolveOwningVendor(customer);
+  return vendorId;
 }
 
 async function showBrandCatalog(phone: string, customer: any, existingVendorId?: string | null) {
@@ -980,8 +975,9 @@ async function resolveNearestVendorFallback(customer: any, radiusKm: number): Pr
 
   const { data: vendors, error: vendorError } = await supabaseAdmin
     .from('vendors')
-    .select('id, latitude, longitude, is_active')
+    .select('id, latitude, longitude, is_active, is_on_vacation')
     .eq('is_active', true)
+    .eq('is_on_vacation', false)
     .limit(500);
 
   if (vendorError || !vendors || vendors.length === 0) {
@@ -1096,30 +1092,53 @@ async function linkCustomerVendor(customerId: string, vendorId: string) {
   );
 }
 
+/**
+ * Model A: a customer is owned by exactly one vendor at a time
+ * (customers.vendor_id, RLS-enforced). But that owning vendor can go on
+ * vacation or become inactive — when that happens the customer must be
+ * reassigned to an available alternative rather than getting stuck unable
+ * to order. Moves the customer (updates vendor_id in place) rather than
+ * creating a second customer row, since vendor_id is a single-owner column.
+ */
+async function resolveOwningVendor(customer: any): Promise<{ vendorId: string | null; reassigned: boolean }> {
+  const currentVendorId = customer?.vendor_id ? String(customer.vendor_id) : null;
+
+  if (currentVendorId) {
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors')
+      .select('id, is_active, is_on_vacation')
+      .eq('id', currentVendorId)
+      .maybeSingle();
+
+    if (vendor && vendor.is_active && !vendor.is_on_vacation) {
+      return { vendorId: currentVendorId, reassigned: false };
+    }
+    console.warn(`Customer ${customer.id}'s vendor ${currentVendorId} is unavailable (active=${vendor?.is_active}, vacation=${vendor?.is_on_vacation}) — reassigning.`);
+  }
+
+  const nearestVendorId = await resolveNearestVendor(customer);
+  if (!nearestVendorId) {
+    return { vendorId: null, reassigned: false };
+  }
+
+  await supabaseAdmin.from('customers').update({ vendor_id: nearestVendorId }).eq('id', customer.id);
+  await linkCustomerVendor(customer.id, nearestVendorId);
+  customer.vendor_id = nearestVendorId;
+  return { vendorId: nearestVendorId, reassigned: currentVendorId !== null };
+}
+
 async function resolveOrderFinancials(
   customer: any,
   canCount: number,
   selectedProductId?: string | null,
 ): Promise<ResolvedOrderFinancials> {
-  const { data: vendorLink } = await supabaseAdmin
-    .from('customer_vendors')
-    .select('vendor_id')
-    .eq('customer_id', customer.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let vendorId = vendorLink?.vendor_id ?? null;
-  let vendorResolutionSource: ResolvedOrderFinancials['vendorResolutionSource'] = vendorId ? 'linked' : 'none';
-
-  if (!vendorId) {
-    const nearestVendorId = await resolveNearestVendor(customer);
-    if (nearestVendorId) {
-      vendorId = nearestVendorId;
-      vendorResolutionSource = 'nearest_2km';
-      await linkCustomerVendor(customer.id, nearestVendorId);
-    }
-  }
+  const { vendorId: resolvedVendorId, reassigned } = await resolveOwningVendor(customer);
+  let vendorId = resolvedVendorId;
+  let vendorResolutionSource: ResolvedOrderFinancials['vendorResolutionSource'] = !vendorId
+    ? 'none'
+    : reassigned
+      ? 'nearest_2km'
+      : 'linked';
 
   let policyId: string | null = null;
   let commissionPerBottle = DEFAULT_PER_BOTTLE_COMMISSION;
@@ -1791,12 +1810,11 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
   }
 }
 
+/** Returns the customer's current owning vendor (customers.vendor_id — Model A). */
 async function getCustomerVendor(customerId: string) {
   return await supabaseAdmin
-    .from('customer_vendors')
+    .from('customers')
     .select('vendor_id, vendors(name, phone)')
-    .eq('customer_id', customerId)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', customerId)
     .single();
 }

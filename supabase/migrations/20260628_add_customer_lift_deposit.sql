@@ -1,7 +1,8 @@
 -- Vendor-facing customer database needs lift-access (affects delivery
--- effort/time) and deposit-amount (refundable can deposit collected from
--- the customer) — neither existed on customers before.
+-- effort/time). Deposit amount is NOT added here — the real production
+-- schema already has `customers.deposit_paid` for exactly this purpose
+-- (refundable can deposit), so the app reuses that column instead of
+-- creating a duplicate `deposit_amount` column.
 
 ALTER TABLE IF EXISTS customers
-  ADD COLUMN IF NOT EXISTS has_lift BOOLEAN,
-  ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0.0;
+  ADD COLUMN IF NOT EXISTS has_lift BOOLEAN;

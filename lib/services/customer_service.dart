@@ -27,14 +27,18 @@ class VendorCustomer {
       address: json['address'] as String? ?? '',
       floor: json['floor'] as String?,
       hasLift: json['has_lift'] as bool?,
-      depositAmount: (json['deposit_amount'] as num?)?.toDouble() ?? 0.0,
+      // Reuses the existing `deposit_paid` column (refundable can deposit) —
+      // there is no separate `deposit_amount` column on the real schema.
+      depositAmount: (json['deposit_paid'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
 
 /// Customer Service — vendor-facing customer database (read + edit
-/// delivery-relevant fields like floor/lift/deposit). Scoped via
-/// customer_vendors RLS to only the vendor's own linked customers.
+/// delivery-relevant fields like floor/lift/deposit). Each customer belongs
+/// to exactly one vendor via customers.vendor_id (direct ownership, not a
+/// many-to-many join table) — RLS on `customers` already scopes this to
+/// `vendor_id = auth.uid()`.
 class CustomerService {
   final _supabase = SupabaseConfig.client;
 
@@ -43,15 +47,12 @@ class CustomerService {
     if (vendorId == null) return [];
 
     try {
-      var query = _supabase
-          .from('customer_vendors')
-          .select('customers(id, name, phone, address, floor, has_lift, deposit_amount)')
+      final response = await _supabase
+          .from('customers')
+          .select('id, name, phone, address, floor, has_lift, deposit_paid')
           .eq('vendor_id', vendorId);
 
-      final response = await query;
       var customers = (response as List)
-          .map((row) => row['customers'])
-          .where((c) => c != null)
           .map((c) => VendorCustomer.fromJson(c as Map<String, dynamic>))
           .toList();
 
@@ -80,7 +81,7 @@ class CustomerService {
       final updates = <String, dynamic>{};
       if (floor != null) updates['floor'] = floor;
       if (hasLift != null) updates['has_lift'] = hasLift;
-      if (depositAmount != null) updates['deposit_amount'] = depositAmount;
+      if (depositAmount != null) updates['deposit_paid'] = depositAmount;
 
       if (updates.isEmpty) return {'success': true};
 

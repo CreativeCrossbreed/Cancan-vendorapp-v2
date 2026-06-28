@@ -22,9 +22,6 @@ export async function POST(req: NextRequest) {
             landmark,
             latitude,
             longitude,
-            city,
-            state,
-            pincode,
         } = body;
 
         // Validate required fields
@@ -50,11 +47,16 @@ export async function POST(req: NextRequest) {
             return Response.json({ error: 'Vendor not found' }, { status: 404 });
         }
 
-        // If this phone is already a known customer, do NOT let an
-        // unauthenticated onboarding POST silently overwrite their existing
-        // name/address (anyone who guesses/knows a phone number could
-        // otherwise corrupt a real customer's profile). Just link them to
-        // the new vendor and return their existing record untouched.
+        // Model A: a customer is owned by exactly one vendor at a time
+        // (customers.vendor_id). Lookup is by phone GLOBALLY, not scoped to
+        // this vendor — a phone number identifies one customer identity,
+        // who may currently belong to a different vendor. Scanning a new
+        // vendor's QR code is treated as an explicit request to switch —
+        // we move the existing row (update vendor_id) rather than creating
+        // a second row for the same person. Do NOT let an unauthenticated
+        // POST overwrite their existing name/address though (anyone who
+        // guesses/knows a phone number could otherwise corrupt a real
+        // customer's profile) — only vendor_id changes on reassignment.
         const { data: existingCustomer } = await supabaseAdmin
             .from('customers')
             .select('*')
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
             const inserted = await supabaseAdmin
                 .from('customers')
                 .insert({
+                    vendor_id: vendorId,
                     phone,
                     name,
                     address,
@@ -77,16 +80,21 @@ export async function POST(req: NextRequest) {
                     landmark: landmark || null,
                     latitude: latitude || null,
                     longitude: longitude || null,
-                    city: city || null,
-                    state: state || null,
-                    pincode: pincode || null,
                     is_verified: true,
-                    verification_status: 'verified',
                 })
                 .select()
                 .single();
             customer = inserted.data;
             customerError = inserted.error;
+        } else if (existingCustomer.vendor_id !== vendorId) {
+            const { data: reassigned, error: reassignError } = await supabaseAdmin
+                .from('customers')
+                .update({ vendor_id: vendorId })
+                .eq('id', existingCustomer.id)
+                .select()
+                .single();
+            customer = reassigned;
+            customerError = reassignError;
         }
 
         if (customerError || !customer) {
@@ -97,15 +105,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Link customer to vendor (ignore if already linked)
+        // Also record the relationship in customer_vendors for any code that
+        // still reads the historical multi-vendor linking table.
         await supabaseAdmin
             .from('customer_vendors')
             .upsert(
-                {
-                    customer_id: customer.id,
-                    vendor_id: vendorId,
-                    referral_source: 'qr_code',
-                },
+                { customer_id: customer.id, vendor_id: vendorId },
                 { onConflict: 'customer_id,vendor_id' }
             );
 
