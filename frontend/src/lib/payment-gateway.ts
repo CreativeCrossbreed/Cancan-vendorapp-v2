@@ -34,7 +34,7 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
       }
       return {
         providerOrderId: `mock_rzp_${params.receipt}`,
-        checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/mock-payment?provider=razorpay&receipt=${encodeURIComponent(params.receipt)}`,
+        checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cancanindia.com'}/mock-payment?provider=razorpay&receipt=${encodeURIComponent(params.receipt)}`,
       };
     }
 
@@ -79,7 +79,7 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
     }
     return {
       providerOrderId: `mock_cf_${params.receipt}`,
-      checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/mock-payment?provider=cashfree&receipt=${encodeURIComponent(params.receipt)}`,
+      checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cancanindia.com'}/mock-payment?provider=cashfree&receipt=${encodeURIComponent(params.receipt)}`,
     };
   }
 
