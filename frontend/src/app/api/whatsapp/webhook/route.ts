@@ -466,12 +466,22 @@ async function handleActiveSession(
 
       if (id.startsWith('pay_cod_')) {
         const orderId = id.replace('pay_cod_', '');
-        await supabaseAdmin
+        const { data: codOrder } = await supabaseAdmin
           .from('orders')
           .update({ payment_method: 'cash', payment_state: 'pending_cod' })
-          .eq('id', orderId);
+          .eq('id', orderId)
+          .select('total_amount, order_number')
+          .maybeSingle();
         await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
-        await sendWhatsAppMessage(phone, `✅ Got it! You'll pay cash on delivery.\n\nYour vendor will collect payment when they drop off your water can. 🚰`);
+        const codAmt = Number((codOrder as any)?.total_amount || 0);
+        await sendWhatsAppMessage(
+          phone,
+          `✅ *Cash on Delivery selected!*\n\n` +
+            `💵 Please keep *₹${codAmt.toFixed(0)}* ready when your water arrives.\n` +
+            `🚚 Your delivery partner will collect the payment at your door.\n\n` +
+            `💡 _Tip: exact change makes the handover quicker!_\n\n` +
+            `Thank you for choosing Can Can 💙 We'll message you when your order is out for delivery.`
+        );
         await showMainMenu(phone, customer.name);
         return;
       }
@@ -505,17 +515,32 @@ async function handleActiveSession(
           const checkoutUrl = paymentIntent.checkout_url || providerOrder.checkoutUrl;
           await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
           if (checkoutUrl) {
-            await sendReplyButtons(phone, `💳 Tap below to pay ₹${amount.toFixed(0)} securely online:`, [
-              { id: 'noop', title: '🔗 Open Payment Link' },
-            ]);
-            await sendWhatsAppMessage(phone, checkoutUrl);
+            await sendWhatsAppMessage(
+              phone,
+              `💳 *Here's your secure payment link for ₹${amount.toFixed(0)}:*\n\n` +
+                `${checkoutUrl}\n\n` +
+                `👆 Tap the link above to pay via UPI, card, or netbanking.\n\n` +
+                `🔒 Payments are processed securely — we never see your card or UPI details.\n` +
+                `✅ You'll get an instant confirmation here once the payment goes through.\n\n` +
+                `_Changed your mind? No problem — you can always pay cash when your water arrives._`
+            );
           } else {
-            await sendWhatsAppMessage(phone, `Sorry, we couldn't generate a payment link right now. Please pay cash on delivery.`);
+            await sendWhatsAppMessage(
+              phone,
+              `😕 Sorry, we couldn't create your payment link right now.\n\n` +
+                `💵 No worries — you can simply pay *₹${amount.toFixed(0)}* in cash when your water is delivered.\n\n` +
+                `Your order is confirmed and on track! 👍`
+            );
           }
         } catch (e) {
           console.error('Payment link error:', e);
           await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
-          await sendWhatsAppMessage(phone, `Sorry, we couldn't generate a payment link. Please pay cash on delivery.`);
+          await sendWhatsAppMessage(
+            phone,
+            `😕 Sorry, we couldn't create your payment link right now.\n\n` +
+              `💵 No worries — you can simply pay in cash when your water is delivered.\n\n` +
+              `Your order is confirmed and on track! 👍`
+          );
         }
         await showMainMenu(phone, customer.name);
         return;
@@ -531,10 +556,17 @@ async function handleActiveSession(
       .maybeSingle();
     if (pendingOrder) {
       const amt = Number((pendingOrder as any).total_amount || 0);
-      await sendReplyButtons(phone, `💳 *How would you like to pay?*\n\nTotal: ₹${amt.toFixed(0)}`, [
-        { id: `pay_online_${(pendingOrder as any).id}`, title: '💳 Pay Online Now' },
-        { id: `pay_cod_${(pendingOrder as any).id}`, title: '💵 Cash on Delivery' },
-      ]);
+      await sendReplyButtons(
+        phone,
+        `💳 *How would you like to pay ₹${amt.toFixed(0)}?*\n\n` +
+          `1️⃣ *Pay Online* — quick & secure UPI / card / netbanking. We'll send you a payment link right here.\n\n` +
+          `2️⃣ *Cash on Delivery* — pay in cash when your water arrives.\n\n` +
+          `Choose whichever is easier for you 👇`,
+        [
+          { id: `pay_online_${(pendingOrder as any).id}`, title: '💳 Pay Online' },
+          { id: `pay_cod_${(pendingOrder as any).id}`, title: '💵 Cash on Delivery' },
+        ]
+      );
     } else {
       await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
       await showMainMenu(phone, customer.name);
@@ -1569,13 +1601,36 @@ async function placeOrder(phone: string, customer: any, session: any) {
     evening: 'Evening (3pm–9pm)',
   };
 
+  // Vendor name makes the confirmation feel personal and tells the
+  // customer who will actually show up at their door.
+  let vendorName = 'your Can Can vendor';
+  if (order.vendor_id) {
+    const { data: v } = await supabaseAdmin
+      .from('vendors')
+      .select('business_name, name')
+      .eq('id', order.vendor_id)
+      .maybeSingle();
+    vendorName = (v as any)?.business_name || (v as any)?.name || vendorName;
+  }
+
+  const orderAmount = Number(order.total_amount || 0);
+  const canCount = Number(order.can_count || session.can_count || 1);
+  const orderRef = order.order_number || String(order.id).slice(0, 8).toUpperCase();
+
   await sendWhatsAppMessage(
     phone,
-    `🎉 *Your order has been placed!* 💧\n\n📦 Order ID: *${order.id}*\n📅 Expected Delivery: ${new Date(order.delivery_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}\n⏰ Time Slot: ${slotLabels[order.time_slot] || order.time_slot}\n\n_We'll notify you once the vendor confirms._`
+    `🎉 *Order confirmed — thank you, ${customer.name}!* 💧\n\n` +
+      `🧾 Order No: *${orderRef}*\n` +
+      `💧 Items: ${canCount} Water Can${canCount > 1 ? 's' : ''}\n` +
+      `💰 Total: *₹${orderAmount.toFixed(0)}*\n` +
+      `📍 Delivery Address: ${order.delivery_address || customer.address}\n` +
+      `📅 Delivery Date: ${new Date(order.delivery_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}\n` +
+      `⏰ Time Slot: ${slotLabels[order.time_slot] || order.time_slot}\n` +
+      `🚚 Delivered by: *${vendorName}*\n\n` +
+      `_We'll send you updates here on WhatsApp as your order progresses._`
   );
 
   // Ask customer how they want to pay
-  const orderAmount = Number(order.total_amount || 0);
   await supabaseAdmin
     .from('whatsapp_sessions')
     .upsert(
@@ -1585,9 +1640,12 @@ async function placeOrder(phone: string, customer: any, session: any) {
 
   await sendReplyButtons(
     phone,
-    `💳 *How would you like to pay?*\n\nTotal: ₹${orderAmount.toFixed(0)}`,
+    `💳 *How would you like to pay ₹${orderAmount.toFixed(0)}?*\n\n` +
+      `1️⃣ *Pay Online* — quick & secure UPI / card / netbanking. We'll send you a payment link right here.\n\n` +
+      `2️⃣ *Cash on Delivery* — pay ${vendorName} in cash when your water arrives.\n\n` +
+      `Choose whichever is easier for you 👇`,
     [
-      { id: `pay_online_${order.id}`, title: '💳 Pay Online Now' },
+      { id: `pay_online_${order.id}`, title: '💳 Pay Online' },
       { id: `pay_cod_${order.id}`, title: '💵 Cash on Delivery' },
     ]
   );
@@ -1618,9 +1676,16 @@ async function repeatLastOrder(phone: string, customer: any) {
     evening: 'Evening (3pm–9pm)',
   };
 
+  const lastAmt = Number(lastOrder.total_amount || 0);
   await sendReplyButtons(
     phone,
-    `🔁 *Your last order:*\n\n💧 ${lastOrder.can_count} Water Can${lastOrder.can_count > 1 ? 's' : ''}\n📍 ${lastOrder.delivery_address}\n⏰ ${slotLabels[lastOrder.time_slot] || lastOrder.time_slot}`,
+    `🔁 *Repeat your last order?*\n\n` +
+      `💧 ${lastOrder.can_count} Water Can${lastOrder.can_count > 1 ? 's' : ''}\n` +
+      `💰 Total: ₹${lastAmt.toFixed(0)}\n` +
+      `📍 ${lastOrder.delivery_address}\n` +
+      `⏰ ${slotLabels[lastOrder.time_slot] || lastOrder.time_slot}\n` +
+      `📅 Delivery: *Today*\n\n` +
+      `Tap *Confirm* to place this order for today, or change the time slot first 👇`,
     [
       { id: 'repeat_confirm', title: '✅ Confirm' },
       { id: 'repeat_change_slot', title: '🕐 Change Time Slot' },
