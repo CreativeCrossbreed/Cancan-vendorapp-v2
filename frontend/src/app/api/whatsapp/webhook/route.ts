@@ -481,7 +481,7 @@ async function handleActiveSession(
         try {
           const { data: ord } = await supabaseAdmin.from('orders').select('total_amount').eq('id', orderId).single();
           const amount = Number((ord as any)?.total_amount || 0);
-          const provider = (process.env.PAYMENT_PROVIDER_DEFAULT || 'razorpay') as 'razorpay' | 'cashfree';
+          const provider = (process.env.PAYMENT_PROVIDER_DEFAULT || 'cashfree') as 'razorpay' | 'cashfree';
           const receipt = `wa_${orderId.slice(0, 8)}_${Date.now()}`;
           const providerOrder = await createProviderOrder({
             provider,
