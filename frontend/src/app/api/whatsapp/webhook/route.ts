@@ -505,10 +505,11 @@ async function handleActiveSession(
         const today = new Date().toISOString().split('T')[0];
         await supabaseAdmin
           .from('whatsapp_sessions')
-          .update({ time_slot: slot, delivery_date: today })
+          .update({ time_slot: slot, delivery_date: today, state: 'awaiting_confirmation' })
           .eq('id', session.id);
         session.time_slot = slot;
         session.delivery_date = today;
+        session.state = 'awaiting_confirmation';
         await placeOrder(phone, customer, session);
         return;
       }
