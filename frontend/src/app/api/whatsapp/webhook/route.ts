@@ -549,13 +549,15 @@ async function handleActiveSession(
       const id = message.interactive.button_reply.id;
 
       if (id === 'repeat_confirm') {
-        // Place repeat order with today's date and stored time_slot
+        // Place repeat order with today's date and stored time_slot.
+        // placeOrder's idempotency lock only proceeds from awaiting_confirmation.
         const today = new Date().toISOString().split('T')[0];
         await supabaseAdmin
           .from('whatsapp_sessions')
-          .update({ delivery_date: today })
+          .update({ delivery_date: today, state: 'awaiting_confirmation' })
           .eq('id', session.id);
         session.delivery_date = today;
+        session.state = 'awaiting_confirmation';
         await placeOrder(phone, customer, session);
         return;
       }
@@ -1633,6 +1635,7 @@ async function repeatLastOrder(phone: string, customer: any) {
       customer_id: customer.id,
       can_count: lastOrder.can_count,
       time_slot: lastOrder.time_slot,
+      vendor_id: lastOrder.vendor_id || customer.vendor_id || null,
     },
     { onConflict: 'phone_number' }
   );
