@@ -1623,7 +1623,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
       `🧾 Order No: *${orderRef}*\n` +
       `💧 Items: ${canCount} Water Can${canCount > 1 ? 's' : ''}\n` +
       `💰 Total: *₹${orderAmount.toFixed(0)}*\n` +
-      `📍 Delivery Address: ${order.delivery_address || customer.address}\n` +
+      `📍 Delivery Address: ${(order as any).delivery_address || customer.address}\n` +
       `📅 Delivery Date: ${new Date(order.delivery_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}\n` +
       `⏰ Time Slot: ${slotLabels[order.time_slot] || order.time_slot}\n` +
       `🚚 Delivered by: *${vendorName}*\n\n` +
