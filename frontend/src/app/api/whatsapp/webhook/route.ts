@@ -286,6 +286,22 @@ async function handleActiveSession(
 ) {
   const state: string = session.state;
 
+  // Main-menu buttons always win over a stale mid-flow session — a customer
+  // tapping "New Order" from an old menu expects a fresh start, not to be
+  // dropped into whatever step their abandoned session was stuck on.
+  // (Exception: awaiting_payment_choice keeps its own fallback so a just-placed
+  // order's payment question isn't silently discarded.)
+  if (
+    message.type === 'interactive' &&
+    message.interactive.type === 'button_reply' &&
+    String(message.interactive.button_reply.id).startsWith('menu_') &&
+    state !== 'awaiting_payment_choice'
+  ) {
+    await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+    await handleIdleCustomer(message, phone, customer);
+    return;
+  }
+
   // ── ORDER FLOW ────────────────────────────────────────────
 
   if (state === 'awaiting_brand') {
