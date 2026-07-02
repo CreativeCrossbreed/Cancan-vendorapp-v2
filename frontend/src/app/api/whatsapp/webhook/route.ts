@@ -458,6 +458,90 @@ async function handleActiveSession(
     return;
   }
 
+  // ── PAYMENT CHOICE FLOW ───────────────────────────────────
+
+  if (state === 'awaiting_payment_choice') {
+    if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
+      const id = message.interactive.button_reply.id as string;
+
+      if (id.startsWith('pay_cod_')) {
+        const orderId = id.replace('pay_cod_', '');
+        await supabaseAdmin
+          .from('orders')
+          .update({ payment_method: 'cash', payment_state: 'pending_cod' })
+          .eq('id', orderId);
+        await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
+        await sendWhatsAppMessage(phone, `✅ Got it! You'll pay cash on delivery.\n\nYour vendor will collect payment when they drop off your water can. 🚰`);
+        await showMainMenu(phone, customer.name);
+        return;
+      }
+
+      if (id.startsWith('pay_online_')) {
+        const orderId = id.replace('pay_online_', '');
+        try {
+          const { data: ord } = await supabaseAdmin.from('orders').select('total_amount').eq('id', orderId).single();
+          const amount = Number((ord as any)?.total_amount || 0);
+          const provider = (process.env.PAYMENT_PROVIDER_DEFAULT || 'razorpay') as 'razorpay' | 'cashfree';
+          const receipt = `wa_${orderId.slice(0, 8)}_${Date.now()}`;
+          const providerOrder = await createProviderOrder({
+            provider,
+            amountInPaise: Math.round(amount * 100),
+            receipt,
+            customerId: customer.id,
+            customerPhone: phone.replace(/\D/g, '').slice(-10),
+            notes: { order_id: orderId, source: 'whatsapp' },
+          });
+          const paymentIntent = await createPaymentIntentRecord({
+            orderId,
+            customerId: customer.id,
+            vendorId: session.vendor_id || null,
+            provider,
+            providerOrderId: providerOrder.providerOrderId,
+            amount,
+            checkoutUrl: providerOrder.checkoutUrl || null,
+            idempotencyKey: `wa-intent:${orderId}`,
+            metadata: { source: 'whatsapp' },
+          });
+          const checkoutUrl = paymentIntent.checkout_url || providerOrder.checkoutUrl;
+          await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
+          if (checkoutUrl) {
+            await sendReplyButtons(phone, `💳 Tap below to pay ₹${amount.toFixed(0)} securely online:`, [
+              { id: 'noop', title: '🔗 Open Payment Link' },
+            ]);
+            await sendWhatsAppMessage(phone, checkoutUrl);
+          } else {
+            await sendWhatsAppMessage(phone, `Sorry, we couldn't generate a payment link right now. Please pay cash on delivery.`);
+          }
+        } catch (e) {
+          console.error('Payment link error:', e);
+          await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
+          await sendWhatsAppMessage(phone, `Sorry, we couldn't generate a payment link. Please pay cash on delivery.`);
+        }
+        await showMainMenu(phone, customer.name);
+        return;
+      }
+    }
+    // Fallback: re-show the choice
+    const { data: pendingOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id, total_amount')
+      .eq('customer_id', customer.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (pendingOrder) {
+      const amt = Number((pendingOrder as any).total_amount || 0);
+      await sendReplyButtons(phone, `💳 *How would you like to pay?*\n\nTotal: ₹${amt.toFixed(0)}`, [
+        { id: `pay_online_${(pendingOrder as any).id}`, title: '💳 Pay Online Now' },
+        { id: `pay_cod_${(pendingOrder as any).id}`, title: '💵 Cash on Delivery' },
+      ]);
+    } else {
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
+      await showMainMenu(phone, customer.name);
+    }
+    return;
+  }
+
   // ── REPEAT LAST ORDER FLOW ─────────────────────────────────
 
   if (state === 'repeat_awaiting_choice') {
@@ -1488,49 +1572,23 @@ async function placeOrder(phone: string, customer: any, session: any) {
     `🎉 *Your order has been placed!* 💧\n\n📦 Order ID: *${order.id}*\n📅 Expected Delivery: ${new Date(order.delivery_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}\n⏰ Time Slot: ${slotLabels[order.time_slot] || order.time_slot}\n\n_We'll notify you once the vendor confirms._`
   );
 
-  // Best-effort payment link creation (non-blocking).
-  try {
-    const orderAmount = Number(order.total_amount || 0);
-    if (orderAmount > 0) {
-      const provider = (process.env.PAYMENT_PROVIDER_DEFAULT || 'razorpay') as 'razorpay' | 'cashfree';
-      const receipt = `wa_${String(order.id).slice(0, 8)}_${Date.now()}`;
-      const providerOrder = await createProviderOrder({
-        provider,
-        amountInPaise: Math.round(orderAmount * 100),
-        receipt,
-        customerId: customer.id,
-        customerPhone: phone.replace(/\D/g, '').slice(-10),
-        notes: {
-          order_id: order.id,
-          source: 'whatsapp',
-        },
-      });
+  // Ask customer how they want to pay
+  const orderAmount = Number(order.total_amount || 0);
+  await supabaseAdmin
+    .from('whatsapp_sessions')
+    .upsert(
+      { phone_number: phone, state: 'awaiting_payment_choice', customer_id: customer.id, vendor_id: resolvedFinancials?.vendorId || session.vendor_id || null },
+      { onConflict: 'phone_number' }
+    );
 
-      const paymentIntent = await createPaymentIntentRecord({
-        orderId: order.id,
-        customerId: customer.id,
-        vendorId: resolvedFinancials?.vendorId || session.vendor_id || null,
-        provider,
-        providerOrderId: providerOrder.providerOrderId,
-        amount: orderAmount,
-        checkoutUrl: providerOrder.checkoutUrl || null,
-        idempotencyKey: `wa-intent:${order.id}`,
-        metadata: {
-          source: 'whatsapp',
-        },
-      });
-
-      const checkoutUrl = paymentIntent.checkout_url || providerOrder.checkoutUrl;
-      if (checkoutUrl) {
-        await sendWhatsAppMessage(
-          phone,
-          `💳 You can pay online now: ${checkoutUrl}\n\nYou may also pay cash to Can Can at delivery.`,
-        );
-      }
-    }
-  } catch (paymentLinkError) {
-    console.error('Failed to generate WhatsApp payment link:', paymentLinkError);
-  }
+  await sendReplyButtons(
+    phone,
+    `💳 *How would you like to pay?*\n\nTotal: ₹${orderAmount.toFixed(0)}`,
+    [
+      { id: `pay_online_${order.id}`, title: '💳 Pay Online Now' },
+      { id: `pay_cod_${order.id}`, title: '💵 Cash on Delivery' },
+    ]
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
