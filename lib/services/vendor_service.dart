@@ -1,5 +1,4 @@
 import '../config/supabase_config.dart';
-import 'auth_service.dart' as auth;
 
 /// Vendor Service - Handles vendor profile CRUD operations
 class VendorService {
@@ -73,10 +72,9 @@ class VendorService {
         };
       }
 
-      // Check if we're in test mode
-      final authService = auth.AuthService();
-      final isTestMode = authService.isInTestMode;
-
+      // Real vendors table has no `test_mode` column — RLS is scoped via
+      // `auth.uid() = id` directly (see Model A), so no extra flag is needed
+      // here regardless of whether this came from a test-mode sign-in.
       await _supabase.from('vendors').insert({
         'id': vendorId,
         'phone': fullPhone,
@@ -86,12 +84,7 @@ class VendorService {
         'latitude': latitude,
         'longitude': longitude,
         'is_active': true,
-        'test_mode': isTestMode, // Mark test mode vendors for RLS policies
       });
-
-      if (isTestMode) {
-        print('🧪 Creating test mode vendor profile');
-      }
 
       print('✅ Vendor profile created successfully: $vendorId');
 

@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
@@ -11,23 +10,19 @@ class AuthService {
   // Test OTP for development - bypasses real SMS verification
   static const String _testOTP = '000000';
 
+  // This exact phone number is pinned to OTP 000000 in Supabase's own
+  // "test phone numbers" Auth setting (Dashboard → Authentication → Sign In
+  // / Providers → SMS provider → Test OTPs). Matching must be an EXACT
+  // string match against what's configured there — no +91 prefix. Using
+  // this real, pre-configured number+OTP pair means test-mode login goes
+  // through Supabase's actual OTP verification and gets a real, RLS-valid
+  // auth.uid() — unlike a locally-generated fake UUID or anonymous sign-in
+  // (which requires an Auth setting this account doesn't have permission
+  // to enable). Every test-mode login shares this one underlying identity.
+  static const String _testPhoneRaw = '9080126534';
+
   // In-memory test session (NOT persisted - lost on app restart)
   static Map<String, dynamic>? _testSession;
-
-  /// Generate a test UUID for development
-  String _generateTestUUID(String phoneNumber) {
-    final random = Random.secure();
-    final hexDigits = '0123456789abcdef';
-    final phoneHash = phoneNumber.hashCode.abs().toRadixString(16).padLeft(8, '0').substring(0, 8);
-
-    final part1 = phoneHash;
-    final part2 = List.generate(4, (_) => hexDigits[random.nextInt(16)]).join();
-    final part3 = '4${List.generate(3, (_) => hexDigits[random.nextInt(16)]).join()}';
-    final part4 = '${hexDigits[8 + random.nextInt(4)]}${List.generate(3, (_) => hexDigits[random.nextInt(16)]).join()}';
-    final part5 = List.generate(12, (_) => hexDigits[random.nextInt(16)]).join();
-
-    return '$part1-$part2-$part3-$part4-$part5';
-  }
 
   /// Send OTP to phone number
   Future<Map<String, dynamic>> sendOTP({required String phoneNumber}) async {
@@ -77,44 +72,61 @@ class AuthService {
 
     // Check for test OTP first (bypasses real SMS verification)
     if (otp == _testOTP && kDebugMode) {
-      print('🧪 TEST MODE: Using test OTP for $fullNumber');
+      print('🧪 TEST MODE: Using test OTP — routing through real Supabase OTP verification for the pinned test number');
 
-      // Create in-memory test session (LOST on app restart - NO auto-login)
-      final testVendorId = _generateTestUUID(fullNumber);
-      _testSession = {
-        'vendorId': testVendorId,
-        'phone': fullNumber,
-        'testMode': true,
-      };
+      try {
+        // Goes through the SAME real Supabase OTP flow as production mode,
+        // just with the pre-configured test phone+code pair, so we get a
+        // genuine, RLS-valid auth.uid() — not a locally-generated fake UUID
+        // and not anonymous sign-in (which needs an Auth setting this
+        // account doesn't have permission to enable).
+        await _supabase.auth.signInWithOtp(phone: _testPhoneRaw);
+        final response = await _supabase.auth.verifyOTP(
+          type: OtpType.sms,
+          phone: _testPhoneRaw,
+          token: _testOTP,
+        );
 
-      print('✅ Test mode session created: $testVendorId');
-      print('⚠️ Session is IN-MEMORY only - will be lost on app restart');
+        if (response.user == null) {
+          return {
+            'success': false,
+            'message': 'Test mode sign-in failed — no user returned.',
+          };
+        }
 
-      // Check if vendor profile exists in database for this phone number
-      final existingVendor = await _supabase
-          .from('vendors')
-          .select()
-          .eq('phone', fullNumber)
-          .maybeSingle();
+        final vendorId = response.user!.id;
+        final existingVendor = await _supabase
+            .from('vendors')
+            .select()
+            .eq('id', vendorId)
+            .maybeSingle();
 
-      final hasProfile = existingVendor != null;
-      print('📊 Database check for phone $fullNumber: ${hasProfile ? "Vendor EXISTS" : "Vendor NOT found"}');
+        final hasProfile = existingVendor != null;
+        print('📊 Test-mode vendor check: ${hasProfile ? "exists" : "needs profile setup"} (id: $vendorId)');
 
-      if (hasProfile) {
-        print('📋 Existing vendor ID: ${existingVendor['id']}');
-        print('📋 Existing vendor name: ${existingVendor['name']}');
-        print('📋 Using existing vendor ID instead of test UUID');
-        // Update test session with real vendor ID
-        _testSession!['vendorId'] = existingVendor['id'];
+        _testSession = {
+          'vendorId': vendorId,
+          'phone': fullNumber,
+          'testMode': true,
+        };
+
+        return {
+          'success': true,
+          'message': 'Login successful (test mode)',
+          'hasProfile': hasProfile,
+          'vendorId': vendorId,
+          'testMode': true,
+        };
+      } catch (e) {
+        // Surfaced explicitly (rather than letting it propagate to the OTP
+        // screen's generic "Verification failed" catch-all) so the actual
+        // cause is visible.
+        print('❌ Test mode sign-in error: $e');
+        return {
+          'success': false,
+          'message': 'Test mode error: ${e.toString()}',
+        };
       }
-
-      return {
-        'success': true,
-        'message': 'Login successful (test mode)',
-        'hasProfile': hasProfile,
-        'vendorId': _testSession!['vendorId'] as String,
-        'testMode': true,
-      };
     }
 
     // PRODUCTION MODE: Real OTP verification via Supabase

@@ -29,6 +29,12 @@ class _AppDrawerState extends State<AppDrawer> {
   Future<void> _loadVendorData() async {
     // Use cached data - no API call if cache is valid
     final data = await VendorDataService.getVendorProfile();
+    // The drawer is popped (and its State disposed) before the Business
+    // Details sheet opens, since this is also passed as that sheet's
+    // onUpdated callback — without this guard, setState here throws after
+    // a successful save, which the sheet's catch block silently swallows,
+    // leaving the sheet stuck open.
+    if (!mounted) return;
     setState(() {
       _vendorData = data;
       _isLoading = data == null; // Only show loading if no data at all

@@ -58,6 +58,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         pendingAmount += order.remainingAmount;
       }
 
+      if (!mounted) return;
       setState(() {
         _unpaidOrders = unpaid;
         _totalPending = pendingAmount;
@@ -73,14 +74,13 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       print('📊 Total Pending: Rs.$pendingAmount');
     } catch (e) {
       print('❌ Error loading payments: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.tr('failed_load_payments')),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.tr('failed_load_payments')),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
       setState(() => _isLoading = false);
     }
   }
