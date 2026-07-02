@@ -83,8 +83,12 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
     };
   }
 
-  if (process.env.NODE_ENV === 'production' && baseUrl.includes('sandbox')) {
-    throw new Error('CASHFREE_BASE_URL points at sandbox — refusing to use it in production.');
+  if (
+    process.env.NODE_ENV === 'production' &&
+    baseUrl.includes('sandbox') &&
+    process.env.ALLOW_SANDBOX_PAYMENTS !== 'true'
+  ) {
+    throw new Error('CASHFREE_BASE_URL points at sandbox — refusing to use it in production. Set ALLOW_SANDBOX_PAYMENTS=true to override while testing.');
   }
 
   const response = await fetch(`${baseUrl}/orders`, {
