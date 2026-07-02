@@ -134,7 +134,7 @@ async function processMessage(message: any, customerPhone: string) {
     .eq('customer_phone', customerPhone)
     .eq('direction', 'inbound')
     .gte('created_at', oneHourAgo);
-  if ((recentCount ?? 0) > 20) return;
+  if ((recentCount ?? 0) > 100) return;
 
   // Check for vendor ref code in the message
   let vendorId: string | null = null;
