@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/supabase_config.dart';
@@ -45,9 +46,9 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_products.length} products for catalog');
+      debugPrint('✅ Loaded ${_products.length} products for catalog');
     } catch (e) {
-      print('❌ Error loading products: $e');
+      debugPrint('❌ Error loading products: $e');
       setState(() => _isLoading = false);
     }
   }

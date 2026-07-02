@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 
 class DayAnalytics {
@@ -61,7 +62,7 @@ class AnalyticsService {
         }
       }
     } catch (e) {
-      print('❌ Error fetching delivered-orders analytics: $e');
+      debugPrint('❌ Error fetching delivered-orders analytics: $e');
     }
 
     try {
@@ -77,7 +78,7 @@ class AnalyticsService {
         newCustomersByDay[dateStr] = (newCustomersByDay[dateStr] ?? 0) + 1;
       }
     } catch (e) {
-      print('❌ Error fetching new-customer analytics: $e');
+      debugPrint('❌ Error fetching new-customer analytics: $e');
     }
 
     return List.generate(days, (i) {

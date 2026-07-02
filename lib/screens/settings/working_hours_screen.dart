@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_data_service.dart';
@@ -100,7 +101,7 @@ class _WorkingHoursScreenState extends State<WorkingHoursScreen> {
         }
       }
     } catch (e) {
-      print('❌ Error loading working hours: $e');
+      debugPrint('❌ Error loading working hours: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -153,7 +154,7 @@ class _WorkingHoursScreenState extends State<WorkingHoursScreen> {
       await VendorDataService.clearCache();
       return true;
     } catch (e) {
-      print('❌ Error saving working hours: $e');
+      debugPrint('❌ Error saving working hours: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

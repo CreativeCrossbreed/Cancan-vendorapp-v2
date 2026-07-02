@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 
 /// Vendor Service - Handles vendor profile CRUD operations
@@ -17,11 +18,11 @@ class VendorService {
       // Add +91 prefix if not present
       final fullPhone = phone.startsWith('+91') ? phone : '+91$phone';
 
-      print('📝 Creating vendor profile...');
-      print('   Phone: $fullPhone');
-      print('   Name: $name');
-      print('   Business: $businessName');
-      print('   Address: $address');
+      debugPrint('📝 Creating vendor profile...');
+      debugPrint('   Phone: $fullPhone');
+      debugPrint('   Name: $name');
+      debugPrint('   Business: $businessName');
+      debugPrint('   Address: $address');
 
       // Check if vendor already exists by phone
       final existing = await _supabase
@@ -31,9 +32,9 @@ class VendorService {
           .maybeSingle();
 
       if (existing != null) {
-        print('⚠️ Vendor already exists with phone: $fullPhone');
-        print('📋 Existing vendor ID: ${existing['id']}');
-        print('📋 Existing vendor name: ${existing['name']}');
+        debugPrint('⚠️ Vendor already exists with phone: $fullPhone');
+        debugPrint('📋 Existing vendor ID: ${existing['id']}');
+        debugPrint('📋 Existing vendor name: ${existing['name']}');
 
         // Update the existing vendor's details
         final updated = await _supabase
@@ -50,7 +51,7 @@ class VendorService {
             .select()
             .single();
 
-        print('✅ Existing vendor profile updated: ${updated['id']}');
+        debugPrint('✅ Existing vendor profile updated: ${updated['id']}');
 
         return {
           'success': true,
@@ -65,7 +66,7 @@ class VendorService {
       final vendorId = SupabaseConfig.currentVendorId;
 
       if (vendorId == null) {
-        print('❌ No authenticated user found');
+        debugPrint('❌ No authenticated user found');
         return {
           'success': false,
           'message': 'User not authenticated. Please login again.',
@@ -86,7 +87,7 @@ class VendorService {
         'is_active': true,
       });
 
-      print('✅ Vendor profile created successfully: $vendorId');
+      debugPrint('✅ Vendor profile created successfully: $vendorId');
 
       return {
         'success': true,
@@ -95,8 +96,8 @@ class VendorService {
         'created': true,
       };
     } catch (e) {
-      print('❌ Error creating vendor profile: $e');
-      print('   Error type: ${e.runtimeType}');
+      debugPrint('❌ Error creating vendor profile: $e');
+      debugPrint('   Error type: ${e.runtimeType}');
       return {
         'success': false,
         'message': 'Failed to create profile: ${e.toString()}',
@@ -116,7 +117,7 @@ class VendorService {
 
       return data;
     } catch (e) {
-      print('Error fetching vendor profile: $e');
+      debugPrint('Error fetching vendor profile: $e');
       return null;
     }
   }
@@ -164,7 +165,7 @@ class VendorService {
         'message': 'Profile updated successfully',
       };
     } catch (e) {
-      print('Error updating vendor profile: $e');
+      debugPrint('Error updating vendor profile: $e');
       return {
         'success': false,
         'message': 'Failed to update profile.',
@@ -200,7 +201,7 @@ class VendorService {
             isOnVacation ? 'Vacation mode enabled' : 'Vacation mode disabled',
       };
     } catch (e) {
-      print('Error setting vacation mode: $e');
+      debugPrint('Error setting vacation mode: $e');
       return {
         'success': false,
         'message': 'Failed to update vacation mode.',
@@ -242,7 +243,7 @@ class VendorService {
         'earnings': totalEarnings,
       };
     } catch (e) {
-      print('Error fetching daily summary: $e');
+      debugPrint('Error fetching daily summary: $e');
       return {'cansToDeliver': 0, 'earnings': 0.0};
     }
   }
@@ -300,7 +301,7 @@ class VendorService {
         'message': message,
       };
     } catch (e) {
-      print('Error checking vendor readiness: $e');
+      debugPrint('Error checking vendor readiness: $e');
       return {
         'isReady': false,
         'missingLocation': true,

@@ -30,9 +30,9 @@ class AuthService {
       final fullNumber =
           phoneNumber.startsWith('+91') ? phoneNumber : '+91$phoneNumber';
 
-      print('📱 Sending OTP to $fullNumber...');
+      debugPrint('📱 Sending OTP to $fullNumber...');
       if (kDebugMode) {
-        print('   (Test OTP: $_testOTP)');
+        debugPrint('   (Test OTP: $_testOTP)');
       }
 
       // Try to send real OTP via Supabase
@@ -40,12 +40,12 @@ class AuthService {
         await _supabase.auth.signInWithOtp(
           phone: fullNumber,
         );
-        print('✅ OTP sent via Supabase');
+        debugPrint('✅ OTP sent via Supabase');
       } catch (e) {
         // If SMS provider is not configured, that's OK for test mode
-        print('⚠️ SMS provider not configured: $e');
+        debugPrint('⚠️ SMS provider not configured: $e');
         if (kDebugMode) {
-          print('   Test OTP ($_testOTP) will still work');
+          debugPrint('   Test OTP ($_testOTP) will still work');
         }
       }
 
@@ -54,7 +54,7 @@ class AuthService {
         'message': 'OTP sent successfully',
       };
     } catch (e) {
-      print('Error sending OTP: $e');
+      debugPrint('Error sending OTP: $e');
       return {
         'success': false,
         'message': 'Failed to send OTP. Please try again.',
@@ -72,7 +72,7 @@ class AuthService {
 
     // Check for test OTP first (bypasses real SMS verification)
     if (otp == _testOTP && kDebugMode) {
-      print('🧪 TEST MODE: Using test OTP — routing through real Supabase OTP verification for the pinned test number');
+      debugPrint('🧪 TEST MODE: Using test OTP — routing through real Supabase OTP verification for the pinned test number');
 
       try {
         // Goes through the SAME real Supabase OTP flow as production mode,
@@ -102,7 +102,7 @@ class AuthService {
             .maybeSingle();
 
         final hasProfile = existingVendor != null;
-        print('📊 Test-mode vendor check: ${hasProfile ? "exists" : "needs profile setup"} (id: $vendorId)');
+        debugPrint('📊 Test-mode vendor check: ${hasProfile ? "exists" : "needs profile setup"} (id: $vendorId)');
 
         _testSession = {
           'vendorId': vendorId,
@@ -121,7 +121,7 @@ class AuthService {
         // Surfaced explicitly (rather than letting it propagate to the OTP
         // screen's generic "Verification failed" catch-all) so the actual
         // cause is visible.
-        print('❌ Test mode sign-in error: $e');
+        debugPrint('❌ Test mode sign-in error: $e');
         return {
           'success': false,
           'message': 'Test mode error: ${e.toString()}',
@@ -160,7 +160,7 @@ class AuthService {
         'message': 'Invalid OTP',
       };
     } catch (e) {
-      print('Error verifying OTP: $e');
+      debugPrint('Error verifying OTP: $e');
       return {
         'success': false,
         'message': 'Verification failed. Please try again.',
@@ -174,7 +174,7 @@ class AuthService {
       _testSession = null; // Clear test session
       await _supabase.auth.signOut();
     } catch (e) {
-      print('Error signing out: $e');
+      debugPrint('Error signing out: $e');
       rethrow;
     }
   }

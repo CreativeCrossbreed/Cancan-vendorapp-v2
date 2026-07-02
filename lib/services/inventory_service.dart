@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 
 /// Inventory Service - Handles inventory operations
@@ -54,9 +55,9 @@ class InventoryService {
               .update({'current_stock': newStock})
               .eq('id', vendorProducts['id']);
 
-          print('✅ Deducted $quantity from product $productId. New stock: $newStock');
+          debugPrint('✅ Deducted $quantity from product $productId. New stock: $newStock');
         } else {
-          print('⚠️ Vendor product not found for product_id: $productId');
+          debugPrint('⚠️ Vendor product not found for product_id: $productId');
         }
       }
 
@@ -65,7 +66,7 @@ class InventoryService {
         'message': 'Stock deducted successfully',
       };
     } catch (e) {
-      print('❌ Error deducting stock: $e');
+      debugPrint('❌ Error deducting stock: $e');
       return {
         'success': false,
         'message': 'Failed to deduct stock: $e',
@@ -89,7 +90,7 @@ class InventoryService {
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('❌ Error fetching vendor products: $e');
+      debugPrint('❌ Error fetching vendor products: $e');
       return [];
     }
   }

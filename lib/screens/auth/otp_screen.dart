@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import '../../config/theme.dart';
@@ -55,7 +56,7 @@ class _OTPScreenState extends State<OTPScreen> {
         if (hasProfile) {
           // Initialize vendor data cache before navigating to home
           await VendorDataService.initialize(forceRefresh: true);
-          print('✅ Vendor data cache initialized for returning user');
+          debugPrint('✅ Vendor data cache initialized for returning user');
 
           await PushNotificationService.initialize();
 

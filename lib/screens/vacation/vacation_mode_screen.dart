@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
@@ -48,7 +49,7 @@ class _VacationModeScreenState extends State<VacationModeScreen> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('❌ Error loading vacation status: $e');
+      debugPrint('❌ Error loading vacation status: $e');
       setState(() => _isLoading = false);
     }
   }

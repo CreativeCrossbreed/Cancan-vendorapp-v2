@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -28,9 +29,9 @@ void main() async {
   try {
     await SupabaseConfig.initialize();
     supabaseReady = true;
-    print('✅ Supabase initialized successfully');
+    debugPrint('✅ Supabase initialized successfully');
   } catch (e) {
-    print('❌ Supabase initialization failed: $e');
+    debugPrint('❌ Supabase initialization failed: $e');
     startupError = e.toString();
   }
 
@@ -46,7 +47,7 @@ void main() async {
       await PushNotificationService.initialize();
     }
   } catch (e) {
-    print('⚠️ Firebase/push init failed: $e');
+    debugPrint('⚠️ Firebase/push init failed: $e');
   }
 
   runApp(CanCanApp(

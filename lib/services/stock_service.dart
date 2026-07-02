@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 
 /// Stock Service - Handles stock reservation and management
@@ -18,7 +19,7 @@ class StockService {
 
       return response as int? ?? 0;
     } catch (e) {
-      print('❌ Error getting available stock: $e');
+      debugPrint('❌ Error getting available stock: $e');
       return 0;
     }
   }
@@ -36,17 +37,17 @@ class StockService {
       final success = result as bool? ?? false;
 
       if (success) {
-        print('✅ Stock reserved for order: $orderId');
+        debugPrint('✅ Stock reserved for order: $orderId');
         return {'success': true, 'message': 'Stock reserved successfully'};
       } else {
-        print('⚠️ Insufficient stock for order: $orderId');
+        debugPrint('⚠️ Insufficient stock for order: $orderId');
         return {
           'success': false,
           'message': 'Insufficient stock available'
         };
       }
     } catch (e) {
-      print('❌ Error reserving stock: $e');
+      debugPrint('❌ Error reserving stock: $e');
       return {
         'success': false,
         'message': 'Failed to reserve stock: $e'
@@ -63,10 +64,10 @@ class StockService {
         'p_order_id': orderId,
       });
 
-      print('✅ Reserved stock released for order: $orderId');
+      debugPrint('✅ Reserved stock released for order: $orderId');
       return {'success': true, 'message': 'Stock released successfully'};
     } catch (e) {
-      print('❌ Error releasing stock: $e');
+      debugPrint('❌ Error releasing stock: $e');
       return {
         'success': false,
         'message': 'Failed to release stock: $e'
@@ -84,10 +85,10 @@ class StockService {
         'p_order_id': orderId,
       });
 
-      print('✅ Reserved stock converted to delivery for order: $orderId');
+      debugPrint('✅ Reserved stock converted to delivery for order: $orderId');
       return {'success': true, 'message': 'Stock updated successfully'};
     } catch (e) {
-      print('❌ Error converting stock: $e');
+      debugPrint('❌ Error converting stock: $e');
       return {
         'success': false,
         'message': 'Failed to update stock: $e'
@@ -110,7 +111,7 @@ class StockService {
       final alertNeeded = shouldAlert as bool? ?? false;
 
       if (alertNeeded) {
-        print('🚨 Low stock alert needed for product: $productId');
+        debugPrint('🚨 Low stock alert needed for product: $productId');
         return {
           'success': true,
           'alert_needed': true,
@@ -124,7 +125,7 @@ class StockService {
         };
       }
     } catch (e) {
-      print('❌ Error checking low stock: $e');
+      debugPrint('❌ Error checking low stock: $e');
       return {
         'success': false,
         'alert_needed': false,
@@ -148,7 +149,7 @@ class StockService {
 
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      print('❌ Error fetching vendor products: $e');
+      debugPrint('❌ Error fetching vendor products: $e');
       return [];
     }
   }
@@ -164,10 +165,10 @@ class StockService {
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', vendorProductId);
 
-      print('✅ Stock updated to: $newStock');
+      debugPrint('✅ Stock updated to: $newStock');
       return {'success': true, 'message': 'Stock updated successfully'};
     } catch (e) {
-      print('❌ Error updating stock: $e');
+      debugPrint('❌ Error updating stock: $e');
       return {
         'success': false,
         'message': 'Failed to update stock: $e'
@@ -195,7 +196,7 @@ class StockService {
         newStock: newStock,
       );
     } catch (e) {
-      print('❌ Error adding stock: $e');
+      debugPrint('❌ Error adding stock: $e');
       return {
         'success': false,
         'message': 'Failed to add stock: $e'

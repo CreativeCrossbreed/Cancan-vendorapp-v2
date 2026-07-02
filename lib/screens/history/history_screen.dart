@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
@@ -96,7 +97,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Error loading history: $e');
+      debugPrint('❌ Error loading history: $e');
       setState(() => _isLoading = false);
     }
   }

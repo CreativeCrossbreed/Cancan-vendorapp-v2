@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -128,9 +129,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_pendingOrders.length} pending orders');
+      debugPrint('✅ Loaded ${_pendingOrders.length} pending orders');
     } catch (e) {
-      print('❌ Error loading data: $e');
+      debugPrint('❌ Error loading data: $e');
       setState(() => _isLoading = false);
     }
   }

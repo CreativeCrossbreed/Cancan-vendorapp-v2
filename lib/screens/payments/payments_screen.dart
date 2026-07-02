@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,10 +71,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         _isLoading = false;
       });
 
-      print('💰 Payments loaded: ${unpaid.length} unpaid orders');
-      print('📊 Total Pending: Rs.$pendingAmount');
+      debugPrint('💰 Payments loaded: ${unpaid.length} unpaid orders');
+      debugPrint('📊 Total Pending: Rs.$pendingAmount');
     } catch (e) {
-      print('❌ Error loading payments: $e');
+      debugPrint('❌ Error loading payments: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

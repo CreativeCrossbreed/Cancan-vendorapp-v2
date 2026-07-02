@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 import '../models/order.dart';
 
@@ -29,13 +30,6 @@ class PaymentService {
           .eq('id', orderId)
           .single();
 
-      if (order == null) {
-        return {
-          'success': false,
-          'message': 'Order not found',
-        };
-      }
-
       final totalAmount = (order['total_amount'] as num).toDouble();
       final currentAmountPaid = (order['amount_paid'] as num).toDouble();
       final newTotalPaid = currentAmountPaid + amount;
@@ -55,7 +49,7 @@ class PaymentService {
         'notes': notes,
       });
 
-      print('✅ Payment of ₹$amount recorded for order $orderId');
+      debugPrint('✅ Payment of ₹$amount recorded for order $orderId');
 
       return {
         'success': true,
@@ -65,7 +59,7 @@ class PaymentService {
         'paymentStatus': newTotalPaid >= totalAmount ? 'paid' : 'partial',
       };
     } catch (e) {
-      print('❌ Error recording payment: $e');
+      debugPrint('❌ Error recording payment: $e');
       return {
         'success': false,
         'message': 'Failed to record payment: ${e.toString()}',
@@ -86,7 +80,7 @@ class PaymentService {
           .map((p) => Payment.fromJson(p as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Error fetching payments: $e');
+      debugPrint('❌ Error fetching payments: $e');
       return [];
     }
   }
@@ -101,13 +95,6 @@ class PaymentService {
           .eq('id', orderId)
           .single();
 
-      if (order == null) {
-        return {
-          'success': false,
-          'message': 'Order not found',
-        };
-      }
-
       final payments = await getOrderPayments(orderId: orderId);
 
       return {
@@ -120,7 +107,7 @@ class PaymentService {
         'payments': payments,
       };
     } catch (e) {
-      print('❌ Error fetching payment summary: $e');
+      debugPrint('❌ Error fetching payment summary: $e');
       return {
         'success': false,
         'message': 'Failed to fetch payment summary',
@@ -155,7 +142,7 @@ class PaymentService {
           .map((p) => Payment.fromJson(p as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Error fetching all payments: $e');
+      debugPrint('❌ Error fetching all payments: $e');
       return [];
     }
   }
@@ -202,7 +189,7 @@ class PaymentService {
         'paymentCount': response.length,
       };
     } catch (e) {
-      print('❌ Error fetching today\'s payments: $e');
+      debugPrint('❌ Error fetching today\'s payments: $e');
       return {'totalCollected': 0.0, 'paymentCount': 0};
     }
   }

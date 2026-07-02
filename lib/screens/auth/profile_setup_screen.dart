@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
@@ -49,7 +50,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      print('💼 Saving vendor profile...');
+      debugPrint('💼 Saving vendor profile...');
 
       final latitude = double.tryParse(_latitudeController.text.trim());
       final longitude = double.tryParse(_longitudeController.text.trim());
@@ -69,19 +70,19 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
       if (!mounted) return;
 
-      print('📊 Result: ${result['success']}');
-      print('📊 Message: ${result['message']}');
-      print('📊 Vendor ID: ${result['vendorId']}');
+      debugPrint('📊 Result: ${result['success']}');
+      debugPrint('📊 Message: ${result['message']}');
+      debugPrint('📊 Vendor ID: ${result['vendorId']}');
 
       if (result['success']) {
         final vendorId = result['vendorId'] as String;
 
-        print('✅ Vendor profile created with ID: $vendorId');
+        debugPrint('✅ Vendor profile created with ID: $vendorId');
 
         // Clear and refresh cache with new vendor data
         await VendorDataService.clearCache();
         await VendorDataService.initialize(forceRefresh: true); // Force refresh from database
-        print('✅ Vendor data cache refreshed');
+        debugPrint('✅ Vendor data cache refreshed');
 
         await PushNotificationService.initialize();
 
@@ -114,7 +115,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _showError(result['message'] ?? 'Failed to create profile');
       }
     } catch (e) {
-      print('❌ Exception in _saveProfile: $e');
+      debugPrint('❌ Exception in _saveProfile: $e');
       _showError('Something went wrong: ${e.toString()}');
     } finally {
       if (mounted) {

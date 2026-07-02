@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/theme.dart';
@@ -53,9 +54,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         _isLoading = false;
       });
 
-      print('✅ Loaded ${_products.length} products');
+      debugPrint('✅ Loaded ${_products.length} products');
     } catch (e) {
-      print('❌ Error loading inventory: $e');
+      debugPrint('❌ Error loading inventory: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1029,7 +1030,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating stock: $e');
+      debugPrint('❌ Error updating stock: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1071,7 +1072,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error updating product: $e');
+      debugPrint('❌ Error updating product: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1134,7 +1135,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error deleting product: $e');
+      debugPrint('❌ Error deleting product: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1200,7 +1201,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
       _loadInventory();
     } catch (e) {
-      print('❌ Error creating product: $e');
+      debugPrint('❌ Error creating product: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 
 class VendorCustomer {
@@ -66,7 +67,7 @@ class CustomerService {
       customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       return customers;
     } catch (e) {
-      print('❌ Error fetching customers: $e');
+      debugPrint('❌ Error fetching customers: $e');
       return [];
     }
   }
@@ -88,7 +89,7 @@ class CustomerService {
       await _supabase.from('customers').update(updates).eq('id', customerId);
       return {'success': true};
     } catch (e) {
-      print('❌ Error updating customer: $e');
+      debugPrint('❌ Error updating customer: $e');
       return {'success': false, 'message': 'Failed to update customer'};
     }
   }

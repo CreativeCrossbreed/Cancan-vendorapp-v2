@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
@@ -63,9 +64,9 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
         _isLoading = false;
       });
 
-      print('✅ QR code generated for $_vendorName');
+      debugPrint('✅ QR code generated for $_vendorName');
     } catch (e) {
-      print('❌ Error loading vendor data: $e');
+      debugPrint('❌ Error loading vendor data: $e');
 
       setState(() {
         _isLoading = false;

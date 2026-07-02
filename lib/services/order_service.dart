@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
 import '../models/order.dart';
 import 'inventory_service.dart';
@@ -27,7 +28,7 @@ class OrderService {
           final missingColumn = match.group(1)!;
           if (adaptiveUpdates.containsKey(missingColumn)) {
             adaptiveUpdates.remove(missingColumn);
-            print('⚠️ Retrying order update without missing column: $missingColumn');
+            debugPrint('⚠️ Retrying order update without missing column: $missingColumn');
             if (adaptiveUpdates.isEmpty) {
               throw Exception('No compatible order fields left to update');
             }
@@ -49,13 +50,13 @@ class OrderService {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        print('⚠️ User not authenticated - cannot fetch orders');
+        debugPrint('⚠️ User not authenticated - cannot fetch orders');
         return [];
       }
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-      print('📦 Fetching $status orders for $dateStr...');
+      debugPrint('📦 Fetching $status orders for $dateStr...');
 
       final baseQuery = _supabase.from('orders').select('''
             *,
@@ -85,12 +86,12 @@ class OrderService {
               .order('time_slot', ascending: true)
           : await baseQuery.eq('status', status).order('time_slot', ascending: true);
 
-      print('✅ Found ${response.length} $status orders for $dateStr');
+      debugPrint('✅ Found ${response.length} $status orders for $dateStr');
 
       return (response as List).map((json) => Order.fromJson(json)).toList();
     } catch (e, stackTrace) {
-      print('❌ Error fetching orders for $date: $e');
-      print('❌ Stack trace: $stackTrace');
+      debugPrint('❌ Error fetching orders for $date: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       return [];
     }
   }
@@ -105,11 +106,11 @@ class OrderService {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        print('⚠️ User not authenticated - cannot fetch orders');
+        debugPrint('⚠️ User not authenticated - cannot fetch orders');
         return [];
       }
 
-      print('📦 Fetching all $status orders...');
+      debugPrint('📦 Fetching all $status orders...');
 
       final baseQuery = _supabase.from('orders').select('''
             *,
@@ -139,12 +140,12 @@ class OrderService {
               .order('delivery_date', ascending: false)
           : await baseQuery.eq('status', status).order('delivery_date', ascending: false);
 
-      print('✅ Found ${response.length} $status orders');
+      debugPrint('✅ Found ${response.length} $status orders');
 
       return (response as List).map((json) => Order.fromJson(json)).toList();
     } catch (e, stackTrace) {
-      print('❌ Error fetching orders: $e');
-      print('❌ Stack trace: $stackTrace');
+      debugPrint('❌ Error fetching orders: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       return [];
     }
   }
@@ -175,7 +176,7 @@ class OrderService {
 
       return {'pending': pending, 'completed': completed};
     } catch (e) {
-      print('❌ Error fetching order counts: $e');
+      debugPrint('❌ Error fetching order counts: $e');
       return {'pending': 0, 'completed': 0};
     }
   }
@@ -188,7 +189,7 @@ class OrderService {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        print('⚠️ User not authenticated - cannot fetch daily summary');
+        debugPrint('⚠️ User not authenticated - cannot fetch daily summary');
         return {'totalCans': 0, 'totalEarnings': 0.0};
       }
 
@@ -221,7 +222,7 @@ class OrderService {
 
       return {'totalCans': totalCans, 'totalEarnings': totalEarnings};
     } catch (e) {
-      print('❌ Error fetching daily summary for $date: $e');
+      debugPrint('❌ Error fetching daily summary for $date: $e');
       return {'totalCans': 0, 'totalEarnings': 0.0};
     }
   }
@@ -232,11 +233,11 @@ class OrderService {
     try {
       final vendorId = SupabaseConfig.currentVendorId;
       if (vendorId == null) {
-        print('⚠️ User not authenticated - cannot fetch unpaid orders');
+        debugPrint('⚠️ User not authenticated - cannot fetch unpaid orders');
         return [];
       }
 
-      print('🔍 Fetching all unpaid orders for vendor: $vendorId');
+      debugPrint('🔍 Fetching all unpaid orders for vendor: $vendorId');
 
       final response = await _supabase
           .from('orders')
@@ -264,7 +265,7 @@ class OrderService {
           .eq('vendor_id', vendorId)
           .order('delivery_date', ascending: false);
 
-      print('✅ Found ${response.length} total orders');
+      debugPrint('✅ Found ${response.length} total orders');
 
       // Filter unpaid orders on the client side (where total_amount > amount_paid)
       final unpaidOrders = (response as List).where((json) {
@@ -273,11 +274,11 @@ class OrderService {
         return totalAmount > amountPaid.toDouble();
       }).toList();
 
-      print('✅ Found ${unpaidOrders.length} unpaid orders');
+      debugPrint('✅ Found ${unpaidOrders.length} unpaid orders');
 
       return unpaidOrders.map((json) => Order.fromJson(json)).toList();
     } catch (e) {
-      print('❌ Error fetching unpaid orders: $e');
+      debugPrint('❌ Error fetching unpaid orders: $e');
       return [];
     }
   }
@@ -305,13 +306,13 @@ class OrderService {
         final inventoryService = InventoryService();
         final stockResult = await inventoryService.deductStockForOrder(orderId: orderId);
         if (!stockResult['success']) {
-          print('⚠️ Warning: ${stockResult['message']}');
+          debugPrint('⚠️ Warning: ${stockResult['message']}');
         }
       }
 
       if (updates.isNotEmpty) {
         await _updateOrderWithFallback(orderId: orderId, updates: updates);
-        print('✅ Order $orderId updated successfully');
+        debugPrint('✅ Order $orderId updated successfully');
       }
 
       return {
@@ -319,7 +320,7 @@ class OrderService {
         'message': 'Order updated successfully',
       };
     } catch (e) {
-      print('❌ Error updating order: $e');
+      debugPrint('❌ Error updating order: $e');
       return {
         'success': false,
         'message': 'Failed to update order',
@@ -343,7 +344,7 @@ class OrderService {
         'message': 'Order cancelled',
       };
     } catch (e) {
-      print('❌ Error cancelling order: $e');
+      debugPrint('❌ Error cancelling order: $e');
       return {
         'success': false,
         'message': 'Failed to cancel order',

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -57,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Error loading vendor data: $e');
+      debugPrint('❌ Error loading vendor data: $e');
       setState(() => _isLoading = false);
     }
   }

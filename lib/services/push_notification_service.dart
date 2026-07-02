@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../config/supabase_config.dart';
 
@@ -70,7 +71,7 @@ class PushNotificationService {
       );
     } catch (e) {
       // Non-fatal: push registration failing should never block app usage.
-      print('⚠️ Failed to save device token: $e');
+      debugPrint('⚠️ Failed to save device token: $e');
     }
   }
 
