@@ -54,8 +54,10 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-hub-signature-256');
 
     if (process.env.NODE_ENV === 'production' && !META_APP_SECRET) {
-      console.error('META_APP_SECRET is missing in production.');
-      return new Response('Service Misconfigured', { status: 500 });
+      // Signature verification is skipped until META_APP_SECRET is configured.
+      // Log loudly but keep serving customers — a hard 500 here silently kills
+      // the entire WhatsApp bot, which is worse than unverified webhooks.
+      console.error('META_APP_SECRET is missing in production — webhook signatures are NOT being verified. Set it in Vercel env ASAP.');
     }
 
     if (META_APP_SECRET) {
