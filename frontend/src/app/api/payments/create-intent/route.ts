@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const orderId = String(body.order_id || '');
-    const provider = (body.provider || process.env.PAYMENT_PROVIDER_DEFAULT || 'razorpay') as SupportedProvider;
+    const provider = (body.provider || process.env.PAYMENT_PROVIDER_DEFAULT || 'cashfree') as SupportedProvider;
     const idempotencyKey = String(body.idempotency_key || `${orderId}:${provider}:intent`);
 
     if (!orderId) {
