@@ -19,19 +19,35 @@ async function getWhatsAppCredentials() {
     let token = '';
     let phoneNumberId = '';
 
-    // 1) config row in whatsapp_sessions (writable via REST, no DDL needed)
+    // 1) settings table (clean home). Preferred once the migration is applied.
     try {
-        const { data: cfg } = await supabaseAdmin
-            .from('whatsapp_sessions')
-            .select('name, address')
-            .eq('phone_number', '__wa_config__')
-            .maybeSingle();
-        if (cfg) {
-            token = (cfg as any).name || '';
-            phoneNumberId = (cfg as any).address || '';
-        }
+        const { data } = await supabaseAdmin
+            .from('settings')
+            .select('key, value')
+            .in('key', ['whatsapp_api_token', 'whatsapp_phone_number_id']);
+        const s: Record<string, string> = {};
+        for (const row of data || []) s[row.key] = row.value;
+        token = s.whatsapp_api_token || '';
+        phoneNumberId = s.whatsapp_phone_number_id || '';
     } catch {
-        // ignore — fall through
+        // settings table not created yet — fall through to interim sources
+    }
+
+    // 2) interim config row in whatsapp_sessions (works with no DDL)
+    if (!token || !phoneNumberId) {
+        try {
+            const { data: cfg } = await supabaseAdmin
+                .from('whatsapp_sessions')
+                .select('name, address')
+                .eq('phone_number', '__wa_config__')
+                .maybeSingle();
+            if (cfg) {
+                token = token || (cfg as any).name || '';
+                phoneNumberId = phoneNumberId || (cfg as any).address || '';
+            }
+        } catch {
+            // ignore — fall through
+        }
     }
 
     // 2) app_settings table (may not exist)
