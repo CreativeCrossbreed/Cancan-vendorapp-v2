@@ -288,11 +288,40 @@ async function handleActiveSession(
 ) {
   const state: string = session.state;
 
-  // Main-menu buttons always win over a stale mid-flow session — a customer
-  // tapping "New Order" from an old menu expects a fresh start, not to be
-  // dropped into whatever step their abandoned session was stuck on.
-  // (Exception: awaiting_payment_choice keeps its own fallback so a just-placed
-  // order's payment question isn't silently discarded.)
+  // ── SELF-HEALING GUARDS ───────────────────────────────────
+  // These run before any state handling so a customer can NEVER get
+  // permanently stuck in a mid-flow session (the #1 support problem).
+
+  // 1) Reset keywords — typing any of these from ANY state escapes to the
+  //    main menu. This is the universal "get me out" that a stuck customer
+  //    reaches for. Onboarding (awaiting_name/location/address) is exempt so
+  //    a new user typing "hi" as their name isn't trapped — actually we still
+  //    let them reset; onboarding re-triggers cleanly on next message.
+  if (message.type === 'text') {
+    const t = (message.text?.body || '').trim().toLowerCase();
+    const RESET_WORDS = ['hi', 'hello', 'hey', 'menu', 'main', 'start', 'restart', 'cancel', 'stop', 'reset', 'back', 'exit', 'home'];
+    if (RESET_WORDS.includes(t)) {
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+      await handleIdleCustomer(message, phone, customer);
+      return;
+    }
+  }
+
+  // 2) Stale session auto-expiry — an abandoned session older than 30 min is
+  //    treated as gone. Sessions persist in the DB across deploys and would
+  //    otherwise resurrect an old flow the customer has long forgotten.
+  const lastTouched = session.updated_at ? new Date(session.updated_at).getTime() : 0;
+  if (lastTouched > 0 && Date.now() - lastTouched > 30 * 60 * 1000) {
+    await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+    await handleIdleCustomer(message, phone, customer);
+    return;
+  }
+
+  // 3) Main-menu buttons always win over a stale mid-flow session — a customer
+  //    tapping "New Order" from an old menu expects a fresh start, not to be
+  //    dropped into whatever step their abandoned session was stuck on.
+  //    (Exception: awaiting_payment_choice keeps its own fallback so a just-placed
+  //    order's payment question isn't silently discarded.)
   if (
     message.type === 'interactive' &&
     message.interactive.type === 'button_reply' &&
@@ -1367,6 +1396,19 @@ async function insertOrderWithFallback(payload: Record<string, any>) {
       return { data, usedPayload: orderPayload };
     }
 
+    // Duplicate idempotency_key (concurrent placeOrder for the same order) —
+    // recover the row that won the race instead of throwing a dead-end.
+    if ((error as any).code === '23505' && orderPayload.idempotency_key) {
+      const { data: winner } = await supabaseAdmin
+        .from('orders')
+        .select('id, delivery_date, time_slot, total_amount, vendor_id, order_number, can_count')
+        .eq('idempotency_key', orderPayload.idempotency_key)
+        .maybeSingle();
+      if (winner?.id) {
+        return { data: winner, usedPayload: orderPayload, deduped: true };
+      }
+    }
+
     const errorMessage = String(error.message || '');
     const missingColumnMatch = errorMessage.match(/Could not find the '([^']+)' column/);
     if (missingColumnMatch) {
@@ -1442,6 +1484,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
 
   const idempotencyKey = `wa:${session.id}:${session.delivery_date}:${session.time_slot}:${session.can_count}`;
   if (!lockRows || lockRows.length === 0) {
+    // Strict lock (state must be awaiting_confirmation) didn't catch. Two cases:
     const { data: inflightOrder } = await supabaseAdmin
       .from('orders')
       .select('id')
@@ -1449,12 +1492,23 @@ async function placeOrder(phone: string, customer: any, session: any) {
       .maybeSingle();
 
     if (inflightOrder?.id) {
+      // The order genuinely already exists → tell the customer, don't dead-end.
       await sendWhatsAppMessage(
         phone,
-        `Your order is already being processed. We'll confirm shortly.`
+        `✅ Your order is already placed! We'll notify you as it progresses.`
       );
+      return;
     }
-    return;
+
+    // No order exists yet, but the lock wasn't in awaiting_confirmation — the
+    // caller reached placeOrder from a different state. Rather than silently
+    // dropping a real order (the old dead-end bug), acquire the lock
+    // unconditionally and proceed. The orders.idempotency_key unique index is
+    // the real duplicate guard, so this can't create a double order.
+    await supabaseAdmin
+      .from('whatsapp_sessions')
+      .update({ state: 'placing_order' })
+      .eq('id', session.id);
   }
 
   const { data: existingOrder } = await supabaseAdmin
