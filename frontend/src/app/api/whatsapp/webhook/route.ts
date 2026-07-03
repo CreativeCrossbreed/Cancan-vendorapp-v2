@@ -301,7 +301,7 @@ async function handleActiveSession(
     const t = (message.text?.body || '').trim().toLowerCase();
     const RESET_WORDS = ['hi', 'hello', 'hey', 'menu', 'main', 'start', 'restart', 'cancel', 'stop', 'reset', 'back', 'exit', 'home'];
     if (RESET_WORDS.includes(t)) {
-      await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
       await handleIdleCustomer(message, phone, customer);
       return;
     }
@@ -312,7 +312,7 @@ async function handleActiveSession(
   //    otherwise resurrect an old flow the customer has long forgotten.
   const lastTouched = session.updated_at ? new Date(session.updated_at).getTime() : 0;
   if (lastTouched > 0 && Date.now() - lastTouched > 30 * 60 * 1000) {
-    await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+    await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
     await handleIdleCustomer(message, phone, customer);
     return;
   }
@@ -328,7 +328,7 @@ async function handleActiveSession(
     String(message.interactive.button_reply.id).startsWith('menu_') &&
     state !== 'awaiting_payment_choice'
   ) {
-    await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+    await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
     await handleIdleCustomer(message, phone, customer);
     return;
   }
@@ -371,7 +371,7 @@ async function handleActiveSession(
               },
             })}`,
           })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
 
         await sendCanCountButtons(phone, brandName);
         return;
@@ -389,7 +389,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'awaiting_custom_qty' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendWhatsAppMessage(phone, 'How many cans would you like? Please type a number (e.g. 5)');
         return;
       }
@@ -438,7 +438,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'awaiting_time_slot', delivery_date: date })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendTimeSlotButtons(phone);
         return;
       }
@@ -455,13 +455,13 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'awaiting_confirmation', time_slot: slot })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
 
         // Refresh session data to show confirmation
         const { data: updatedSession } = await supabaseAdmin
           .from('whatsapp_sessions')
           .select('*')
-          .eq('id', session.id)
+          .eq('phone_number', phone)
           .single();
 
         await sendOrderConfirmation(phone, customer, updatedSession);
@@ -485,12 +485,12 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'awaiting_date' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendDateButtons(phone);
         return;
       }
       if (id === 'cancel_order') {
-        await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+        await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
         await sendWhatsAppMessage(phone, `Your order has been cancelled.`);
         await showMainMenu(phone, customer.name);
         return;
@@ -499,7 +499,7 @@ async function handleActiveSession(
     const { data: fresh } = await supabaseAdmin
       .from('whatsapp_sessions')
       .select('*')
-      .eq('id', session.id)
+      .eq('phone_number', phone)
       .single();
     await sendOrderConfirmation(phone, customer, fresh);
     return;
@@ -634,7 +634,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ delivery_date: today, state: 'awaiting_confirmation' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         session.delivery_date = today;
         session.state = 'awaiting_confirmation';
         await placeOrder(phone, customer, session);
@@ -645,7 +645,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'repeat_awaiting_time_slot' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendTimeSlotButtons(phone);
         return;
       }
@@ -671,7 +671,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ time_slot: slot, delivery_date: today, state: 'awaiting_confirmation' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         session.time_slot = slot;
         session.delivery_date = today;
         session.state = 'awaiting_confirmation';
@@ -703,7 +703,7 @@ async function handleActiveSession(
         longitude,
         pending_address: addressText,
       })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
 
     await sendReplyButtons(
       phone,
@@ -729,7 +729,7 @@ async function handleActiveSession(
             longitude: session.longitude,
           })
           .eq('phone', phone);
-        await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+        await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
         await sendWhatsAppMessage(phone, `✅ Great! Your address has been updated.`);
         await showMainMenu(phone, customer.name);
         return;
@@ -740,7 +740,7 @@ async function handleActiveSession(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'update_address_manual' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendWhatsAppMessage(
           phone,
           `Please type your full address (flat/house number, building name, street, landmark):`
@@ -762,7 +762,7 @@ async function handleActiveSession(
           longitude: session.longitude,
         })
         .eq('phone', phone);
-      await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
       await sendWhatsAppMessage(phone, `✅ Your address has been updated to:\n\n_${address}_`);
       await showMainMenu(phone, customer.name);
       return;
@@ -775,7 +775,7 @@ async function handleActiveSession(
   // manual DB edit) — never silently drop the customer's message. Reset to
   // a known-good state so the conversation can recover instead of stalling.
   console.error('Unrecognized whatsapp_sessions.state — resetting session', { sessionId: session.id, state });
-  await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+  await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
   await sendWhatsAppMessage(phone, `Sorry, something went wrong. Let's start over — type "hi" to begin.`);
 }
 
@@ -811,7 +811,7 @@ async function handleOnboarding(
     await supabaseAdmin
       .from('whatsapp_sessions')
       .update({ vendor_id: vendorId })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
     session.vendor_id = vendorId;
   }
 
@@ -824,7 +824,7 @@ async function handleOnboarding(
     await supabaseAdmin
       .from('whatsapp_sessions')
       .update({ name, state: 'awaiting_location' })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
     await sendLocationRequestMessage(
       phone,
       `Nice to meet you, ${name}! 📍 Please drop your location pin so we can find you for delivery.`
@@ -851,7 +851,7 @@ async function handleOnboarding(
         pending_address: addressText,
         state: 'awaiting_address',
       })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
 
     await sendReplyButtons(
       phone,
@@ -874,7 +874,7 @@ async function handleOnboarding(
         await supabaseAdmin
           .from('whatsapp_sessions')
           .update({ state: 'awaiting_address_text' })
-          .eq('id', session.id);
+          .eq('phone_number', phone);
         await sendWhatsAppMessage(
           phone,
           `Please type your flat/house number and building name/landmark:`
@@ -940,7 +940,7 @@ async function finaliseOnboarding(phone: string, session: any, address: string) 
     });
   }
 
-  await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+  await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
 
   await sendWhatsAppMessage(
     phone,
@@ -1051,7 +1051,7 @@ async function setSessionQtyAndAskDate(phone: string, session: any, qty: number)
   await supabaseAdmin
     .from('whatsapp_sessions')
     .update({ state: 'awaiting_date', can_count: qty })
-    .eq('id', session.id);
+    .eq('phone_number', phone);
   await sendDateButtons(phone);
 }
 
@@ -1477,7 +1477,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
   const { data: lockRows } = await supabaseAdmin
     .from('whatsapp_sessions')
     .update({ state: 'placing_order' })
-    .eq('id', session.id)
+    .eq('phone_number', phone)
     .eq('state', 'awaiting_confirmation')
     .select('id')
     .limit(1);
@@ -1508,7 +1508,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
     await supabaseAdmin
       .from('whatsapp_sessions')
       .update({ state: 'placing_order' })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
   }
 
   const { data: existingOrder } = await supabaseAdmin
@@ -1528,7 +1528,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
     resolvedFinancials = financials;
 
     if (!financials.vendorId) {
-      await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+      await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
       await sendWhatsAppMessage(
         phone,
         `Sorry, we could not find an active vendor within 2km of your location right now. Our team has been notified and will help you shortly.`,
@@ -1556,13 +1556,13 @@ async function placeOrder(phone: string, customer: any, session: any) {
         const message = String(stockError.message || '');
         if (!message.includes('function reserve_can_stock') && !message.includes('does not exist')) {
           console.error('Stock reservation check failed:', stockError);
-          await supabaseAdmin.from('whatsapp_sessions').update({ state: 'awaiting_confirmation' }).eq('id', session.id);
+          await supabaseAdmin.from('whatsapp_sessions').update({ state: 'awaiting_confirmation' }).eq('phone_number', phone);
           await sendWhatsAppMessage(phone, `Sorry, something went wrong placing your order. Please try again.`);
           return;
         }
         console.warn('reserve_can_stock RPC not found — apply supabase/migrations/20260628_add_whatsapp_stock_reservation.sql. Skipping stock check for this order.');
       } else if (stockReserved === false) {
-        await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+        await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
         await sendWhatsAppMessage(
           phone,
           `Sorry, this vendor is out of stock for the selected product right now. Please try again later or choose a different quantity.`,
@@ -1652,7 +1652,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
     await supabaseAdmin
       .from('whatsapp_sessions')
       .update({ state: 'awaiting_confirmation' })
-      .eq('id', session.id);
+      .eq('phone_number', phone);
     await sendWhatsAppMessage(
       phone,
       `Sorry, something went wrong placing your order. Please try again.`
@@ -1661,7 +1661,7 @@ async function placeOrder(phone: string, customer: any, session: any) {
   }
 
   // Clean up session only after successful order creation.
-  await supabaseAdmin.from('whatsapp_sessions').delete().eq('id', session.id);
+  await supabaseAdmin.from('whatsapp_sessions').delete().eq('phone_number', phone);
 
   if (order.vendor_id) {
     notifyVendorNewOrder(order.vendor_id, order.order_number || order.id, Number(order.can_count || session.can_count || 1));
