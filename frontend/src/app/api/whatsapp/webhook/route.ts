@@ -1,4 +1,4 @@
-import { NextRequest, after } from 'next/server';
+import { NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
@@ -94,20 +94,18 @@ export async function POST(req: NextRequest) {
 
       if (value?.messages && value.messages.length > 0) {
         const contactPhone = value.contacts?.[0]?.wa_id;
-        const messages = value.messages;
-        // Acknowledge Meta immediately (avoids their webhook timeout + retry
-        // storms), then finish processing/replying in the background. after()
-        // keeps the function alive for up to maxDuration, so the reply sends
-        // even on a cold start — the fix for "only replies while kept warm".
-        after(async () => {
-          for (const message of messages) {
-            try {
-              await processMessage(message, contactPhone);
-            } catch (err) {
-              console.error('processMessage failed for', message?.id, err);
-            }
+        // Await processing BEFORE responding. This keeps the function's request
+        // active (Vercel won't freeze/kill it mid-work), and maxDuration=60
+        // gives cold starts ample time. after() was tried here but its
+        // post-response work got killed on the Hobby plan before the reply
+        // sent — inbound logged, no reply. Awaiting is the reliable path.
+        for (const message of value.messages) {
+          try {
+            await processMessage(message, contactPhone);
+          } catch (err) {
+            console.error('processMessage failed for', message?.id, err);
           }
-        });
+        }
       }
     }
 
@@ -125,10 +123,16 @@ export async function POST(req: NextRequest) {
 async function processMessage(message: any, customerPhone: string) {
   if (!customerPhone) return;
 
-  // DEDUPLICATION — rely on the DB unique constraint (idx_whatsapp_messages_dedup
-  // on message_id) as the source of truth, not a separate SELECT-then-INSERT,
-  // which is a TOCTOU race under Meta's near-simultaneous webhook retries.
   const messageId = message.id;
+
+  // DEDUP that does NOT poison retries. We log the inbound message as
+  // 'received' and only flip it to 'processed' AFTER a reply is actually sent
+  // (end of this function). If a first delivery is killed mid-way — e.g. a
+  // serverless cold-start timeout — the row stays 'received', so Meta's
+  // automatic retry RE-PROCESSES and replies, instead of hitting a permanent
+  // dedup wall (the old bug: log-first-as-lock meant a killed attempt blocked
+  // every retry, so the message was never answered). Genuine near-simultaneous
+  // duplicate deliveries are still deduped by a short in-flight window.
   if (messageId) {
     const { error: insertError } = await supabaseAdmin.from('whatsapp_messages').insert([{
       message_id: messageId,
@@ -140,13 +144,43 @@ async function processMessage(message: any, customerPhone: string) {
     }]);
 
     if (insertError) {
-      // Unique violation (Postgres code 23505) means this message_id was
-      // already processed by another concurrent/retried delivery — stop here.
-      if ((insertError as any).code === '23505') return;
-      console.error('Failed to log inbound WhatsApp message:', insertError);
+      if ((insertError as any).code === '23505') {
+        const { data: existing } = await supabaseAdmin
+          .from('whatsapp_messages')
+          .select('status, created_at')
+          .eq('message_id', messageId)
+          .eq('direction', 'inbound')
+          .maybeSingle();
+        // Already replied to → genuine duplicate, skip.
+        if (existing?.status === 'processed') return;
+        // Another delivery is likely in flight right now → skip to avoid a
+        // double reply. If the earlier attempt actually stalled/was killed,
+        // Meta's next retry (>15s later) will fall through and re-process.
+        const ageMs = existing?.created_at
+          ? Date.now() - new Date(existing.created_at).getTime()
+          : Number.MAX_SAFE_INTEGER;
+        if (ageMs < 15000) return;
+        // else: prior attempt never finished — re-process this delivery.
+      } else {
+        console.error('Failed to log inbound WhatsApp message:', insertError);
+      }
     }
   }
 
+  // Route the message. If this throws OR the function is killed before the
+  // status update below runs, the row stays 'received' and a retry recovers.
+  await routeMessage(message, customerPhone);
+
+  if (messageId) {
+    await supabaseAdmin
+      .from('whatsapp_messages')
+      .update({ status: 'processed' })
+      .eq('message_id', messageId)
+      .eq('direction', 'inbound');
+  }
+}
+
+async function routeMessage(message: any, customerPhone: string) {
   // RATE LIMIT
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const { count: recentCount } = await supabaseAdmin
@@ -169,7 +203,7 @@ async function processMessage(message: any, customerPhone: string) {
     .from('customers')
     .select('id, name, address, latitude, longitude, vendor_id')
     .eq('phone', customerPhone)
-    .single();
+    .maybeSingle();
 
   // ── NEW CUSTOMER: hand off to onboarding ──
   if (!customer) {
@@ -199,7 +233,7 @@ async function processMessage(message: any, customerPhone: string) {
     .from('whatsapp_sessions')
     .select('*')
     .eq('phone_number', customerPhone)
-    .single();
+    .maybeSingle();
 
   if (session) {
     await handleActiveSession(message, customerPhone, customer, session);
