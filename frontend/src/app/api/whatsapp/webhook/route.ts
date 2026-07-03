@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, after } from 'next/server';
 import crypto from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
@@ -10,6 +10,13 @@ import {
 import { createProviderOrder } from '@/lib/payment-gateway';
 import { createPaymentIntentRecord } from '@/lib/finance-ledger';
 import { notifyVendorNewOrder } from '@/lib/push-notifications';
+
+// Give the webhook function room to finish sending replies even on a cold
+// start. Vercel's default (10s on Hobby) kills the function mid-processing
+// when idle, which is why the bot only replied while being actively used
+// (kept warm). 60s is the Hobby ceiling and ample headroom.
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 const WHATSAPP_WEBHOOK_SECRET = process.env.WHATSAPP_WEBHOOK_SECRET;
 const META_APP_SECRET = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
@@ -86,9 +93,21 @@ export async function POST(req: NextRequest) {
       const value = changes?.value;
 
       if (value?.messages && value.messages.length > 0) {
-        for (const message of value.messages) {
-          await processMessage(message, value.contacts?.[0]?.wa_id);
-        }
+        const contactPhone = value.contacts?.[0]?.wa_id;
+        const messages = value.messages;
+        // Acknowledge Meta immediately (avoids their webhook timeout + retry
+        // storms), then finish processing/replying in the background. after()
+        // keeps the function alive for up to maxDuration, so the reply sends
+        // even on a cold start — the fix for "only replies while kept warm".
+        after(async () => {
+          for (const message of messages) {
+            try {
+              await processMessage(message, contactPhone);
+            } catch (err) {
+              console.error('processMessage failed for', message?.id, err);
+            }
+          }
+        });
       }
     }
 
