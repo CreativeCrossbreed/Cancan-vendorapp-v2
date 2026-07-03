@@ -120,7 +120,10 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
   // live keys is a one-row update (change base_url + keys, no redeploy).
   // Guard only against an ACCIDENTAL sandbox base_url when keys look live.
 
-  const response = await fetch(`${baseUrl}/orders`, {
+  // Use Cashfree Payment Links (not Orders): the Orders API returns only a
+  // payment_session_id that requires their JS SDK to render, whereas Links
+  // returns a directly shareable link_url — the right shape for WhatsApp.
+  const response = await fetch(`${baseUrl}/links`, {
     method: 'POST',
     signal: AbortSignal.timeout(8000),
     headers: {
@@ -130,29 +133,28 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      order_id: params.receipt,
-      order_amount: Number((params.amountInPaise / 100).toFixed(2)),
-      order_currency: 'INR',
-      order_note: 'Can Can marketplace payment',
-      // Cashfree's Orders API rejects the request without this — customer_id
-      // and customer_phone are mandatory, not optional.
+      link_id: params.receipt,
+      link_amount: Number((params.amountInPaise / 100).toFixed(2)),
+      link_currency: 'INR',
+      link_purpose: 'Can Can water order',
       customer_details: {
-        customer_id: params.customerId || params.receipt,
         customer_phone: params.customerPhone || '9999999999',
         ...(params.customerEmail ? { customer_email: params.customerEmail } : {}),
       },
+      // We deliver the link over WhatsApp ourselves — don't double-notify.
+      link_notify: { send_sms: false, send_email: false },
     }),
   });
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Cashfree order create failed (${response.status}): ${body}`);
+    throw new Error(`Cashfree payment link create failed (${response.status}): ${body}`);
   }
 
   const data = await response.json();
   return {
-    providerOrderId: data.order_id || params.receipt,
-    checkoutUrl: data.payment_link,
+    providerOrderId: String(data.cf_link_id || params.receipt),
+    checkoutUrl: data.link_url,
     rawResponse: data,
   };
 }
