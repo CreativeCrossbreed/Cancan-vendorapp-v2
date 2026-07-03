@@ -1,0 +1,23 @@
+name: keep-warm
+
+# Keeps the WhatsApp webhook serverless function warm so it doesn't cold-start
+# and time out on the first real customer message (Vercel Hobby kills idle
+# functions; a warm one replies in ~3s instead of being killed at ~10s).
+# Free alternative to upgrading to Vercel Pro.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes (GitHub's minimum)
+  workflow_dispatch:          # allow manual runs
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm the webhook function
+        run: |
+          # A GET to the webhook invokes (and warms) the function. It returns
+          # 403 without a valid verify token — that's expected; the point is
+          # just to keep the function instance alive.
+          curl -s -o /dev/null -w "webhook warm ping: %{http_code} in %{time_total}s\n" \
+            "https://cancanindia.com/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=warm&hub.challenge=1" || true
