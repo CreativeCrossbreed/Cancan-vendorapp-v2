@@ -3,27 +3,61 @@ import { supabaseAdmin } from './supabase';
 
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
 
-// Fetch WhatsApp credentials — DB first, env fallback
+// Fetch WhatsApp credentials.
+// Source order: config row in whatsapp_sessions (phone_number '__wa_config__',
+// token in `name`, phone number id in `address`) → app_settings table (if it
+// exists) → environment variables. The whatsapp_sessions config row is used
+// because it can be written via the REST API without any DDL, so credentials
+// can be set/rotated without a redeploy or a migration.
+let _credsCache: { token: string; phoneNumberId: string; at: number } | null = null;
+
 async function getWhatsAppCredentials() {
-    try {
-        const { data } = await supabaseAdmin
-            .from('app_settings')
-            .select('key, value')
-            .in('key', ['whatsapp_api_token', 'whatsapp_phone_number_id']);
-
-        const settings: Record<string, string> = {};
-        for (const row of data || []) settings[row.key] = row.value;
-
-        return {
-            token: settings.whatsapp_api_token || process.env.WHATSAPP_API_TOKEN || '',
-            phoneNumberId: settings.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-        };
-    } catch {
-        return {
-            token: process.env.WHATSAPP_API_TOKEN || '',
-            phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-        };
+    if (_credsCache && Date.now() - _credsCache.at < 60_000) {
+        return { token: _credsCache.token, phoneNumberId: _credsCache.phoneNumberId };
     }
+
+    let token = '';
+    let phoneNumberId = '';
+
+    // 1) config row in whatsapp_sessions (writable via REST, no DDL needed)
+    try {
+        const { data: cfg } = await supabaseAdmin
+            .from('whatsapp_sessions')
+            .select('name, address')
+            .eq('phone_number', '__wa_config__')
+            .maybeSingle();
+        if (cfg) {
+            token = (cfg as any).name || '';
+            phoneNumberId = (cfg as any).address || '';
+        }
+    } catch {
+        // ignore — fall through
+    }
+
+    // 2) app_settings table (may not exist)
+    if (!token || !phoneNumberId) {
+        try {
+            const { data } = await supabaseAdmin
+                .from('app_settings')
+                .select('key, value')
+                .in('key', ['whatsapp_api_token', 'whatsapp_phone_number_id']);
+            const settings: Record<string, string> = {};
+            for (const row of data || []) settings[row.key] = row.value;
+            token = token || settings.whatsapp_api_token || '';
+            phoneNumberId = phoneNumberId || settings.whatsapp_phone_number_id || '';
+        } catch {
+            // table absent — fall through to env
+        }
+    }
+
+    // 3) environment variables
+    token = token || process.env.WHATSAPP_API_TOKEN || '';
+    phoneNumberId = phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID || '';
+
+    if (token && phoneNumberId) {
+        _credsCache = { token, phoneNumberId, at: Date.now() };
+    }
+    return { token, phoneNumberId };
 }
 
 export async function sendWhatsAppMessage(to: string, message: any, type: string = 'text') {
