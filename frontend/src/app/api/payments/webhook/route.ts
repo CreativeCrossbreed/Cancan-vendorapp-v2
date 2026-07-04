@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { detectProviderFromHeaders, verifyWebhookSignature } from '@/lib/payment-gateway';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import {
   appendVendorWalletEntry,
   createPaymentRecord,
@@ -38,13 +39,24 @@ function parseWebhookPayload(provider: 'razorpay' | 'cashfree', payload: Record<
   const data = (payload['data'] as Record<string, unknown> | undefined) || payload;
   const orderData = (data['order'] as Record<string, unknown> | undefined) || data;
   const paymentData = (data['payment'] as Record<string, unknown> | undefined) || data;
-  const cfStatus = String(orderData['order_status'] || paymentData['payment_status'] || '').toUpperCase();
+
+  // Support BOTH Cashfree APIs:
+  //  • Payment Links (what we use): data.cf_link_id + data.link_status
+  //  • Orders API: order.order_id + order.order_status
+  const linkId = data['cf_link_id'] || data['link_id'];
+  const linkStatus = String(data['link_status'] || '').toUpperCase();
+  const cfStatus = String(
+    orderData['order_status'] || paymentData['payment_status'] || linkStatus || '',
+  ).toUpperCase();
   const status = cfStatus === 'PAID' || cfStatus === 'SUCCESS' ? 'paid' : cfStatus === 'FAILED' ? 'failed' : 'pending';
 
   return {
-    providerOrderId: String(orderData['order_id'] || orderData['cf_order_id'] || '') || null,
+    providerOrderId:
+      String(linkId || orderData['order_id'] || orderData['cf_order_id'] || '') || null,
     providerPaymentId: String(paymentData['cf_payment_id'] || paymentData['payment_id'] || '') || null,
-    amount: Number(paymentData['payment_amount'] || orderData['order_amount'] || 0),
+    amount: Number(
+      data['link_amount_paid'] || paymentData['payment_amount'] || orderData['order_amount'] || 0,
+    ),
     status,
     raw: payload,
   };
@@ -160,6 +172,33 @@ export async function POST(req: NextRequest) {
             notes: `Online payment settlement credit (${provider})`,
           });
         }
+      }
+
+      // Tell the customer on WhatsApp that their payment landed.
+      try {
+        const { data: cust } = await supabaseAdmin
+          .from('customers')
+          .select('phone, name')
+          .eq('id', order.customer_id)
+          .maybeSingle();
+        const { data: ord } = await supabaseAdmin
+          .from('orders')
+          .select('order_number')
+          .eq('id', order.id)
+          .maybeSingle();
+        if ((cust as any)?.phone) {
+          const nm = (cust as any).name ? `, ${(cust as any).name}` : '';
+          const ref = (ord as any)?.order_number ? ` (${(ord as any).order_number})` : '';
+          await sendWhatsAppMessage(
+            (cust as any).phone,
+            `✅ *Payment received — thank you${nm}!* 💧\n\n` +
+              `We've received your payment of *₹${amount.toFixed(0)}*${ref}.\n` +
+              `Your order is now *fully paid and confirmed*. 🎉\n\n` +
+              `We'll message you when it's out for delivery. 🚚`,
+          );
+        }
+      } catch (notifyErr) {
+        console.error('[payments/webhook] customer payment-confirmation message failed', notifyErr);
       }
 
       return Response.json({ status: 'ok', payment_id: payment.id });
