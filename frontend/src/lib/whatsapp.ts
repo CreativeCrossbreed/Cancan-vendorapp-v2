@@ -96,6 +96,9 @@ export async function sendWhatsAppMessage(to: string, message: any, type: string
         payload.text = { body: message };
     } else if (type === 'interactive') {
         payload.interactive = message;
+    } else if (type === 'image') {
+        // message = { link: 'https://...', caption?: '...' }
+        payload.image = message;
     }
 
     try {
@@ -180,6 +183,12 @@ export async function sendReplyButtons(
         },
     };
     return sendWhatsAppMessage(to, message, 'interactive');
+}
+
+// Helper: Send an image (by public URL) with an optional caption. Used for
+// promotional banners.
+export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
+    return sendWhatsAppMessage(to, { link: imageUrl, ...(caption ? { caption } : {}) }, 'image');
 }
 
 // Helper: Send a Call-To-Action URL button — a tappable button that opens a
