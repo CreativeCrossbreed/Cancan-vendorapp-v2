@@ -52,7 +52,13 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get('hub.verify_token');
   const challenge = searchParams.get('hub.challenge');
 
-  if (mode === 'subscribe' && token === WHATSAPP_WEBHOOK_SECRET) {
+  // Accept the configured secret OR a known fixed verify token. The fixed
+  // token lets the webhook be (re)pointed to this deployment from the Meta
+  // dashboard without needing to know whatever WHATSAPP_WEBHOOK_SECRET env is
+  // set to. The verify token is only a handshake — real security is the
+  // request-signature check (META_APP_SECRET), not this value.
+  const VERIFY_TOKEN = 'cancan-wa-verify-2026';
+  if (mode === 'subscribe' && (token === WHATSAPP_WEBHOOK_SECRET || token === VERIFY_TOKEN)) {
     return new Response(challenge, { status: 200 });
   }
   return new Response('Forbidden', { status: 403 });
