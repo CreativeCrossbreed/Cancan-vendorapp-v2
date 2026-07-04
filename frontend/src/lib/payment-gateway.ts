@@ -143,6 +143,11 @@ export async function createProviderOrder(params: CreateOrderParams): Promise<{
       },
       // We deliver the link over WhatsApp ourselves — don't double-notify.
       link_notify: { send_sms: false, send_email: false },
+      // Per-link webhook: Cashfree calls this URL when the link is paid, so we
+      // don't need an account-level webhook configured in the dashboard.
+      link_meta: {
+        notify_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cancanindia.com'}/api/payments/webhook`,
+      },
     }),
   });
 
