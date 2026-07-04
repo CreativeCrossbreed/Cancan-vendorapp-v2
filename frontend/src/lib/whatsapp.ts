@@ -182,6 +182,29 @@ export async function sendReplyButtons(
     return sendWhatsAppMessage(to, message, 'interactive');
 }
 
+// Helper: Send a Call-To-Action URL button — a tappable button that opens a
+// URL directly (used for the online payment link so the customer taps one
+// button instead of a raw link).
+export async function sendCtaUrlButton(
+    to: string,
+    bodyText: string,
+    buttonText: string,
+    url: string,
+) {
+    const message = {
+        type: 'cta_url',
+        body: { text: bodyText },
+        action: {
+            name: 'cta_url',
+            parameters: {
+                display_text: buttonText.substring(0, 20), // max 20 chars
+                url,
+            },
+        },
+    };
+    return sendWhatsAppMessage(to, message, 'interactive');
+}
+
 // Helper: Send Location Request (Native WhatsApp location pin request)
 export async function sendLocationRequestMessage(to: string, bodyText: string) {
     const message = {
