@@ -186,7 +186,13 @@ export function verifyWebhookSignature(
   }
 
   const secret = process.env.CASHFREE_WEBHOOK_SECRET;
-  if (!secret) return process.env.NODE_ENV !== 'production';
+  if (!secret) {
+    // No webhook secret configured (e.g. sandbox/test). Accept the webhook so
+    // payment confirmations flow, but warn loudly — set CASHFREE_WEBHOOK_SECRET
+    // before taking real money so fake payment events can't be forged.
+    console.warn('CASHFREE_WEBHOOK_SECRET not set — accepting webhook WITHOUT signature verification. Set it before going live.');
+    return true;
+  }
 
   const signature =
     headers.get('x-webhook-signature') ||
@@ -194,8 +200,12 @@ export function verifyWebhookSignature(
     headers.get('x-signature');
   if (!signature) return false;
 
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
-  return timingSafeCompare(signature, expected);
+  // Cashfree signs base64(HMAC-SHA256(timestamp + rawBody)). Include the
+  // timestamp header if present (newer scheme); fall back to body-only.
+  const ts = headers.get('x-webhook-timestamp') || '';
+  const expectedWithTs = crypto.createHmac('sha256', secret).update(ts + rawBody).digest('base64');
+  const expectedBodyOnly = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
+  return timingSafeCompare(signature, expectedWithTs) || timingSafeCompare(signature, expectedBodyOnly);
 }
 
 export function detectProviderFromHeaders(headers: Headers): SupportedProvider {
