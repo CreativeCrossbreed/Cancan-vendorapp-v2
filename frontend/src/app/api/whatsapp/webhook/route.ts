@@ -6,6 +6,7 @@ import {
   sendInteractiveList,
   sendReplyButtons,
   sendLocationRequestMessage,
+  sendCtaUrlButton,
 } from '@/lib/whatsapp';
 import { createProviderOrder } from '@/lib/payment-gateway';
 import { createPaymentIntentRecord } from '@/lib/finance-ledger';
@@ -588,7 +589,7 @@ async function handleActiveSession(
           `💵 *Pay cash on delivery.* Please keep the amount ready when your water arrives — exact change makes the handover quicker!\n\n` +
             `We'll message you when your order is out for delivery. Thank you for choosing Can Can 💙`,
         );
-        await showMainMenu(phone, customer.name);
+        // Order is done — end here. Don't push the main menu unprompted.
         return;
       }
 
@@ -625,9 +626,15 @@ async function handleActiveSession(
               phone,
               customer.name,
               orderId,
-              `💳 *Pay ₹${amount.toFixed(0)} online now:*\n${checkoutUrl}\n\n` +
-                `🔒 Secure — UPI, card, or netbanking. You'll get an instant confirmation here once it goes through.\n` +
+              `🔒 Secure — UPI, card, or netbanking. You'll get an instant confirmation here once it goes through.\n` +
                 `_Prefer cash? You can still pay on delivery._`,
+            );
+            // A tappable button that opens the payment page directly.
+            await sendCtaUrlButton(
+              phone,
+              `💳 Tap below to pay *₹${amount.toFixed(0)}* securely.`,
+              `Pay ₹${amount.toFixed(0)} Now`,
+              String(checkoutUrl),
             );
           } else {
             await sendWhatsAppMessage(
@@ -647,7 +654,7 @@ async function handleActiveSession(
               `Your order is confirmed and on track! 👍`
           );
         }
-        await showMainMenu(phone, customer.name);
+        // Order is done — end here. Don't push the main menu unprompted.
         return;
       }
     }
