@@ -5,6 +5,7 @@ import {
   Clock,
   MessageCircle,
   MessageSquare,
+  Megaphone,
   Phone,
   RefreshCw,
   Send,
@@ -64,6 +65,37 @@ const WhatsApp: React.FC = () => {
     access_token: '',
     phone_number_id: '',
   });
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastForm, setBroadcastForm] = useState({ message: '', imageUrl: '' });
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
+
+  const handleBroadcast = async () => {
+    setBroadcasting(true);
+    setBroadcastResult(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await fetch('/api/whatsapp/broadcast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: broadcastForm.message, imageUrl: broadcastForm.imageUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Broadcast failed');
+      setBroadcastResult(
+        data.note ||
+          `✅ Sent to ${data.sent} customer${data.sent === 1 ? '' : 's'}` +
+            (data.failed ? ` (${data.failed} failed)` : '') + '.',
+      );
+    } catch (e) {
+      setBroadcastResult(`❌ ${e instanceof Error ? e.message : 'Broadcast failed'}`);
+    } finally {
+      setBroadcasting(false);
+    }
+  };
 
   useEffect(() => {
     if (tab === 'messages') {
@@ -203,6 +235,18 @@ const WhatsApp: React.FC = () => {
           <Button variant="ghost" size="md" className="gap-2" onClick={() => setSendDialogOpen(true)}>
             <Send className="w-4 h-4" />
             Send Message
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            className="gap-2"
+            onClick={() => {
+              setBroadcastResult(null);
+              setBroadcastOpen(true);
+            }}
+          >
+            <Megaphone className="w-4 h-4" />
+            Broadcast Promotion
           </Button>
           <Button variant="ghost" size="md" className="gap-2" onClick={() => setConfigDialogOpen(true)}>
             <Settings className="w-4 h-4" />
@@ -398,6 +442,60 @@ const WhatsApp: React.FC = () => {
               placeholder="Type your message here..."
             />
           </label>
+        </div>
+      </Modal>
+
+      {/* Broadcast Promotion Modal */}
+      <Modal
+        open={broadcastOpen}
+        title="Broadcast Promotion"
+        onClose={() => setBroadcastOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setBroadcastOpen(false)}>
+              Close
+            </Button>
+            <Button
+              onClick={handleBroadcast}
+              disabled={broadcasting || (!broadcastForm.message.trim() && !broadcastForm.imageUrl.trim())}
+            >
+              {broadcasting ? 'Sending…' : 'Send to Active Customers'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+            Reaches customers who messaged in the last <b>24 hours</b> (WhatsApp&apos;s free-form window).
+            To reach everyone, an approved Marketing template is required.
+          </div>
+          <label className="block">
+            <span className="block text-sm font-medium text-slate-700 mb-1">Message / Caption</span>
+            <textarea
+              value={broadcastForm.message}
+              onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
+              rows={4}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cancan-primary/30"
+              placeholder="🎉 Special offer! Order 2 cans today and get free delivery. Reply to order."
+            />
+          </label>
+          <Input
+            label="Image / banner URL (optional)"
+            value={broadcastForm.imageUrl}
+            onChange={(v) => setBroadcastForm({ ...broadcastForm, imageUrl: v })}
+            placeholder="https://.../banner.jpg"
+          />
+          {broadcastResult ? (
+            <div
+              className={`rounded-lg px-3 py-2 text-sm ${
+                broadcastResult.startsWith('❌')
+                  ? 'bg-red-50 border border-red-200 text-red-700'
+                  : 'bg-green-50 border border-green-200 text-green-700'
+              }`}
+            >
+              {broadcastResult}
+            </div>
+          ) : null}
         </div>
       </Modal>
 
