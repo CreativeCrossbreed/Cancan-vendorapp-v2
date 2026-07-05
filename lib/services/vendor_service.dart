@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../config/supabase_config.dart';
+import 'vendor_data_service.dart';
 
 /// Vendor Service - Handles vendor profile CRUD operations
 class VendorService {
@@ -170,6 +171,51 @@ class VendorService {
         'success': false,
         'message': 'Failed to update profile.',
       };
+    }
+  }
+
+  /// Save payout (bank or UPI) details used by the Cashfree payout engine.
+  ///
+  /// [method] is 'bank' or 'upi'. Only the fields for the chosen method are
+  /// stored; the other set is nulled so the beneficiary transfer mode is
+  /// unambiguous. Any existing `cf_beneficiary_id` is cleared so the backend
+  /// re-registers the beneficiary with the new details on the next payout.
+  Future<Map<String, dynamic>> updatePayoutDetails({
+    required String method,
+    required String holderName,
+    String? accountNumber,
+    String? ifsc,
+    String? vpa,
+  }) async {
+    try {
+      final vendorId = SupabaseConfig.currentVendorId;
+      if (vendorId == null) {
+        return {'success': false, 'message': 'User not authenticated'};
+      }
+
+      final updates = <String, dynamic>{
+        'bank_account_holder_name': holderName.trim(),
+        'cf_beneficiary_id': null, // force re-registration with new details
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (method == 'bank') {
+        updates['bank_account_number'] = accountNumber?.trim();
+        updates['bank_ifsc'] = ifsc?.trim().toUpperCase();
+        updates['payout_vpa'] = null;
+      } else {
+        updates['payout_vpa'] = vpa?.trim();
+        updates['bank_account_number'] = null;
+        updates['bank_ifsc'] = null;
+      }
+
+      await _supabase.from('vendors').update(updates).eq('id', vendorId);
+      await VendorDataService.clearCache();
+
+      return {'success': true, 'message': 'Payout details saved'};
+    } catch (e) {
+      debugPrint('Error saving payout details: $e');
+      return {'success': false, 'message': 'Failed to save payout details.'};
     }
   }
 

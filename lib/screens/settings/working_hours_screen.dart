@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_data_service.dart';

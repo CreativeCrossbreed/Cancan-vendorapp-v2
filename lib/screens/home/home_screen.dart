@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -139,117 +138,95 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-      ),
+      color: AppTheme.white,
       child: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: AppTheme.paddingXXL,
+              padding: const EdgeInsets.fromLTRB(8, 8, 20, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.menu, color: AppTheme.white),
-                          onPressed: () {
-                            Scaffold.of(context).openDrawer();
-                          },
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.menu, color: AppTheme.textPrimary),
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
                       ),
-                      const SizedBox(width: AppTheme.spacingM),
+                      const SizedBox(width: 4),
                       Text(
                         context.tr('deliveries_for'),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.white,
-                              fontWeight: FontWeight.bold,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: _buildDateCarousel(context),
+                  ),
                   const SizedBox(height: AppTheme.spacingL),
-                  _buildDateCarousel(context),
-                  const SizedBox(height: AppTheme.spacingXL),
-                  GestureDetector(
-                    onTap: _showDeliveryBreakdown,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: _buildSummaryCard(
-                        context,
-                        '$_totalCans',
-                        context.tr('to_be_delivered'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: GestureDetector(
+                      onTap: _showDeliveryBreakdown,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: _buildSummaryCard(
+                          context,
+                          '$_totalCans',
+                          context.tr('to_be_delivered'),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppTheme.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+            const SizedBox(height: AppTheme.spacingS),
+            if (!_isLoading && !_isVendorReady)
+              Padding(
+                padding: AppTheme.screenPaddingHorizontal,
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+                  padding: const EdgeInsets.all(AppTheme.spacingM),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warningOrange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.warningOrange.withValues(alpha: 0.4),
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: AppTheme.spacingXXL),
-                    if (!_isLoading && !_isVendorReady) ...[
-                      Padding(
-                        padding: AppTheme.screenPaddingHorizontal,
-                        child: Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
-                          padding: const EdgeInsets.all(AppTheme.spacingM),
-                          decoration: BoxDecoration(
-                            color: AppTheme.warningOrange.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppTheme.warningOrange.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_rounded,
-                                color: AppTheme.warningOrange,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: AppTheme.warningOrange),
+                      const SizedBox(width: AppTheme.spacingS),
+                      Expanded(
+                        child: Text(
+                          _vendorReadinessMessage,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(width: AppTheme.spacingS),
-                              Expanded(
-                                child: Text(
-                                  _vendorReadinessMessage,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: AppTheme.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ],
-                    Expanded(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : RefreshIndicator(
-                              onRefresh: _loadData,
-                              child: _buildOrdersList(),
-                            ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: _buildOrdersList(),
+                    ),
             ),
           ],
         ),
@@ -315,10 +292,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               width: 84,
               padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.white : AppTheme.white.withValues(alpha: 0.15),
+                color: isSelected ? AppTheme.primaryBlue : AppTheme.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppTheme.white.withValues(alpha: isSelected ? 1 : 0.3),
+                  color: isSelected ? AppTheme.primaryBlue : AppTheme.mediumGray,
                 ),
               ),
               child: Column(
@@ -329,7 +306,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: isSelected ? AppTheme.primaryBlue : AppTheme.white,
+                          color: AppTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -338,8 +315,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     dateLabel,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isSelected
-                              ? AppTheme.textSecondary
-                              : AppTheme.white.withValues(alpha: 0.85),
+                              ? AppTheme.textPrimary
+                              : AppTheme.textSecondary,
                         ),
                   ),
                 ],
@@ -356,32 +333,50 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       padding: AppTheme.paddingXL,
       constraints: const BoxConstraints(minHeight: 96),
       decoration: BoxDecoration(
-        color: AppTheme.white.withValues(alpha: 0.2),
+        color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: AppTheme.white,
-                  fontWeight: FontWeight.bold,
-                ),
+        border: Border.all(color: AppTheme.mediumGray),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(height: AppTheme.spacingXS),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.white.withValues(alpha: 0.9),
-                ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.local_shipping_rounded, color: AppTheme.primaryBlueDark),
+          ),
+          const SizedBox(width: AppTheme.spacingL),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: AppTheme.spacingXS),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+              ),
+            ],
           ),
         ],
       ),

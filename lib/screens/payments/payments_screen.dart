@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -91,59 +90,34 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     return Scaffold(
       drawer: const AppDrawer(),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        color: AppTheme.white,
         child: SafeArea(
           child: Column(
             children: [
-              // Custom Header
+              // Flat minimal header
               Padding(
-                padding: AppTheme.paddingXXL,
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(8, 8, 20, 8),
+                child: Row(
                   children: [
-                    // Hamburger + Title Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    IconButton(
+                      icon: const Icon(Icons.menu, color: AppTheme.textPrimary),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                    const SizedBox(width: 4),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Isolated hamburger icon
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: AppTheme.white),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
-                          ),
+                        Text(
+                          'Payments',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        // Center title/subtitle
-                        Column(
-                          children: [
-                            Text(
-                              'Payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: AppTheme.white.withValues(alpha: 0.9),
-                                  ),
-                            ),
-                            const SizedBox(height: AppTheme.spacingXS),
-                            Text(
-                              'Track pending payments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    color: AppTheme.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
+                        Text(
+                          'Track pending payments',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        // Balance spacing
-                        const SizedBox(width: 48),
                       ],
                     ),
                   ],
@@ -153,13 +127,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               // Payments Section
               Expanded(
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppTheme.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                  ),
+                  color: AppTheme.white,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

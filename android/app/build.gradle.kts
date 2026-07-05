@@ -8,7 +8,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-val keyPropertiesFile = rootProject.file("app/keystore/../key.properties")
+val keyPropertiesFile = rootProject.file("key.properties")
 val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
     keyPropertiesFile.inputStream().use { keyProperties.load(it) }
@@ -41,7 +41,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = keyProperties["storeFile"]?.let { file("$it") }
+            storeFile = keyProperties["storeFile"]?.let { rootProject.file("$it") }
             storePassword = keyProperties["storePassword"] as String?
             keyAlias = keyProperties["keyAlias"] as String?
             keyPassword = keyProperties["keyPassword"] as String?

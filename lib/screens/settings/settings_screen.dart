@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +12,7 @@ import '../auth/login_screen.dart';
 import '../home/widgets/app_drawer.dart';
 import 'notifications_settings_screen.dart';
 import 'working_hours_screen.dart';
+import '../auth/payout_details_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 
@@ -165,6 +165,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const WorkingHoursScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildSettingTile(
+                          icon: Icons.account_balance_wallet_outlined,
+                          title: 'Bank / UPI Details',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PayoutDetailsScreen(),
                               ),
                             );
                           },

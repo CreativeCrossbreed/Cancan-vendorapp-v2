@@ -7,3 +7,6 @@
 -keep class com.google.gson.** { *; }
 # Firebase
 -keep class com.google.firebase.** { *; }
+# Play Core (Flutter deferred components — not used, ignore missing refs)
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }

@@ -1,11 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../config/theme.dart';
 import '../../services/vendor_service.dart';
 import '../../services/vendor_data_service.dart';
 import '../../services/push_notification_service.dart';
 import '../home/home_screen.dart';
 import '../settings/working_hours_screen.dart';
+import 'payout_details_screen.dart';
 
 /// Profile Setup Screen - First-time vendor registration
 class ProfileSetupScreen extends StatefulWidget {
@@ -31,6 +32,38 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _longitudeController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isLocating = false;
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _showError('Please turn on location services and try again.');
+        return;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _showError('Location permission denied. Enter coordinates manually.');
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (!mounted) return;
+      setState(() {
+        _latitudeController.text = pos.latitude.toStringAsFixed(6);
+        _longitudeController.text = pos.longitude.toStringAsFixed(6);
+      });
+    } catch (e) {
+      _showError('Could not get location. Enter coordinates manually.');
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -101,8 +134,19 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               builder: (context) => WorkingHoursScreen(
                 isOnboarding: true,
                 onComplete: () {
+                  // Then collect payout details before landing on Home.
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => PayoutDetailsScreen(
+                        isOnboarding: true,
+                        onComplete: () {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => const HomeScreen()),
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ),
                     (route) => false,
                   );
                 },
@@ -250,6 +294,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             },
                           ),
                           const SizedBox(height: 24),
+
+                          // Use current location (fills lat/long automatically)
+                          OutlinedButton.icon(
+                            onPressed: _isLocating ? null : _useCurrentLocation,
+                            icon: _isLocating
+                                ? const SizedBox(
+                                    height: 18, width: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.my_location_rounded, size: 20),
+                            label: Text(_isLocating ? 'Getting location…' : 'Use my current location'),
+                            style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                          ),
+                          const SizedBox(height: 16),
 
                           Row(
                             children: [
