@@ -62,8 +62,14 @@ async function call(path: string): Promise<TwoFactorResult> {
     }
 }
 
+// DLT-approved OTP template name on the 2Factor account. Sending via the
+// approved template (rather than bare AUTOGEN) is what makes the SMS actually
+// deliver — bare AUTOGEN is accepted+charged but dropped by DLT scrubbing when
+// no approved template exists. Overridable via env without a code change.
+const OTP_TEMPLATE = process.env.TWOFACTOR_TEMPLATE || 'CANCAN OTP';
+
 export async function sendOtp(phone10: string): Promise<TwoFactorResult> {
-    return call(`SMS/${phone10}/AUTOGEN`);
+    return call(`SMS/${phone10}/AUTOGEN/${encodeURIComponent(OTP_TEMPLATE)}`);
 }
 
 export async function verifyOtp(phone10: string, otp: string): Promise<TwoFactorResult> {
