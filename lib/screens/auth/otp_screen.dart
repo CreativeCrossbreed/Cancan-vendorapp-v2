@@ -21,6 +21,10 @@ class OTPScreen extends StatefulWidget {
 }
 
 class _OTPScreenState extends State<OTPScreen> {
+  // Voice OTP (2Factor) delivers a 4-digit code. If the backend is switched to
+  // the SMS channel (6-digit template), change this to 6 to match.
+  static const int _otpLength = 4;
+
   final _otpController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
@@ -33,8 +37,8 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   Future<void> _verifyOTP() async {
-    if (_otpController.text.length != 6) {
-      _showError('Please enter the complete 6-digit OTP');
+    if (_otpController.text.length != _otpLength) {
+      _showError('Please enter the complete $_otpLength-digit OTP');
       return;
     }
 
@@ -199,7 +203,7 @@ class _OTPScreenState extends State<OTPScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'We sent a 6-digit code to\n+91 ${widget.phoneNumber}',
+                        'We sent a $_otpLength-digit code to\n+91 ${widget.phoneNumber}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppTheme.textSecondary,
                             ),
@@ -210,7 +214,7 @@ class _OTPScreenState extends State<OTPScreen> {
                       // OTP Input
                       Pinput(
                         controller: _otpController,
-                        length: 6,
+                        length: _otpLength,
                         defaultPinTheme: defaultPinTheme,
                         focusedPinTheme: focusedPinTheme,
                         submittedPinTheme: submittedPinTheme,
