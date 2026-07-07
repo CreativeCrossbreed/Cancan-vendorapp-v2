@@ -62,14 +62,23 @@ async function call(path: string): Promise<TwoFactorResult> {
     }
 }
 
-// DLT-approved OTP template name on the 2Factor account. Sending via the
-// approved template (rather than bare AUTOGEN) is what makes the SMS actually
-// deliver — bare AUTOGEN is accepted+charged but dropped by DLT scrubbing when
-// no approved template exists. Overridable via env without a code change.
+// DLT-approved OTP template name on the 2Factor account (used for the SMS
+// channel). Sending via the approved template — rather than bare AUTOGEN — is
+// what makes SMS actually deliver once DLT has propagated.
 const OTP_TEMPLATE = process.env.TWOFACTOR_TEMPLATE || 'CANCAN OTP';
 
+// Delivery channel: 'voice' | 'sms'. Currently voice — the SMS leg still drops
+// at DLT scrubbing (falls back to voice anyway), so we deliver by voice call
+// directly for a deterministic experience. Flip to 'sms' via env once the
+// CANCAN header + template have fully propagated on the operators.
+// VERIFY3 (in verifyOtp) validates the OTP by phone regardless of channel.
+const OTP_CHANNEL = (process.env.TWOFACTOR_CHANNEL || 'voice').toLowerCase();
+
 export async function sendOtp(phone10: string): Promise<TwoFactorResult> {
-    return call(`SMS/${phone10}/AUTOGEN/${encodeURIComponent(OTP_TEMPLATE)}`);
+    if (OTP_CHANNEL === 'sms') {
+        return call(`SMS/${phone10}/AUTOGEN/${encodeURIComponent(OTP_TEMPLATE)}`);
+    }
+    return call(`VOICE/${phone10}/AUTOGEN`);
 }
 
 export async function verifyOtp(phone10: string, otp: string): Promise<TwoFactorResult> {
