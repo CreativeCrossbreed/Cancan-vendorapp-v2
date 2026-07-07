@@ -21,9 +21,8 @@ class OTPScreen extends StatefulWidget {
 }
 
 class _OTPScreenState extends State<OTPScreen> {
-  // Voice OTP (2Factor) delivers a 4-digit code. If the backend is switched to
-  // the SMS channel (6-digit template), change this to 6 to match.
-  static const int _otpLength = 4;
+  // 2Factor SMS AUTOGEN (with voice fallback) delivers a 6-digit code.
+  static const int _otpLength = 6;
 
   final _otpController = TextEditingController();
   final _authService = AuthService();

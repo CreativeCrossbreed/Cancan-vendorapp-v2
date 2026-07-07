@@ -67,12 +67,17 @@ async function call(path: string): Promise<TwoFactorResult> {
 // what makes SMS actually deliver once DLT has propagated.
 const OTP_TEMPLATE = process.env.TWOFACTOR_TEMPLATE || 'CANCAN OTP';
 
-// Delivery channel: 'voice' | 'sms'. Currently voice — the SMS leg still drops
-// at DLT scrubbing (falls back to voice anyway), so we deliver by voice call
-// directly for a deterministic experience. Flip to 'sms' via env once the
-// CANCAN header + template have fully propagated on the operators.
-// VERIFY3 (in verifyOtp) validates the OTP by phone regardless of channel.
-const OTP_CHANNEL = (process.env.TWOFACTOR_CHANNEL || 'voice').toLowerCase();
+// Delivery channel: 'sms' | 'voice'.
+//
+// Use 'sms' (the approved AUTOGEN template): it creates a VERIFY3-verifiable
+// 6-digit session AND, because the SMS leg is currently dropped at DLT
+// scrubbing, 2Factor automatically falls back to a VOICE CALL reading that
+// same code — so the user still gets a voice OTP today, and it seamlessly
+// becomes real SMS once the CANCAN header/template finish propagating.
+//
+// Do NOT use the direct 'voice' endpoint: it issues a 4-digit code that
+// VERIFY3 cannot validate (voice sessions aren't verifiable via VERIFY3).
+const OTP_CHANNEL = (process.env.TWOFACTOR_CHANNEL || 'sms').toLowerCase();
 
 export async function sendOtp(phone10: string): Promise<TwoFactorResult> {
     if (OTP_CHANNEL === 'sms') {
